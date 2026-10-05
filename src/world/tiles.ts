@@ -1,0 +1,46 @@
+import { BLOCKS } from './blocks';
+
+/** All atlas tiles, in atlas order. The atlas painter (render/atlas.ts) draws each by name. */
+export const TILE_NAMES = [
+  'none', 'grass_top', 'grass_side', 'dirt', 'stone', 'rubble', 'sand', 'sandstone', 'sandstone_top', 'gravel',
+  'snow', 'snow_side', 'ice', 'water', 'ash_log', 'ash_log_top', 'ash_leaves', 'pine_log', 'pine_log_top',
+  'pine_leaves', 'planks', 'ember_ore', 'copper_ore', 'iron_ore', 'lumen_ore', 'coreite', 'cactus_side', 'cactus_top',
+  'tall_grass', 'flower_red', 'flower_gold', 'berry_bush', 'dry_shrub', 'bench_top', 'bench_side', 'kiln_top',
+  'kiln_front', 'glass', 'slate_bricks', 'fern',
+  'break_0', 'break_1', 'break_2', 'break_3', 'break_4', 'break_5', 'break_6', 'break_7', 'break_8', 'break_9',
+] as const;
+
+export type TileName = (typeof TILE_NAMES)[number];
+
+export const TILE_PX = 16;
+export const ATLAS_COLS = 8;
+export const ATLAS_ROWS = Math.ceil(TILE_NAMES.length / ATLAS_COLS);
+/** Each tile is drawn with a 2px extruded border to prevent bleeding. */
+export const TILE_PAD = 2;
+export const CELL_PX = TILE_PX + TILE_PAD * 2;
+export const ATLAS_W = ATLAS_COLS * CELL_PX;
+export const ATLAS_H = ATLAS_ROWS * CELL_PX;
+
+export function tileIndex(name: string): number {
+  const i = (TILE_NAMES as readonly string[]).indexOf(name);
+  if (i < 0) throw new Error(`Unknown tile '${name}'`);
+  return i;
+}
+
+/** Tile indices per block: [top, bottom, side] packed as BLOCK_TILES[id*3 + face]. */
+export const BLOCK_TILES = new Uint16Array(256 * 3);
+for (const d of BLOCKS) {
+  if (!d) continue;
+  for (let f = 0; f < 3; f++) BLOCK_TILES[d.id * 3 + f] = tileIndex(d.tiles[f]);
+}
+
+/** UV rect of a tile in [0,1] atlas space (v up, three.js convention), inset to the unpadded area. */
+export function tileRect(index: number): [number, number, number, number] {
+  const col = index % ATLAS_COLS;
+  const row = Math.floor(index / ATLAS_COLS);
+  const u0 = (col * CELL_PX + TILE_PAD) / ATLAS_W;
+  const u1 = (col * CELL_PX + TILE_PAD + TILE_PX) / ATLAS_W;
+  const vTop = 1 - (row * CELL_PX + TILE_PAD) / ATLAS_H;
+  const vBot = 1 - (row * CELL_PX + TILE_PAD + TILE_PX) / ATLAS_H;
+  return [u0, vBot, u1, vTop];
+}
