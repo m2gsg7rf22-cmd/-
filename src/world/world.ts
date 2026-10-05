@@ -120,7 +120,42 @@ export class World {
     return -1;
   }
 
-  setBlock(x: number, y: number, z: number, id: number): boolean {
+  /**
+   * Find a safe standing spot near (x,z) using real block data: ground must be natural
+   * terrain (not leaves/logs/water) with two free blocks above. Returns feet position or null.
+   */
+  findSafeSpot(x: number, z: number, radius = 16): { x: number; y: number; z: number } | null {
+    const ground = new Set<number>([B.GRASS, B.DIRT, B.SAND, B.SNOW_GRASS, B.GRAVEL, B.STONE, B.SNOW_BLOCK, B.SANDSTONE]);
+    const free = (id: number) => id !== UNLOADED && !SOLID[id] && id !== B.WATER;
+    const fx = Math.floor(x);
+    const fz = Math.floor(z);
+    let fallback: { x: number; y: number; z: number } | null = null;
+    for (let r = 0; r <= radius; r++) {
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dz = -r; dz <= r; dz++) {
+          if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+          const cx = fx + dx;
+          const cz = fz + dz;
+          const y = this.surfaceY(cx + 0.5, cz + 0.5);
+          if (y < 0) continue;
+          if (!ground.has(this.getBlock(cx, y, cz))) continue;
+          if (!free(this.getBlock(cx, y + 1, cz)) || !free(this.getBlock(cx, y + 2, cz))) continue;
+          const spot = { x: cx + 0.5, y: y + 1, z: cz + 0.5 };
+          // Prefer open spots: all 4 neighbors walkable at feet and head level.
+          let open = 0;
+          for (const [ax, az] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            if (free(this.getBlock(cx + ax, y + 1, cz + az)) && free(this.getBlock(cx + ax, y + 2, cz + az))) open++;
+          }
+          if (open === 4) return spot;
+          if (!fallback) fallback = spot;
+        }
+      }
+    }
+    return fallback;
+  }
+
+  /** Set a block. `immediate` remeshes synchronously (player edits); bulk edits pass false and remesh via workers. */
+  setBlock(x: number, y: number, z: number, id: number, immediate = true): boolean {
     if (y < 0 || y >= WORLD_HEIGHT) return false;
     const fx = Math.floor(x);
     const fz = Math.floor(z);
@@ -136,14 +171,14 @@ export class World {
     e.version++;
     this.dirtySave.add(e.key);
     // Rebuild this chunk immediately for instant feedback; neighbors via workers.
-    this.meshNow(e);
+    if (immediate) this.meshNow(e);
     const nx = lx === 0 ? -1 : lx === CHUNK_SIZE - 1 ? 1 : 0;
     const nz = lz === 0 ? -1 : lz === CHUNK_SIZE - 1 ? 1 : 0;
     const touch = (dx: number, dz: number) => {
       const n = this.entryAt(cx + dx, cz + dz);
       if (n && n.data) {
         n.version++;
-        if (Math.abs(dx) + Math.abs(dz) === 1) this.meshNow(n);
+        if (immediate && Math.abs(dx) + Math.abs(dz) === 1) this.meshNow(n);
       }
     };
     if (nx) touch(nx, 0);

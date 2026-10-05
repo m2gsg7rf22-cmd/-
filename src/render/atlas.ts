@@ -352,7 +352,7 @@ export function buildAtlasCanvas(): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = ATLAS_W;
   canvas.height = ATLAS_H;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
   const img = ctx.createImageData(ATLAS_W, ATLAS_H);
   TILE_NAMES.forEach((name, index) => {
     const t = new Tile(mulberry32(1000 + index * 7919));

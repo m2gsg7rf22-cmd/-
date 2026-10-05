@@ -227,12 +227,15 @@ export class Game {
 
     progress('Loading world…', 0.93);
     if (fresh) {
-      // Use real block data (trees, caves) for the final spawn height.
-      const sy = this.world.surfaceY(x, z);
-      if (sy > 0) {
-        y = Math.min(WORLD_HEIGHT - 2, sy + 1);
-        this.player.setPosition(x, y, z);
+      // Use real block data (trees, caves, water) for the final spawn: solid natural ground with headroom.
+      const spot = this.world.findSafeSpot(x, z, 24);
+      if (spot) {
+        ({ x, y, z } = spot);
+      } else {
+        const sy = this.world.surfaceY(x, z);
+        if (sy > 0) y = Math.min(WORLD_HEIGHT - 2, sy + 1);
       }
+      this.player.setPosition(x, y, z);
       this.player.spawn = { x, y, z };
       this.time = 0.04;
     }

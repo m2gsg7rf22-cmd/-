@@ -52,7 +52,7 @@ export class WorkerPool {
 
   /** Max jobs to keep in flight. */
   get capacity(): number {
-    return this.fallback ? 1 : this.workers.length * 2;
+    return this.fallback ? 1 : this.workers.length * 4;
   }
 
   private enterFallback(): void {
