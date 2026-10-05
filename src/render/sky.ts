@@ -41,8 +41,7 @@ void main() {
   float h = clamp(dir.y, -1.0, 1.0);
   float t = pow(clamp(h, 0.0, 1.0), 0.55);
   vec3 col = mix(uHorizon, uTop, t);
-  // Below horizon: slightly darker horizon color (sea of fog).
-  if (h < 0.0) col = mix(uHorizon, uHorizon * 0.75, clamp(-h * 3.0, 0.0, 1.0));
+  // Below the horizon the dome shows the plain horizon color — exactly what terrain fog fades to.
 
   // Sunset glow toward the sun.
   float sd = max(dot(dir, uSunDir), 0.0);
@@ -51,11 +50,12 @@ void main() {
   col += vec3(1.0, 0.9, 0.7) * pow(sd, 64.0) * 0.35 * (1.0 - uNight);
 
   // Stars.
-  if (uNight > 0.01 && h > 0.0) {
-    vec3 cell = floor(dir * 220.0);
+  float starVis = smoothstep(0.55, 0.92, uNight);
+  if (starVis > 0.0 && h > 0.0) {
+    vec3 cell = floor(dir * 520.0);
     float s = hash(cell);
-    float star = step(0.9965, s) * (0.5 + 0.5 * hash(cell + 3.1));
-    col += vec3(star) * uNight * smoothstep(0.0, 0.25, h);
+    float star = step(0.9982, s) * (0.35 + 0.65 * hash(cell + 3.1));
+    col += vec3(star) * starVis * smoothstep(0.02, 0.3, h);
   }
 
   // Sun and moon.
@@ -155,6 +155,8 @@ export interface SkyState {
   day: number;
   /** Fog/horizon color. */
   horizon: THREE.Color;
+  /** Zenith color. */
+  top: THREE.Color;
   /** Light color for blocks. */
   light: THREE.Color;
   /** Daylight brightness multiplier. */
@@ -171,6 +173,7 @@ export class Sky {
   readonly state: SkyState = {
     day: 1,
     horizon: new THREE.Color(),
+    top: new THREE.Color(),
     light: new THREE.Color(),
     brightness: 1,
     sunDir: new THREE.Vector3(),
@@ -243,6 +246,7 @@ export class Sky {
     u.uSunset.value = sunset;
 
     this.state.horizon.copy(u.uHorizon.value);
+    this.state.top.copy(u.uTop.value);
     lerpColor(this.state.light, MOON_LIGHT, DAY_LIGHT, day);
     this.state.light.lerp(WARM_LIGHT, sunset * 0.6 * day);
     this.state.brightness = THREE.MathUtils.lerp(0.16, 1.0, day);

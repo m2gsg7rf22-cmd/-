@@ -7,6 +7,8 @@ export const worldUniforms = {
   uLightColor: { value: new THREE.Color(1, 1, 1) },
   uAmbient: { value: 0.09 },
   uFogColor: { value: new THREE.Color(0.7, 0.8, 0.95) },
+  /** Sky zenith color: fog blends toward the sky gradient in the view direction. */
+  uSkyTop: { value: new THREE.Color(0.32, 0.56, 0.9) },
   uFogNear: { value: 60 },
   uFogFar: { value: 120 },
   uTime: { value: 0 },
@@ -37,6 +39,7 @@ uniform float uDaylight;
 uniform vec3 uLightColor;
 uniform float uAmbient;
 uniform vec3 uFogColor;
+uniform vec3 uSkyTop;
 uniform float uFogNear;
 uniform float uFogFar;
 uniform float uTime;
@@ -53,7 +56,10 @@ vec3 lightFor(float shade, float sky) {
 
 vec3 applyFog(vec3 col) {
   float f = smoothstep(uFogNear, uFogFar, vFogDepth);
-  return mix(col, uFogColor, f);
+  // Match the sky dome gradient behind the fragment so distant terrain dissolves into the sky.
+  vec3 dir = normalize(vWorld - cameraPosition);
+  vec3 sky = mix(uFogColor, uSkyTop, pow(clamp(dir.y, 0.0, 1.0), 0.55));
+  return mix(col, sky, f);
 }
 `;
 

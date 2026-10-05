@@ -471,10 +471,12 @@ export class Game {
     const underwater = p.headInWater;
     if (underwater) {
       worldUniforms.uFogColor.value.copy(UNDERWATER_FOG).multiplyScalar(0.4 + st.brightness * 0.6);
+      worldUniforms.uSkyTop.value.copy(worldUniforms.uFogColor.value);
       worldUniforms.uFogNear.value = 1;
       worldUniforms.uFogFar.value = 22;
     } else {
       worldUniforms.uFogColor.value.copy(st.horizon);
+      worldUniforms.uSkyTop.value.copy(st.top);
       worldUniforms.uFogFar.value = Math.max(32, viewDist - 4);
       worldUniforms.uFogNear.value = worldUniforms.uFogFar.value * 0.55;
     }

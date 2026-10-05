@@ -91,8 +91,8 @@ function buildModel(kind: MobKind, geos: THREE.BufferGeometry[]): { group: THREE
     group.add(box(0.1, 0.18, 0.1, wool, 0.2, 1.28, -0.66, geos));
     for (const [x, z] of [[-0.25, -0.38], [0.25, -0.38], [-0.25, 0.38], [0.25, 0.38]]) leg(x, z, 0.55, 0.18, skin);
   } else if (kind === 'boar') {
-    const hide = mat(0x6e4a32);
-    const bristle = mat(0x4a2f1f);
+    const hide = mat(0x8a5c3c);
+    const bristle = mat(0x5e3c26);
     const snout = mat(0xc98d74);
     const tusk = mat(0xf2ecd8);
     group.add(box(0.72, 0.5, 1.0, hide, 0, 0.6, 0, geos));
@@ -139,8 +139,8 @@ export class MobManager {
   }
 
   setLight(brightness: number, sunDir: THREE.Vector3): void {
-    this.hemi.intensity = 0.25 + brightness * 0.9;
-    this.sun.intensity = brightness * 1.4;
+    this.hemi.intensity = 0.6 + brightness * 1.8;
+    this.sun.intensity = 0.3 + brightness * 2.2;
     this.sun.position.copy(sunDir);
   }
 
