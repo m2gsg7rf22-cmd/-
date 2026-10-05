@@ -12,6 +12,7 @@ export class TouchControls {
   private joyOrigin = { x: 0, y: 0 };
   private lookIds = new Map<number, { x: number; y: number }>();
   private cleanup: (() => void)[] = [];
+  private holdResets: (() => void)[] = [];
 
   constructor(root: HTMLElement, private input: InputManager) {
     this.root = root;
@@ -39,7 +40,11 @@ export class TouchControls {
     this.cleanup.push(() => t.removeEventListener(type, h));
   }
 
-  /** Hold buttons: active while a finger is down on them; released on up/cancel/leave. */
+  /**
+   * Hold buttons: active while a finger is down on them; released on up/cancel, or when the finger
+   * slides off. Touch pointers are implicitly captured by the element they started on (so
+   * pointerleave would never fire) — we release that capture and also hit-test on every move.
+   */
   private bindHold(sel: string, set: (v: boolean) => void): void {
     const el = this.root.querySelector(sel) as HTMLElement | null;
     if (!el) return;
@@ -55,8 +60,15 @@ export class TouchControls {
       e.stopPropagation();
       if (id !== -1) return;
       id = e.pointerId;
+      if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
       el.classList.add('pressed');
       set(true);
+    });
+    this.listen(window, 'pointermove', (e) => {
+      if (e.pointerId !== id) return;
+      const r = el.getBoundingClientRect();
+      const slack = 12;
+      if (e.clientX < r.left - slack || e.clientX > r.right + slack || e.clientY < r.top - slack || e.clientY > r.bottom + slack) release(e);
     });
     this.listen(el, 'pointerup', release);
     this.listen(el, 'pointercancel', release);
@@ -64,6 +76,13 @@ export class TouchControls {
     this.listen(window, 'pointerup', release);
     this.listen(window, 'pointercancel', release);
     this.cleanup.push(() => set(false));
+    this.holdResets.push(() => {
+      if (id !== -1) {
+        id = -1;
+        el.classList.remove('pressed');
+        set(false);
+      }
+    });
   }
 
   private bindTap(sel: string, fn: () => void): void {
@@ -147,6 +166,7 @@ export class TouchControls {
     this.lookIds.clear();
     this.input.setTouchMove(0, 0, false);
     this.root.querySelectorAll('.pressed').forEach((el) => el.classList.remove('pressed'));
+    for (const r of this.holdResets) r();
   }
 
   dispose(): void {
