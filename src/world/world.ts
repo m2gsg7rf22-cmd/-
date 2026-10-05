@@ -222,6 +222,7 @@ export class World {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(d.positions, 3));
     g.setAttribute('uv', new THREE.BufferAttribute(d.uvs, 2));
+    g.setAttribute('tile', new THREE.BufferAttribute(d.tiles, 2));
     g.setAttribute('light', new THREE.BufferAttribute(d.light, 2));
     g.setIndex(new THREE.BufferAttribute(d.indices, 1));
     g.computeBoundingSphere();

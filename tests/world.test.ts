@@ -93,6 +93,19 @@ describe('terrain generator', () => {
   });
 });
 
+/** Sum of quad areas (two triangles per quad). */
+function meshArea(m: { positions: Float32Array; indices: Uint32Array }): number {
+  let a = 0;
+  const p = m.positions;
+  for (let i = 0; i < m.indices.length; i += 3) {
+    const [i0, i1, i2] = [m.indices[i] * 3, m.indices[i + 1] * 3, m.indices[i + 2] * 3];
+    const ux = p[i1] - p[i0], uy = p[i1 + 1] - p[i0 + 1], uz = p[i1 + 2] - p[i0 + 2];
+    const vx = p[i2] - p[i0], vy = p[i2 + 1] - p[i0 + 1], vz = p[i2 + 2] - p[i0 + 2];
+    a += Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) / 2;
+  }
+  return a;
+}
+
 describe('mesher', () => {
   it('emits 6 faces for a lone block and none for air', () => {
     const pad = new Uint8Array(PAD_VOLUME);
@@ -102,14 +115,33 @@ describe('mesher', () => {
     expect(m.opaque.indices.length).toBe(6 * 6);
     expect(m.opaque.positions.length).toBe(6 * 4 * 3);
     for (const v of m.opaque.positions) expect(Number.isFinite(v)).toBe(true);
+    expect(m.opaque.tiles.length).toBe(6 * 4 * 2);
   });
-  it('culls faces between adjacent solid blocks, including across the padded border', () => {
+  it('culls faces between adjacent solid blocks (by exposed area), including across the padded border', () => {
     const pad = new Uint8Array(PAD_VOLUME);
     pad[padIndex(0, 10, 0)] = B.STONE;
     pad[padIndex(1, 10, 0)] = B.STONE;
-    expect(meshChunk(pad).opaque.indices.length / 6).toBe(10);
+    expect(meshArea(meshChunk(pad).opaque)).toBeCloseTo(10, 0);
     pad[padIndex(-1, 10, 0)] = B.STONE; // neighbor chunk block hides the -X face
-    expect(meshChunk(pad).opaque.indices.length / 6).toBe(9);
+    expect(meshArea(meshChunk(pad).opaque)).toBeCloseTo(9, 0);
+  });
+  it('greedy-merges a flat floor into few quads with identical exposed area', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    for (let x = -1; x <= 16; x++) for (let z = -1; z <= 16; z++) pad[padIndex(x, 10, z)] = B.STONE;
+    const m = meshChunk(pad);
+    // Top + bottom of a 16x16 slab, neighbors hide the sides.
+    expect(meshArea(m.opaque)).toBeCloseTo(512, 0);
+    expect(m.opaque.indices.length / 6).toBeLessThanOrEqual(4);
+    // Local uvs span the merged size so the shader repeats the texture per block.
+    expect(Math.max(...m.opaque.uvs)).toBeGreaterThan(15);
+  });
+  it('does not merge faces with different lighting (AO)', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    for (let x = 0; x < 8; x++) pad[padIndex(x, 10, 5)] = B.STONE;
+    const flat = meshChunk(pad).opaque.indices.length / 6;
+    pad[padIndex(3, 11, 6)] = B.STONE; // occluder above-beside creates AO on some top corners
+    const occluded = meshChunk(pad).opaque.indices.length / 6;
+    expect(occluded).toBeGreaterThan(flat);
   });
   it('puts water in the transparent mesh and draws only exposed water faces', () => {
     const pad = new Uint8Array(PAD_VOLUME);

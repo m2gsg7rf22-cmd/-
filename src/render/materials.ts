@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ATLAS_H, ATLAS_W, TILE_PX } from '../world/tiles';
 
 /** Shared uniforms for all world materials, updated once per frame. */
 export const worldUniforms = {
@@ -12,17 +13,21 @@ export const worldUniforms = {
   uFogNear: { value: 60 },
   uFogFar: { value: 120 },
   uTime: { value: 0 },
+  uTileSize: { value: new THREE.Vector2(TILE_PX / ATLAS_W, TILE_PX / ATLAS_H) },
 };
 
 const vertex = /* glsl */ `
 attribute vec2 light;
+attribute vec2 tile;
 varying vec2 vUv;
+varying vec2 vTile;
 varying float vShade;
 varying float vSky;
 varying float vFogDepth;
 varying vec3 vWorld;
 void main() {
   vUv = uv;
+  vTile = tile;
   vShade = light.x;
   vSky = light.y;
   vec4 world = modelMatrix * vec4(position, 1.0);
@@ -43,11 +48,18 @@ uniform vec3 uSkyTop;
 uniform float uFogNear;
 uniform float uFogFar;
 uniform float uTime;
+uniform vec2 uTileSize;
 varying vec2 vUv;
+varying vec2 vTile;
 varying float vShade;
 varying float vSky;
 varying float vFogDepth;
 varying vec3 vWorld;
+
+// Local uvs are in block units; wrap inside the tile so greedy-merged quads repeat the texture.
+vec2 atlasUv() {
+  return vTile + fract(vUv) * uTileSize;
+}
 
 vec3 lightFor(float shade, float sky) {
   float s = sky * sky;
@@ -66,7 +78,7 @@ vec3 applyFog(vec3 col) {
 const opaqueFrag = /* glsl */ `
 ${fragmentCommon}
 void main() {
-  vec4 t = texture2D(map, vUv);
+  vec4 t = texture2D(map, atlasUv());
   if (t.a < 0.5) discard;
   vec3 col = t.rgb * lightFor(vShade, vSky);
   gl_FragColor = vec4(applyFog(col), 1.0);
@@ -78,7 +90,7 @@ const transFrag = /* glsl */ `
 ${fragmentCommon}
 uniform float uWaterMode;
 void main() {
-  vec4 t = texture2D(map, vUv);
+  vec4 t = texture2D(map, atlasUv());
   if (t.a < 0.02) discard;
   vec3 col = t.rgb;
   float a = t.a;
