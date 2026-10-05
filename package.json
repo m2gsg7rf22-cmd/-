@@ -9,7 +9,14 @@
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "e2e": "node scripts/e2e.mjs"
+    "bench": "vite-node tests/bench.perf.ts",
+    "qa:e2e": "node scripts/e2e.mjs",
+    "qa:touch": "node scripts/touch.mjs",
+    "qa:responsive": "node scripts/responsive.mjs",
+    "qa:failures": "node scripts/failures.mjs",
+    "qa:bughunt": "node scripts/bughunt.mjs",
+    "qa:memory": "node scripts/memory.mjs",
+    "qa:visual": "node scripts/visual.mjs"
   },
   "dependencies": {
     "three": "^0.180.0"
