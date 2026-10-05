@@ -7,7 +7,7 @@ import type { InputManager } from '../src/input/input';
 
 /** Flat world: solid below y=0, optional water column region. */
 function fakeWorld(opts: { waterBelow?: number } = {}): World {
-  const getBlock = (_x: number, y: number) => {
+  const getBlock = (_x: number, y: number, _z?: number) => {
     const fy = Math.floor(y);
     if (fy < 0) return B.STONE;
     if (opts.waterBelow !== undefined && fy < opts.waterBelow) return B.WATER;

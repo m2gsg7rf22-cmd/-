@@ -96,6 +96,7 @@ export class Interaction {
         const tool = held ? itemDef(held.id)?.tool : undefined;
         const dmg = tool ? tool.damage : 1;
         g.mobs.damage(this.targetMob, dmg, p.body.x, p.body.z);
+        g.hand.doSwing();
         if (tool) g.wearHeld(1);
         p.exhaustion += 0.1;
         g.particles.burst(this.targetMob.body.x, this.targetMob.body.y + this.targetMob.body.h * 0.6, this.targetMob.body.z, new THREE.Color(0.8, 0.15, 0.1), 6);
@@ -126,6 +127,7 @@ export class Interaction {
       this.progress = 0;
     }
     const def = blockDef(id);
+    g.hand.doSwing();
     if (g.creative) {
       if (this.breakCooldown <= 0) {
         this.breakBlock(t.x, t.y, t.z, id, false);
@@ -199,6 +201,7 @@ export class Interaction {
         if (g.player.eat(def.food)) {
           if (!g.creative) g.consumeHeld(1);
           g.sounds.eat();
+          g.hand.doSwing();
           return true;
         }
         return false;
@@ -235,6 +238,7 @@ export class Interaction {
     if (!g.world.setBlock(x, y, z, blockId)) return false;
     if (!g.creative) g.consumeHeld(1);
     g.sounds.place(def.surface);
+    g.hand.doSwing();
     return true;
   }
 }

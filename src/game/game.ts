@@ -7,6 +7,7 @@ import type { InputManager } from '../input/input';
 import type { TouchControls } from '../input/touch';
 import { MAX_AIR, Player } from '../player/player';
 import { BlockHighlight, Particles } from '../render/effects';
+import { HandView } from '../render/handView';
 import { worldUniforms } from '../render/materials';
 import type { Renderer } from '../render/renderer';
 import { Sky } from '../render/sky';
@@ -52,6 +53,7 @@ export class Game {
   readonly particles: Particles;
   readonly mobs: MobManager;
   readonly interaction: Interaction;
+  readonly hand: HandView;
   readonly sounds = audio;
   readonly camera: THREE.PerspectiveCamera;
   creative: boolean;
@@ -147,6 +149,7 @@ export class Game {
       },
     });
     this.interaction = new Interaction(this);
+    this.hand = new HandView(r.atlas);
     this.adaptive = new AdaptiveQuality(mobile ? 30 : 55);
 
     const scene = r.scene;
@@ -514,7 +517,12 @@ export class Game {
       this.hud.setDebug(this.debugText());
     } else if (!this.debugOn) this.hud.setDebug(null);
 
+    const held = this.heldStack();
+    const speed = Math.hypot(p.vx, p.vz);
+    this.hand.visible = !p.dead;
+    this.hand.update(dt, held ? held.id : -1, p.bob, this.settings.reducedMotion || !p.onGround ? 0 : Math.min(1, speed / 5), st.brightness, this.camera.aspect);
     this.r.render();
+    this.hand.render(this.r.renderer);
   }
 
   private underground = false;
@@ -586,6 +594,7 @@ export class Game {
     this.sky.dispose();
     this.particles.dispose();
     this.highlight.dispose();
+    this.hand.dispose();
     this.hud.onHotbarSelect = undefined;
     document.getElementById('overlay-water')?.classList.remove('on');
     const hurt = document.getElementById('overlay-hurt');
