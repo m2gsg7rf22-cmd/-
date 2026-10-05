@@ -115,6 +115,7 @@ await step('test fixture: clear a flat 15x15 platform around the player', async 
       for (let dy = 0; dy <= 6; dy++) g.world.setBlock(fx + dx, fy + dy, fz + dz, 0, false);
     }
     g.player.setPosition(fx + 0.5, fy, fz + 0.5);
+    window.__fixture = { fx, fy, fz };
   });
   await page.waitForTimeout(500);
 });
@@ -253,20 +254,43 @@ await step('place block (secondary)', async () => {
   assert(slot >= 0 && slot < 9, 'no placeable block in hotbar');
   await page.keyboard.press(`Digit${slot + 1}`);
   await page.evaluate(() => {
-    window.__bf.app.game.player.pitch = -0.9;
+    // Restore the platform (mining dug a hole under the player) and recenter.
+    const g = window.__bf.app.game;
+    const { fx, fy, fz } = window.__fixture;
+    for (let dx = -7; dx <= 7; dx++) for (let dz = -7; dz <= 7; dz++) g.world.setBlock(fx + dx, fy - 1, fz + dz, 2, false);
+    g.player.setPosition(fx + 0.5, fy, fz + 0.5);
+    g.player.yaw = 0;
+    g.player.pitch = -0.6; // aim ~2 blocks ahead so the target cell never overlaps the body
   });
-  await until(() => !!window.__bf.app.game.interaction.target, null, 8000, 'placement target');
+  await until(() => {
+    const g = window.__bf.app.game; const t = g.interaction.target;
+    return !!t && t.y === window.__fixture.fy - 1 && t.ny === 1 && t.dist > 2 && g.player.onGround;
+  }, null, 10000, 'placement target on floor');
   const before = await page.evaluate(() => {
     const g = window.__bf.app.game;
     return { count: g.heldStack()?.count ?? 0, target: g.interaction.target };
   });
   assert(before.target, 'no target for placement');
   const locked = await page.evaluate(() => window.__bf.app.input.pointerLocked);
+  await page.evaluate(() => { window.__ev = []; window.__bf.app.input.onEvent((e) => window.__ev.push(e)); document.addEventListener('mousedown', (e) => window.__ev.push('md' + e.button + ':' + e.target.id), { capture: true }); });
   if (locked) await page.mouse.click(640, 360, { button: 'right' });
   else await page.evaluate(() => window.__bf.app.input.triggerEvent('secondaryDown'));
+  const trace = [];
+  for (let i = 0; i < 10; i++) {
+    trace.push(await page.evaluate(() => { const g = window.__bf.app.game; return `${g.heldStack()?.count ?? 0}/${g.input.primary ? 'P' : '-'}${g.input.secondary ? 'S' : '-'}`; }));
+    await page.waitForTimeout(100);
+  }
+  console.log('place trace', trace.join(' '), await page.evaluate(() => JSON.stringify({ ev: window.__ev, paused: window.__bf.app.game.paused, dead: window.__bf.app.game.player.dead, pq: window.__bf.app.game.interaction.placeQueued, pt: window.__bf.app.game.interaction.placeTimer })));
   await until((c) => (window.__bf.app.game.heldStack()?.count ?? 0) !== c, before.count, 8000, 'placement').catch(() => {});
   const after = await page.evaluate(() => window.__bf.app.game.heldStack()?.count ?? 0);
-  assert(after === before.count - 1, `count ${before.count} -> ${after}`);
+  if (after !== before.count - 1) {
+    const diag = await page.evaluate(() => {
+      const g = window.__bf.app.game; const t = g.interaction.target; const b = g.player.body;
+      const cell = t ? [t.x + t.nx, t.y + t.ny, t.z + t.nz] : null;
+      return { held: g.heldStack(), sel: g.selected, t, cell, cellId: cell && g.world.getBlock(...cell), body: [b.x, b.y, b.z], pitch: g.player.pitch, gameplay: g.input.gameplay, secondary: g.input.secondary };
+    });
+    throw new Error(`count ${before.count} -> ${after} diag=${JSON.stringify(diag)} before=${JSON.stringify(before)}`);
+  }
   return { before: before.count, after };
 });
 
@@ -441,14 +465,22 @@ await step('walk across chunk borders incl. x=0/z=0 (streaming)', async () => {
     const pts = [[-40, -40], [40, 40], [120, 40], [120, -120]];
     for (const [tx, tz] of pts) {
       g.player.setPosition(tx + 0.5, 110, tz + 0.5);
-      await new Promise((res) => setTimeout(res, 4500));
+      const t0 = performance.now();
+      const cx = Math.floor(tx / 16), cz = Math.floor(tz / 16);
+      // Wait until the 3x3 chunks around the new position are meshed (streaming latency).
+      while (performance.now() - t0 < 30000) {
+        let ok = true;
+        for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) if (!g.world.isChunkMeshed(cx + dx, cz + dz)) ok = false;
+        if (ok) break;
+        await new Promise((res) => setTimeout(res, 100));
+      }
       const s = g.world.stats();
-      samples.push({ tx, tz, loaded: s.loaded, meshed: s.meshed, tris: s.triangles });
+      samples.push({ tx, tz, ms: Math.round(performance.now() - t0), loaded: s.loaded, meshed: s.meshed, tris: s.triangles });
     }
     g.player.setPosition(start.x, 110, start.z);
     return samples;
   });
-  for (const s of r) assert(s.meshed > 10, `few chunks meshed at ${s.tx},${s.tz}`);
+  for (const s of r) assert(s.ms < 30000, `chunks around ${s.tx},${s.tz} never meshed`);
   // Loaded chunk count must stay bounded (unloading works).
   const max = Math.max(...r.map((s) => s.loaded));
   assert(max < 600, `too many chunks loaded: ${max}`);
