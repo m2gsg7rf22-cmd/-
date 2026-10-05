@@ -359,6 +359,7 @@ export class App {
       game.start();
       if (!this.mobile) this.input.requestPointerLock();
       if (!this.store.persistent) this.hud.toast('Storage unavailable: this world will not be saved', true, 5000);
+      if (!meta.player) this.showFirstHints(meta.mode);
     } catch (e) {
       if (token !== this.loadToken) return;
       console.error('[BlockForge] failed to load world', e);
@@ -369,6 +370,19 @@ export class App {
       actions(err, { reload: () => void this.showMenu() });
       (err.querySelector('[data-act=reload]') as HTMLElement).textContent = 'Back to menu';
     }
+  }
+
+  /** Short onboarding for a brand-new world. */
+  private showFirstHints(mode: GameMode): void {
+    const m = this.mobile;
+    const hints = mode === 'creative'
+      ? [m ? 'Tap ▦ for the Block Library. Fly with the wing button.' : 'Press E for the Block Library. Double-tap Space or F to fly.']
+      : [
+          m ? 'Hold ⛏ while aiming at a tree to collect logs.' : 'Hold left click on a tree to collect logs.',
+          m ? 'Open ▦ to craft planks, sticks and a Forge Bench.' : 'Press E to craft planks, sticks and a Forge Bench.',
+          'Nights bring Shadow Crawlers — build shelter and keep fed!',
+        ];
+    hints.forEach((h, i) => setTimeout(() => this.state === 'playing' && this.hud.toast(h, false, 6000), 1200 + i * 6500));
   }
 
   private disposeGame(): void {
