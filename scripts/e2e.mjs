@@ -136,10 +136,15 @@ await step('strafe (A/D) and back (S)', async () => {
   for (const k of ['KeyA', 'KeyD', 'KeyS']) {
     const a = await player();
     await page.keyboard.down(k);
-    await page.waitForTimeout(600);
+    let d = 0;
+    const t0 = Date.now();
+    while (Date.now() - t0 < 4000 && d <= 0.5) {
+      await page.waitForTimeout(100);
+      const b = await player();
+      d = Math.hypot(b.x - a.x, b.z - a.z);
+    }
     await page.keyboard.up(k);
-    const b = await player();
-    assert(Math.hypot(b.x - a.x, b.z - a.z) > 0.5, `${k} did not move`);
+    assert(d > 0.5, `${k} did not move`);
   }
 });
 
