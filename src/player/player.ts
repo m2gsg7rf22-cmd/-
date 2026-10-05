@@ -205,6 +205,7 @@ export class Player {
     }
 
     const ox = b.x;
+    const oy = b.y;
     const oz = b.z;
     const res = moveBody(b, this.vx * dt, this.vy * dt, this.vz * dt, world.isSolid);
     if (res.hitX) this.vx = 0;
@@ -230,7 +231,7 @@ export class Player {
 
     // Fall tracking & landing.
     if (!this.onGround) {
-      if (this.wasOnGround || this.inWater || this.flying) this.fallStartY = b.y;
+      if (this.wasOnGround || this.inWater || this.flying) this.fallStartY = Math.max(oy, b.y);
       else this.fallStartY = Math.max(this.fallStartY, b.y);
     } else if (!this.wasOnGround) {
       const fall = this.fallStartY - b.y;
