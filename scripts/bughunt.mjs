@@ -102,8 +102,8 @@ await step('death while inventory open', async () => {
 });
 
 await step('E / Esc ignored on death screen', async () => {
-  await page.waitForTimeout(800); // post-respawn invulnerability window
-  await page.evaluate(() => window.__bf.app.game.player.hurt(100, 'fall'));
+  // Respect the post-respawn invulnerability window (game time may run slower than wall time).
+  await page.waitForFunction(() => { window.__bf.app.game.player.hurt(100, 'fall'); return window.__bf.state === 'dead'; }, null, { timeout: 15000, polling: 200 });
   await page.waitForSelector('[data-screen=death]');
   await page.keyboard.press('KeyE');
   await page.keyboard.press('Escape');

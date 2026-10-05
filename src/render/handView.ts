@@ -100,6 +100,8 @@ export class HandView {
     const side = aspect < 1 ? 0.28 : 0.5;
     this.holder.position.set(side + bx - s * 0.12, -0.4 + by - this.equip * 0.35 - s * 0.05, -0.95 - s * 0.12);
     this.holder.rotation.set(-s * 0.9, s * 0.3, 0);
+    // Short landscape phones: shrink so the item doesn't crowd the hotbar/touch buttons.
+    this.holder.scale.setScalar(aspect > 1.9 ? 0.7 : 1);
     const c = 0.35 + brightness * 0.65;
     this.blockMat.color.setRGB(c, c, c);
     if (this.mesh && this.mesh.material !== this.blockMat) (this.mesh.material as THREE.MeshBasicMaterial).color.setRGB(c, c, c);

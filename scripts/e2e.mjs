@@ -123,11 +123,14 @@ await step('test fixture: clear a flat 15x15 platform around the player', async 
 await step('move forward (W)', async () => {
   const a = await player();
   await page.keyboard.down('KeyW');
-  await page.waitForTimeout(1500);
+  let b = a, d = 0;
+  const t0 = Date.now();
+  while (Date.now() - t0 < 6000 && d <= 1.5) {
+    await page.waitForTimeout(100);
+    b = await player();
+    d = Math.hypot(b.x - a.x, b.z - a.z);
+  }
   await page.keyboard.up('KeyW');
-  await page.waitForTimeout(300);
-  const b = await player();
-  const d = Math.hypot(b.x - a.x, b.z - a.z);
   assert(d > 1.5, `moved only ${d.toFixed(2)}`);
   return { moved: d.toFixed(2) };
 });
