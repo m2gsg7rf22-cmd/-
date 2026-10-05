@@ -1,0 +1,16 @@
+{
+  "name": "BlockForge",
+  "short_name": "BlockForge",
+  "description": "An original voxel survival sandbox for desktop and mobile browsers.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#121318",
+  "theme_color": "#121318",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

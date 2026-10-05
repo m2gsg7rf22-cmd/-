@@ -18,10 +18,10 @@ export interface ChunkMeshes {
 }
 
 class Builder {
-  pos = new Float32Array(1 << 14);
-  uv = new Float32Array(1 << 13);
-  li = new Float32Array(1 << 13);
-  idx = new Uint32Array(1 << 13);
+  pos = new Float32Array(4096 * 3);
+  uv = new Float32Array(4096 * 2);
+  li = new Float32Array(4096 * 2);
+  idx = new Uint32Array(4096 * 1.5);
   vc = 0;
   ic = 0;
 
@@ -31,11 +31,12 @@ class Builder {
   }
 
   private ensure(verts: number, inds: number): void {
-    if ((this.vc + verts) * 3 > this.pos.length) {
-      const n = Math.max(this.pos.length * 2, (this.vc + verts) * 3);
-      const p = new Float32Array(n); p.set(this.pos); this.pos = p;
-      const u = new Float32Array((n / 3) * 2); u.set(this.uv); this.uv = u;
-      const l = new Float32Array((n / 3) * 2); l.set(this.li); this.li = l;
+    const capVerts = this.pos.length / 3;
+    if (this.vc + verts > capVerts) {
+      const n = Math.max(capVerts * 2, this.vc + verts);
+      const p = new Float32Array(n * 3); p.set(this.pos); this.pos = p;
+      const u = new Float32Array(n * 2); u.set(this.uv); this.uv = u;
+      const l = new Float32Array(n * 2); l.set(this.li); this.li = l;
     }
     if (this.ic + inds > this.idx.length) {
       const n = Math.max(this.idx.length * 2, this.ic + inds);
@@ -106,7 +107,8 @@ const AO_CURVE = [0.42, 0.62, 0.8, 1.0];
 const WATER_TOP = 0.875;
 
 /** Build skylight per padded cell: 15 = open sky, attenuated by leaves/water, 0 under opaque. */
-function buildSky(pad: Uint8Array): void {
+function buildSky(pad: Uint8Array): number {
+  let maxY = 0;
   for (let px = 0; px < PAD_SIZE; px++) {
     for (let pz = 0; pz < PAD_SIZE; pz++) {
       const base = (px * PAD_SIZE + pz) * WORLD_HEIGHT;
@@ -114,6 +116,7 @@ function buildSky(pad: Uint8Array): void {
       for (let y = WORLD_HEIGHT - 1; y >= 0; y--) {
         const id = pad[base + y];
         if (id !== 0) {
+          if (y > maxY) maxY = y;
           if (OPAQUE[id]) light = 0;
           else if (id === B.WATER) light = Math.max(4, light - 1);
           else if (RENDER[id] === 2) light = Math.max(0, light - 3);
@@ -122,6 +125,7 @@ function buildSky(pad: Uint8Array): void {
       }
     }
   }
+  return maxY;
 }
 
 function opaqueAt(pad: Uint8Array, x: number, y: number, z: number): number {
@@ -143,7 +147,7 @@ function skyAt(x: number, y: number, z: number): number {
 export function meshChunk(pad: Uint8Array, aoEnabled = true): ChunkMeshes {
   opaqueB.reset();
   transB.reset();
-  buildSky(pad);
+  const maxY = Math.min(WORLD_HEIGHT - 1, buildSky(pad));
 
   const corner = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
   const uvs = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -152,7 +156,7 @@ export function meshChunk(pad: Uint8Array, aoEnabled = true): ChunkMeshes {
   for (let x = 0; x < CHUNK_SIZE; x++) {
     for (let z = 0; z < CHUNK_SIZE; z++) {
       const colBase = padIndex(x, 0, z);
-      for (let y = 0; y < WORLD_HEIGHT; y++) {
+      for (let y = 0; y <= maxY; y++) {
         const id = pad[colBase + y];
         if (id === 0) continue;
         const kind = RENDER[id];

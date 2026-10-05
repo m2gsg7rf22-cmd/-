@@ -120,3 +120,16 @@ describe('mesher', () => {
     expect(m.transparent.indices.length / 6).toBe(10);
   });
 });
+
+describe('mesher buffers', () => {
+  it('grows buffers for worst-case checkerboard chunks without errors', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    for (let x = 0; x < 16; x++) for (let z = 0; z < 16; z++) for (let y = 0; y < 40; y++) {
+      if ((x + y + z) % 2 === 0) pad[padIndex(x, y, z)] = B.STONE;
+    }
+    const m = meshChunk(pad);
+    expect(m.opaque.positions.length / 3).toBe((m.opaque.indices.length / 6) * 4);
+    expect(m.opaque.uvs.length / 2).toBe(m.opaque.positions.length / 3);
+    expect(m.opaque.light.length / 2).toBe(m.opaque.positions.length / 3);
+  });
+});

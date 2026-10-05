@@ -95,7 +95,7 @@ export class TerrainGenerator {
 
     const mm = smoothstep(0.18, 0.55, this.mountainMask.fbm2(x / 520 + 31.7, z / 520 - 12.1, 3) * 1.1 + landness * 0.15);
     const rr = 1 - Math.abs(this.ridge.fbm2(x / 260, z / 260, 4));
-    const mountain = mm * landness * (rr * rr * 62 + this.detail.noise2(x / 40, z / 40) * 4);
+    const mountain = mm * landness * (Math.pow(rr, 1.6) * 54 + this.detail.fbm2(x / 60, z / 60, 2) * 6);
 
     const hillAmp = lerp(3, 11, smoothstep(-0.3, 0.6, this.hills.noise2(x / 900 + 7, z / 900 - 3)));
     const hills = this.hills.fbm2(x / 150, z / 150, 4) * hillAmp * landness;
@@ -436,19 +436,22 @@ export class TerrainGenerator {
     }
   }
 
-  /** Find a safe spawn column near the origin: dry land, grass-ish top, no tree trunk. */
+  /** Find a safe spawn column near the origin: dry land, preferably grassland, no carved ground. */
   findSpawn(): { x: number; z: number; y: number } {
-    for (let r = 0; r < 600; r += 4) {
-      const steps = Math.max(1, Math.floor((2 * Math.PI * r) / 6));
-      for (let s = 0; s < steps; s++) {
-        const a = (s / steps) * Math.PI * 2;
-        const x = Math.round(Math.cos(a) * r);
-        const z = Math.round(Math.sin(a) * r);
-        const c = this.column(x, z);
-        if (c.height <= SEA_LEVEL + 1) continue;
-        if (c.biome === Biome.Mountains || c.biome === Biome.Ocean || c.biome === Biome.River) continue;
-        if (this.isCarved(x, c.height, z, c.height)) continue;
-        return { x: x + 0.5, z: z + 0.5, y: c.height + 1 };
+    const good = (b: Biome) => b === Biome.Plains || b === Biome.Forest;
+    const ok = (b: Biome) => b !== Biome.Mountains && b !== Biome.Ocean && b !== Biome.River && b !== Biome.Beach;
+    for (const accept of [good, ok]) {
+      for (let r = 0; r < 900; r += 6) {
+        const steps = Math.max(1, Math.floor((2 * Math.PI * r) / 8));
+        for (let s = 0; s < steps; s++) {
+          const a = (s / steps) * Math.PI * 2;
+          const x = Math.round(Math.cos(a) * r);
+          const z = Math.round(Math.sin(a) * r);
+          const c = this.column(x, z);
+          if (c.height <= SEA_LEVEL + 1 || !accept(c.biome)) continue;
+          if (this.isCarved(x, c.height, z, c.height)) continue;
+          return { x: x + 0.5, z: z + 0.5, y: c.height + 1 };
+        }
       }
     }
     const c = this.column(0, 0);
