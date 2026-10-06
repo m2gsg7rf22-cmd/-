@@ -18,6 +18,7 @@
     "qa:memory": "node scripts/memory.mjs",
     "qa:visual": "node scripts/visual.mjs",
     "qa:gamepad": "node scripts/gamepad.mjs",
+    "qa:dimensions": "node scripts/dimensions.mjs",
     "build:single": "tsc --noEmit && vite build --mode single"
   },
   "dependencies": {
