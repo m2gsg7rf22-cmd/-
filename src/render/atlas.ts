@@ -343,6 +343,35 @@ const painters: Record<string, (t: Tile) => void> = {
     for (let i = 0; i < 4; i++) { t.set(3 + i, 3 + i, [255, 255, 255], 200); t.set(4 + i, 3 + i, [255, 255, 255], 160); }
   },
   slate_bricks: (t) => bricks(t, [92, 100, 116], [56, 60, 70], 8, 4),
+  // Torch: drawn on a full tile; the shaped mesh shows the middle 2px column via box uvs.
+  torch: (t) => {
+    t.clear();
+    for (let y = 6; y < 16; y++) for (let x = 7; x < 9; x++) t.set(x, y, jitter([128, 92, 56], 8, t.rand));
+    for (let y = 2; y < 6; y++) for (let x = 7; x < 9; x++) t.set(x, y, y < 4 ? [255, 232, 140] : [255, 150, 50]);
+    // Fill the rest so face uvs sampling outside the column still show wood/flame colors.
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (x < 7 || x > 8) t.set(x, y, y < 6 ? [255, 190, 80] : [128, 92, 56]);
+  },
+  torch_top: (t) => { t.noise([255, 200, 90], 20); t.set(7, 7, [255, 250, 200]); t.set(8, 8, [255, 250, 200]); },
+  door_lower: (t) => {
+    planks(t);
+    for (let i = 0; i < 16; i++) { t.set(i, 15, [90, 62, 40]); t.set(0, i, [90, 62, 40]); t.set(15, i, [90, 62, 40]); }
+    for (let y = 3; y < 13; y++) { t.set(4, y, [110, 76, 46]); t.set(11, y, [110, 76, 46]); }
+    t.set(12, 1, [60, 60, 66]); t.set(12, 2, [200, 200, 210]); t.set(13, 2, [60, 60, 66]);
+  },
+  door_upper: (t) => {
+    planks(t);
+    for (let i = 0; i < 16; i++) { t.set(i, 0, [90, 62, 40]); t.set(0, i, [90, 62, 40]); t.set(15, i, [90, 62, 40]); }
+    // Window panes.
+    for (let y = 3; y < 10; y++) for (let x = 3; x < 13; x++) {
+      const frame = x === 7 || x === 8 || y === 6;
+      t.set(x, y, frame ? [110, 76, 46] : [0, 0, 0], frame ? 255 : 0);
+    }
+  },
+  lumen_lamp: (t) => {
+    t.noise([150, 235, 255], 14);
+    for (let i = 0; i < 16; i++) { t.set(i, 0, [60, 70, 90]); t.set(i, 15, [60, 70, 90]); t.set(0, i, [60, 70, 90]); t.set(15, i, [60, 70, 90]); }
+    for (let i = 3; i < 13; i++) { t.set(i, i, [240, 255, 255]); t.set(15 - i, i, [210, 170, 255]); }
+  },
 };
 
 for (let i = 0; i < 10; i++) painters['break_' + i] = (t) => crack(t, i);

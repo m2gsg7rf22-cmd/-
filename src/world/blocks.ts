@@ -1,6 +1,8 @@
 import { B, I, type ToolKind } from '../core/ids';
 
-export type RenderKind = 'none' | 'solid' | 'cutout' | 'cross' | 'water' | 'glass';
+const P = 1 / 16;
+
+export type RenderKind = 'none' | 'solid' | 'cutout' | 'cross' | 'water' | 'glass' | 'shape';
 export type Surface = 'grass' | 'stone' | 'wood' | 'sand' | 'snow' | 'gravel' | 'glass' | 'plant' | 'water';
 
 export interface BlockDef {
@@ -22,6 +24,12 @@ export interface BlockDef {
   surface: Surface;
   /** Can be replaced by placing a block into it (plants, water). */
   replaceable?: boolean;
+  /** Block light emitted (0..15). */
+  light?: number;
+  /** For 'shape' blocks: boxes [x0,y0,z0,x1,y1,z1] in 0..1 cell space (rendered and collided). */
+  boxes?: number[][];
+  /** Hidden from the creative library (orientation/state variants, flowing water). */
+  variant?: boolean;
 }
 
 const defs: BlockDef[] = [];
@@ -76,21 +84,78 @@ def({ id: B.SLATE_BRICKS, name: 'Slate Bricks', hardness: 2.4, tool: 'pickaxe', 
 def({ id: B.SNOW_BLOCK, name: 'Snow Block', hardness: 0.4, tool: 'shovel', tiles: t3('snow'), surface: 'snow' });
 def({ id: B.FERN, name: 'Frost Fern', render: 'cross', solid: false, opaque: false, hardness: 0.05, tiles: t3('fern'), surface: 'plant', replaceable: true, drop: [] });
 
+def({ id: B.TORCH, name: 'Torch', render: 'shape', solid: false, opaque: false, hardness: 0.05, tiles: ['torch_top', 'torch_top', 'torch'], surface: 'wood', light: 14,
+  boxes: [[7 * P, 0, 7 * P, 9 * P, 10 * P, 9 * P]] });
+def({ id: B.LUMEN_LAMP, name: 'Lumen Lamp', hardness: 0.6, tiles: t3('lumen_lamp'), surface: 'glass', light: 15 });
+def({ id: B.SLAB_PLANKS, name: 'Plank Slab', render: 'shape', opaque: false, hardness: 1.2, tool: 'axe', tiles: t3('planks'), surface: 'wood', boxes: [[0, 0, 0, 1, 0.5, 1]] });
+def({ id: B.SLAB_BRICK, name: 'Brick Slab', render: 'shape', opaque: false, hardness: 2, tool: 'pickaxe', minTier: 0, tiles: t3('slate_bricks'), boxes: [[0, 0, 0, 1, 0.5, 1]] });
+
+/** Upper half box of stairs that ascend toward facing f (0 N -z, 1 E +x, 2 S +z, 3 W -x). */
+export function stairsUpper(f: number): number[] {
+  return [[0, 0.5, 0, 1, 1, 0.5], [0.5, 0.5, 0, 1, 1, 1], [0, 0.5, 0.5, 1, 1, 1], [0, 0.5, 0, 0.5, 1, 1]][f & 3];
+}
+for (let f = 0; f < 4; f++) {
+  const boxes = [[0, 0, 0, 1, 0.5, 1], stairsUpper(f)];
+  def({ id: B.STAIRS_PLANKS + f, name: 'Plank Stairs', render: 'shape', opaque: false, hardness: 1.5, tool: 'axe', tiles: t3('planks'), surface: 'wood', boxes, variant: f > 0, drop: [{ id: B.STAIRS_PLANKS, count: 1 }] });
+  def({ id: B.STAIRS_BRICK + f, name: 'Brick Stairs', render: 'shape', opaque: false, hardness: 2.2, tool: 'pickaxe', minTier: 0, tiles: t3('slate_bricks'), boxes, variant: f > 0, drop: [{ id: B.STAIRS_BRICK, count: 1 }] });
+}
+
+/** Door panel box for panel side s (0 -z, 1 +x, 2 +z, 3 -x). */
+function doorPanel(s: number): number[] {
+  const t = 3 * P;
+  return [[0, 0, 0, 1, 1, t], [1 - t, 0, 0, 1, 1, 1], [0, 0, 1 - t, 1, 1, 1], [0, 0, 0, t, 1, 1]][s & 3];
+}
+/** Door id from parts. */
+export function doorId(upper: boolean, open: boolean, facing: number): number {
+  return B.DOOR + (upper ? 8 : 0) + (open ? 4 : 0) + (facing & 3);
+}
+export function doorParts(id: number): { upper: boolean; open: boolean; facing: number } {
+  const k = id - B.DOOR;
+  return { upper: k >= 8, open: (k & 4) !== 0, facing: k & 3 };
+}
+for (let k = 0; k < 16; k++) {
+  const upper = k >= 8;
+  const open = (k & 4) !== 0;
+  const facing = k & 3;
+  // An open door swings its panel to the adjacent side.
+  const side = open ? (facing + 3) % 4 : facing;
+  def({
+    id: B.DOOR + k, name: 'Ashwood Door', render: 'shape', opaque: false, hardness: 1.5, tool: 'axe',
+    tiles: upper ? ['planks', 'planks', 'door_upper'] : ['planks', 'planks', 'door_lower'], surface: 'wood',
+    boxes: [doorPanel(side)], variant: true, drop: upper ? [] : [{ id: I.DOOR_ITEM, count: 1 }],
+  });
+}
+for (let l = 1; l <= 7; l++) {
+  def({ id: B.WATER_FLOW + l - 1, name: 'Flowing Water', render: 'water', solid: false, opaque: false, hardness: Infinity, tiles: t3('water'), drop: [], surface: 'water', replaceable: true, variant: true });
+}
+
 export const BLOCKS: readonly BlockDef[] = defs;
 export const BLOCK_COUNT = defs.length;
 
 /** Fast lookup tables used by hot loops (mesher, physics). */
 export const SOLID = new Uint8Array(256);
 export const OPAQUE = new Uint8Array(256);
-/** 0 none, 1 solid, 2 cutout, 3 cross, 4 water, 5 glass */
+/** 0 none, 1 solid, 2 cutout, 3 cross, 4 water, 5 glass, 6 shape */
 export const RENDER = new Uint8Array(256);
-const RENDER_CODES: Record<RenderKind, number> = { none: 0, solid: 1, cutout: 2, cross: 3, water: 4, glass: 5 };
+/** Block light emission 0..15. */
+export const EMIT = new Uint8Array(256);
+const RENDER_CODES: Record<RenderKind, number> = { none: 0, solid: 1, cutout: 2, cross: 3, water: 4, glass: 5, shape: 6 };
+export const FULL_BOX: readonly number[][] = [[0, 0, 0, 1, 1, 1]];
+const SELECT_PLANT: readonly number[][] = [[0.15, 0, 0.15, 0.85, 0.8, 0.85]];
+/** Collision boxes per id (null = passable). */
+export const COLLISION: (readonly number[][] | null)[] = new Array(256).fill(null);
+/** Selection/targeting boxes per id (null = not targetable). */
+export const SELECTION: (readonly number[][] | null)[] = new Array(256).fill(null);
 for (const d of defs) {
   if (!d) continue;
   SOLID[d.id] = d.solid ? 1 : 0;
   OPAQUE[d.id] = d.opaque ? 1 : 0;
   RENDER[d.id] = RENDER_CODES[d.render];
+  EMIT[d.id] = d.light ?? 0;
+  COLLISION[d.id] = d.solid ? (d.boxes ?? FULL_BOX) : null;
+  SELECTION[d.id] = d.render === 'none' || d.render === 'water' ? null : d.render === 'cross' ? SELECT_PLANT : (d.boxes ?? FULL_BOX);
 }
+EMIT[B.LUMEN_ORE] = 6;
 
 export function isBlockId(id: number): boolean {
   return id > 0 && id < 256 && defs[id] !== undefined;

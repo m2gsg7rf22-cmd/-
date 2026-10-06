@@ -3,7 +3,12 @@ import { CHUNK_SIZE, PAD_VOLUME, SEA_LEVEL, WORLD_HEIGHT } from '../src/core/con
 import { blockIndex, padIndex } from '../src/core/coords';
 import { B } from '../src/core/ids';
 import { TerrainGenerator } from '../src/world/generator';
-import { meshChunk } from '../src/world/mesher';
+import { meshChunk as meshRaw, mergeSections } from '../src/world/mesher';
+
+const meshChunk = (pad: Uint8Array, ao = true, em?: Int16Array) => {
+  const m = meshRaw(pad, ao, em);
+  return { opaque: mergeSections(m.opaque), transparent: mergeSections(m.transparent) };
+};
 import { SOLID } from '../src/world/blocks';
 
 describe('terrain generator', () => {
@@ -162,6 +167,67 @@ describe('mesher buffers', () => {
     const m = meshChunk(pad);
     expect(m.opaque.positions.length / 3).toBe((m.opaque.indices.length / 6) * 4);
     expect(m.opaque.uvs.length / 2).toBe(m.opaque.positions.length / 3);
-    expect(m.opaque.light.length / 2).toBe(m.opaque.positions.length / 3);
+    expect(m.opaque.light.length / 3).toBe(m.opaque.positions.length / 3);
+  });
+});
+
+describe('mesher: light, water, shapes, sections', () => {
+  const maxBlk = (m: { light: Float32Array }) => { let v = 0; for (let i = 2; i < m.light.length; i += 3) v = Math.max(v, m.light[i]); return v; };
+  it('a torch lights nearby faces; light fades with distance and is blocked by walls', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    for (let x = -1; x <= 16; x++) for (let z = -1; z <= 16; z++) pad[padIndex(x, 9, z)] = B.STONE;
+    const dark = meshChunk(pad);
+    expect(maxBlk(dark.opaque)).toBe(0);
+    pad[padIndex(8, 10, 8)] = B.TORCH;
+    const lit = meshChunk(pad);
+    expect(maxBlk(lit.opaque)).toBeGreaterThan(0.85);
+    // Floor block light at a far corner should be lower than next to the torch.
+    const raw = meshRaw(pad);
+    const all = mergeSections(raw.opaque);
+    let near = 0, far = 0;
+    for (let v = 0; v < all.positions.length / 3; v++) {
+      const x = all.positions[v * 3], y = all.positions[v * 3 + 1], z = all.positions[v * 3 + 2];
+      if (Math.abs(y - 10) > 0.01) continue;
+      const b = all.light[v * 3 + 2];
+      if (Math.abs(x - 8.5) < 1.6 && Math.abs(z - 8.5) < 1.6) near = Math.max(near, b);
+      if (x < 1 && z < 1) far = Math.max(far, b);
+    }
+    expect(near).toBeGreaterThan(far);
+  });
+  it('emitters from a neighbor chunk light across the border', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    for (let x = -1; x <= 16; x++) for (let z = -1; z <= 16; z++) pad[padIndex(x, 9, z)] = B.STONE;
+    const without = meshChunk(pad);
+    const withEm = meshChunk(pad, true, Int16Array.from([-3, 10, 5, 14]));
+    expect(maxBlk(without.opaque)).toBe(0);
+    expect(maxBlk(withEm.opaque)).toBeGreaterThan(0.5);
+  });
+  it('slabs render as half-height boxes', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    pad[padIndex(4, 10, 4)] = B.SLAB_PLANKS;
+    const m = meshChunk(pad).opaque;
+    let maxY = 0;
+    for (let i = 1; i < m.positions.length; i += 3) maxY = Math.max(maxY, m.positions[i]);
+    expect(maxY).toBeCloseTo(10.5, 3);
+    expect(m.indices.length / 6).toBe(6);
+  });
+  it('flowing water renders lower than a source', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    pad[padIndex(4, 10, 4)] = B.WATER;
+    pad[padIndex(5, 10, 4)] = B.WATER_FLOW + 2; // level 3
+    const m = meshChunk(pad).transparent;
+    const tops = new Set<number>();
+    for (let i = 1; i < m.positions.length; i += 3) tops.add(Math.round(m.positions[i] * 1000) / 1000);
+    expect([...tops].some((y) => y > 10.8)).toBe(true); // source surface ~10.875
+    expect([...tops].some((y) => y > 10.2 && y < 10.5)).toBe(true); // level-3 surface ~10.33
+  });
+  it('splits geometry into vertical sections', () => {
+    const pad = new Uint8Array(PAD_VOLUME);
+    pad[padIndex(2, 5, 2)] = B.STONE;
+    pad[padIndex(2, 100, 2)] = B.STONE;
+    const m = meshRaw(pad);
+    expect(m.opaque[0].indices.length).toBeGreaterThan(0);
+    expect(m.opaque[3].indices.length).toBeGreaterThan(0);
+    expect(m.opaque[1].indices.length + m.opaque[2].indices.length).toBe(0);
   });
 });

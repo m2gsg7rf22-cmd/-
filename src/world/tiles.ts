@@ -6,7 +6,7 @@ export const TILE_NAMES = [
   'snow', 'snow_side', 'ice', 'water', 'ash_log', 'ash_log_top', 'ash_leaves', 'pine_log', 'pine_log_top',
   'pine_leaves', 'planks', 'ember_ore', 'copper_ore', 'iron_ore', 'lumen_ore', 'coreite', 'cactus_side', 'cactus_top',
   'tall_grass', 'flower_red', 'flower_gold', 'berry_bush', 'dry_shrub', 'bench_top', 'bench_side', 'kiln_top',
-  'kiln_front', 'glass', 'slate_bricks', 'fern',
+  'kiln_front', 'glass', 'slate_bricks', 'fern', 'torch', 'torch_top', 'door_lower', 'door_upper', 'lumen_lamp',
   'break_0', 'break_1', 'break_2', 'break_3', 'break_4', 'break_5', 'break_6', 'break_7', 'break_8', 'break_9',
 ] as const;
 

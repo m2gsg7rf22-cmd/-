@@ -15,7 +15,7 @@ app.boot().catch((e) => {
   if (ui) ui.innerHTML = `<div class="screen solid"><div class="panel"><h2>BlockForge failed to start</h2><p class="muted">${String(e instanceof Error ? e.message : e)}</p></div></div>`;
 });
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+if (!__SINGLE_FILE__ && 'serviceWorker' in navigator && import.meta.env.PROD && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('[BlockForge] service worker registration failed', e));
   });

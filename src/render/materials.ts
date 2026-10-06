@@ -17,12 +17,13 @@ export const worldUniforms = {
 };
 
 const vertex = /* glsl */ `
-attribute vec2 light;
+attribute vec3 light;
 attribute vec2 tile;
 varying vec2 vUv;
 varying vec2 vTile;
 varying float vShade;
 varying float vSky;
+varying float vBlk;
 varying float vFogDepth;
 varying vec3 vWorld;
 void main() {
@@ -30,6 +31,7 @@ void main() {
   vTile = tile;
   vShade = light.x;
   vSky = light.y;
+  vBlk = light.z;
   vec4 world = modelMatrix * vec4(position, 1.0);
   vWorld = world.xyz;
   vec4 mv = viewMatrix * world;
@@ -53,6 +55,7 @@ varying vec2 vUv;
 varying vec2 vTile;
 varying float vShade;
 varying float vSky;
+varying float vBlk;
 varying float vFogDepth;
 varying vec3 vWorld;
 
@@ -61,9 +64,11 @@ vec2 atlasUv() {
   return vTile + fract(vUv) * uTileSize;
 }
 
-vec3 lightFor(float shade, float sky) {
+vec3 lightFor(float shade, float sky, float blk) {
   float s = sky * sky;
-  return shade * (vec3(uAmbient) + s * uDaylight * uLightColor);
+  float b = pow(blk, 3.0) * 1.15;
+  vec3 l = vec3(uAmbient) + s * uDaylight * uLightColor + b * vec3(1.15, 0.92, 0.66);
+  return shade * min(l, vec3(1.35));
 }
 
 vec3 applyFog(vec3 col) {
@@ -80,7 +85,7 @@ ${fragmentCommon}
 void main() {
   vec4 t = texture2D(map, atlasUv());
   if (t.a < 0.5) discard;
-  vec3 col = t.rgb * lightFor(vShade, vSky);
+  vec3 col = t.rgb * lightFor(vShade, vSky, vBlk);
   gl_FragColor = vec4(applyFog(col), 1.0);
   #include <colorspace_fragment>
 }
@@ -102,7 +107,7 @@ void main() {
     vec3 v = normalize(cameraPosition - vWorld);
     a = mix(0.92, a, clamp(abs(v.y) * 1.2, 0.0, 1.0));
   }
-  col *= lightFor(vShade, vSky);
+  col *= lightFor(vShade, vSky, vBlk);
   gl_FragColor = vec4(applyFog(col), a);
   #include <colorspace_fragment>
 }

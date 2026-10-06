@@ -15,6 +15,8 @@ export interface Settings {
   master: number;
   effects: number;
   ambient: number;
+  music: number;
+  showMap: boolean;
   deviceMode: DeviceMode;
   uiScale: number;
   showDebug: boolean;
@@ -45,6 +47,8 @@ export function defaultSettings(): Settings {
     master: 0.8,
     effects: 0.9,
     ambient: 0.6,
+    music: 0.5,
+    showMap: true,
     deviceMode: 'auto',
     uiScale: 1,
     showDebug: false,
@@ -80,6 +84,8 @@ export function sanitizeSettings(raw: unknown): Settings {
     master: clamp(r.master, 0, 1, d.master),
     effects: clamp(r.effects, 0, 1, d.effects),
     ambient: clamp(r.ambient, 0, 1, d.ambient),
+    music: clamp(r.music, 0, 1, d.music),
+    showMap: bool(r.showMap, d.showMap),
     deviceMode: pick(r.deviceMode, ['auto', 'desktop', 'mobile'] as const, d.deviceMode),
     uiScale: clamp(r.uiScale, 0.75, 1.5, d.uiScale),
     showDebug: bool(r.showDebug, d.showDebug),

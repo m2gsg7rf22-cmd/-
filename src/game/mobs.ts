@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { B, I } from '../core/ids';
+import { B, I, isWaterId } from '../core/ids';
 import { collides, moveBody, type Body } from '../player/physics';
 import { SOLID } from '../world/blocks';
 import { UNLOADED, type World } from '../world/world';
@@ -243,7 +243,7 @@ export class MobManager {
     const sy = this.world.surfaceY(x, z);
     if (sy < 0) return;
     const ground = this.world.getBlock(x, sy, z);
-    if (ground === B.WATER || ground === UNLOADED) return;
+    if (isWaterId(ground) || ground === UNLOADED) return;
     const kindHostile = wantHostile && (!wantPassive || Math.random() < 0.6);
     let kind: MobKind;
     if (kindHostile) kind = 'crawler';
@@ -253,14 +253,14 @@ export class MobManager {
     }
     const s = SPECS[kind];
     const body: Body = { x, y: sy + 1, z, hw: s.hw, h: s.h };
-    if (collides(body, this.world.isSolid)) return;
+    if (collides(body, this.world.collisionAt)) return;
     // Spawn passive mobs in small herds.
     const n = kindHostile ? 1 : 1 + Math.floor(Math.random() * 2);
     for (let i = 0; i < n; i++) {
       const ox = i === 0 ? 0 : (Math.random() - 0.5) * 3;
       const oz = i === 0 ? 0 : (Math.random() - 0.5) * 3;
       const b2 = { ...body, x: x + ox, z: z + oz };
-      if (i > 0 && collides(b2, this.world.isSolid)) continue;
+      if (i > 0 && collides(b2, this.world.collisionAt)) continue;
       this.spawn(kind, b2.x, b2.y, b2.z);
     }
   }
@@ -270,7 +270,7 @@ export class MobManager {
     for (let d = 0; d <= 3; d++) {
       const id = this.world.getBlock(x, y - 1 - d, z);
       if (id === UNLOADED) return true;
-      if (id === B.WATER) return d < 2;
+      if (isWaterId(id)) return d < 2;
       if (SOLID[id]) return false;
     }
     return true;
@@ -372,15 +372,15 @@ export class MobManager {
         m.vx += (tx - m.vx) * k;
         m.vz += (tz - m.vz) * k;
       }
-      const inWater = this.world.getBlock(m.body.x, m.body.y + 0.3, m.body.z) === B.WATER;
+      const inWater = isWaterId(this.world.getBlock(m.body.x, m.body.y + 0.3, m.body.z));
       m.vy -= (inWater ? 6 : 28) * dt;
       if (inWater) m.vy = Math.max(m.vy, -2) + 10 * dt;
-      const res = moveBody(m.body, m.vx * dt, m.vy * dt, m.vz * dt, this.world.isSolid);
+      const res = moveBody(m.body, m.vx * dt, m.vy * dt, m.vz * dt, this.world.collisionAt);
       if (res.hitY) m.vy = 0;
       m.onGround = res.onGround;
       if ((res.hitX || res.hitZ) && m.onGround && wl > 0.01) {
         const up: Body = { ...m.body, y: m.body.y + 1.05 };
-        if (!collides(up, this.world.isSolid)) m.vy = 7.6;
+        if (!collides(up, this.world.collisionAt)) m.vy = 7.6;
         else if (m.state === 'wander') m.target = null;
       }
 

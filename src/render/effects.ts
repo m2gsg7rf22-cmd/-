@@ -25,9 +25,20 @@ export class BlockHighlight {
     this.group.visible = false;
   }
 
-  show(x: number, y: number, z: number): void {
+  /** Show the outline around a cell, fitted to the bounding box of its shape (slabs, plants…). */
+  show(x: number, y: number, z: number, boxes?: readonly (readonly number[])[]): void {
     this.group.visible = true;
-    this.group.position.set(x + 0.5, y + 0.5, z + 0.5);
+    let x0 = 0, y0 = 0, z0 = 0, x1 = 1, y1 = 1, z1 = 1;
+    if (boxes && boxes.length) {
+      x0 = y0 = z0 = 1;
+      x1 = y1 = z1 = 0;
+      for (const b of boxes) {
+        x0 = Math.min(x0, b[0]); y0 = Math.min(y0, b[1]); z0 = Math.min(z0, b[2]);
+        x1 = Math.max(x1, b[3]); y1 = Math.max(y1, b[4]); z1 = Math.max(z1, b[5]);
+      }
+    }
+    this.group.position.set(x + (x0 + x1) / 2, y + (y0 + y1) / 2, z + (z0 + z1) / 2);
+    this.group.scale.set(Math.max(0.05, x1 - x0), Math.max(0.05, y1 - y0), Math.max(0.05, z1 - z0));
   }
 
   dispose(): void {

@@ -1,6 +1,17 @@
 /** Axis-separated swept AABB vs voxel grid collision. Pure & unit-tested. */
 
-export type SolidFn = (x: number, y: number, z: number) => boolean;
+/**
+ * Collision query for a cell: true/false for full/empty cells, or a list of boxes
+ * [x0,y0,z0,x1,y1,z1] in cell-local 0..1 coordinates for shaped blocks (slabs, stairs, doors).
+ */
+export type SolidFn = (x: number, y: number, z: number) => boolean | readonly (readonly number[])[] | null;
+
+const FULL: readonly (readonly number[])[] = [[0, 0, 0, 1, 1, 1]];
+function boxesOf(r: ReturnType<SolidFn>): readonly (readonly number[])[] | null {
+  if (r === true) return FULL;
+  if (!r) return null;
+  return r;
+}
 
 export interface Body {
   x: number; // center x
@@ -14,7 +25,15 @@ const EPS = 1e-4;
 /** Max distance per sub-step; < 0.5 so a body can't skip over a full block. */
 const MAX_STEP = 0.4;
 
-/** Does a body at its current position overlap any solid block? */
+function overlaps(b: Body, x: number, y: number, z: number, bx: readonly number[]): boolean {
+  return (
+    x + bx[0] < b.x + b.hw - EPS && x + bx[3] > b.x - b.hw + EPS &&
+    y + bx[1] < b.y + b.h - EPS && y + bx[4] > b.y + EPS &&
+    z + bx[2] < b.z + b.hw - EPS && z + bx[5] > b.z - b.hw + EPS
+  );
+}
+
+/** Does a body at its current position overlap any solid block/box? */
 export function collides(b: Body, solid: SolidFn): boolean {
   const x0 = Math.floor(b.x - b.hw + EPS);
   const x1 = Math.floor(b.x + b.hw - EPS);
@@ -24,7 +43,11 @@ export function collides(b: Body, solid: SolidFn): boolean {
   const z1 = Math.floor(b.z + b.hw - EPS);
   for (let x = x0; x <= x1; x++)
     for (let y = y0; y <= y1; y++)
-      for (let z = z0; z <= z1; z++) if (solid(x, y, z)) return true;
+      for (let z = z0; z <= z1; z++) {
+        const boxes = boxesOf(solid(x, y, z));
+        if (!boxes) continue;
+        for (const bx of boxes) if (overlaps(b, x, y, z, bx)) return true;
+      }
   return false;
 }
 
@@ -47,17 +70,21 @@ function moveAxis(b: Body, axis: 0 | 1 | 2, d: number, solid: SolidFn): boolean 
   for (let x = x0; x <= x1; x++) {
     for (let y = y0; y <= y1; y++) {
       for (let z = z0; z <= z1; z++) {
-        if (!solid(x, y, z)) continue;
-        hit = true;
+        const boxes = boxesOf(solid(x, y, z));
+        if (!boxes) continue;
         const c = axis === 0 ? x : axis === 1 ? y : z;
-        bound = d > 0 ? Math.min(bound, c) : Math.max(bound, c);
+        for (const bx of boxes) {
+          if (!overlaps(b, x, y, z, bx)) continue;
+          hit = true;
+          bound = d > 0 ? Math.min(bound, c + bx[axis]) : Math.max(bound, c + bx[axis + 3]);
+        }
       }
     }
   }
   if (!hit) return false;
-  if (axis === 0) b.x = d > 0 ? bound - b.hw - EPS : bound + 1 + b.hw + EPS;
-  else if (axis === 1) b.y = d > 0 ? bound - b.h - EPS : bound + 1;
-  else b.z = d > 0 ? bound - b.hw - EPS : bound + 1 + b.hw + EPS;
+  if (axis === 0) b.x = d > 0 ? bound - b.hw - EPS : bound + b.hw + EPS;
+  else if (axis === 1) b.y = d > 0 ? bound - b.h - EPS : bound;
+  else b.z = d > 0 ? bound - b.hw - EPS : bound + b.hw + EPS;
   return true;
 }
 

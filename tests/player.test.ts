@@ -13,7 +13,8 @@ function fakeWorld(opts: { waterBelow?: number } = {}): World {
     if (opts.waterBelow !== undefined && fy < opts.waterBelow) return B.WATER;
     return B.AIR;
   };
-  return { getBlock, isSolid: (x: number, y: number, z: number) => SOLID[getBlock(x, y, z)] === 1 } as unknown as World;
+  const isSolid = (x: number, y: number, z: number) => SOLID[getBlock(x, y, z)] === 1;
+  return { getBlock, isSolid, collisionAt: isSolid } as unknown as World;
 }
 
 function fakeInput(o: Partial<{ x: number; y: number; jump: boolean; sprint: boolean }> = {}): InputManager {
@@ -133,5 +134,37 @@ describe('player survival rules', () => {
     expect(p.pitch).toBeLessThan(Math.PI / 2);
     for (let i = 0; i < 1000; i++) p.look(1, 0);
     expect(Math.abs(p.yaw)).toBeLessThan(Math.PI * 4 + 1);
+  });
+});
+
+describe('shaped blocks', () => {
+  it('steps up a slab without jumping, and cannot step a full block', () => {
+    const slabAt = (x: number) => x >= 2;
+    const getBlock = (x: number, y: number, _z?: number) => (Math.floor(y) < 0 ? B.STONE : Math.floor(y) === 0 && slabAt(Math.floor(x)) ? B.SLAB_PLANKS : B.AIR);
+    const collisionAt = (x: number, y: number, z: number) => {
+      const id = getBlock(x, y, z);
+      if (id === B.STONE) return true;
+      if (id === B.SLAB_PLANKS) return [[0, 0, 0, 1, 0.5, 1]];
+      return null;
+    };
+    const w = { getBlock, isSolid: (x: number, y: number, z: number) => !!collisionAt(x, y, z), collisionAt } as unknown as World;
+    const { p } = makePlayer();
+    p.autoJump = false;
+    p.setPosition(0.5, 0, 0.5);
+    p.yaw = -Math.PI / 2; // face +x
+    run(p, w, fakeInput({ y: 1 }), 1.5);
+    expect(p.body.x).toBeGreaterThan(3);
+    expect(p.body.y).toBeCloseTo(0.5, 2);
+    // Full block wall: no step.
+    const wallW = fakeWorld();
+    const g2 = (x: number, y: number) => (Math.floor(y) < 0 || (Math.floor(x) >= 2 && Math.floor(y) === 0) ? B.STONE : B.AIR);
+    const w2 = { ...wallW, getBlock: g2, collisionAt: (x: number, y: number) => g2(x, y) === B.STONE, isSolid: (x: number, y: number) => g2(x, y) === B.STONE } as unknown as World;
+    const q = makePlayer().p;
+    q.autoJump = false;
+    q.setPosition(0.5, 0, 0.5);
+    q.yaw = -Math.PI / 2;
+    run(q, w2, fakeInput({ y: 1 }), 1.5);
+    expect(q.body.x).toBeLessThan(2);
+    expect(q.body.y).toBeCloseTo(0, 2);
   });
 });

@@ -24,7 +24,14 @@ r('bench', [B.FORGE_BENCH, 1], [[B.PLANKS, 4]]);
 r('sandstone', [B.SANDSTONE, 1], [[B.SAND, 4]]);
 r('snowblock', [B.SNOW_BLOCK, 1], [[B.SNOW_GRASS, 1]]);
 
+r('torch', [B.TORCH, 4], [[I.STICK, 1], [I.EMBER, 1]]);
 r('kiln', [B.KILN, 1], [[B.RUBBLE, 8]], 'bench');
+r('slab_planks', [B.SLAB_PLANKS, 6], [[B.PLANKS, 3]], 'bench');
+r('stairs_planks', [B.STAIRS_PLANKS, 4], [[B.PLANKS, 6]], 'bench');
+r('slab_brick', [B.SLAB_BRICK, 6], [[B.SLATE_BRICKS, 3]], 'bench');
+r('stairs_brick', [B.STAIRS_BRICK, 4], [[B.SLATE_BRICKS, 6]], 'bench');
+r('door', [I.DOOR_ITEM, 1], [[B.PLANKS, 6]], 'bench');
+r('lumen_lamp', [B.LUMEN_LAMP, 1], [[B.GLASS, 1], [I.LUMEN_SHARD, 1]], 'bench');
 r('slate_bricks', [B.SLATE_BRICKS, 4], [[B.RUBBLE, 4]], 'bench');
 
 const materials: [number, number][] = [

@@ -1,6 +1,7 @@
 import { HOTBAR_SIZE, type Inventory, type ItemStack } from '../game/inventory';
 import { itemDef, itemName } from '../game/items';
 import { iconFor } from './icons';
+import { Minimap } from './minimap';
 
 const SVG_HEART = (fill: string, half = false) =>
   `<svg viewBox="0 0 9 8" shape-rendering="crispEdges"><path fill="#1a0b0b" d="M1 0h2v1h1v1h1V1h1V0h2v1h1v3H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0V1h1z"/>` +
@@ -66,6 +67,7 @@ export class Hud {
   private lastSelKey = '';
   private nameTimer = 0;
   readonly touchRoot: HTMLElement;
+  minimap: Minimap | null = null;
   onHotbarSelect?: (i: number) => void;
 
   constructor(root: HTMLElement, touchRoot: HTMLElement) {
@@ -123,6 +125,10 @@ export class Hud {
         <div class="tbtn" data-touch="descend" title="Descend" hidden>${ICONS.down}</div>
         <div class="tbtn" data-touch="jump" title="Jump">${ICONS.jump}</div>
       </div>`;
+  }
+
+  initMinimap(atlas: HTMLCanvasElement): void {
+    if (!this.minimap) this.minimap = new Minimap(this.root, atlas);
   }
 
   setMode(creative: boolean): void {

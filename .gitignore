@@ -3,3 +3,4 @@ dist
 qa-output
 *.log
 scripts/dbg
+dist-single

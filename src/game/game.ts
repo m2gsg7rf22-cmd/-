@@ -22,7 +22,9 @@ import type { Station } from './crafting';
 import { Interaction } from './interaction';
 import { HOTBAR_SIZE, Inventory, type ItemStack } from './inventory';
 import { itemName } from './items';
-import { MobManager } from './mobs';
+import { MobManager, type MobKind } from './mobs';
+import { DropManager } from './drops';
+import { FluidSim } from '../world/fluids';
 import type { Settings } from './settings';
 
 export interface GameHost {
@@ -54,6 +56,8 @@ export class Game {
   readonly mobs: MobManager;
   readonly interaction: Interaction;
   readonly hand: HandView;
+  readonly drops: DropManager;
+  readonly fluids: FluidSim;
   readonly sounds = audio;
   readonly camera: THREE.PerspectiveCamera;
   creative: boolean;
@@ -139,7 +143,7 @@ export class Game {
       playerPos: () => ({ x: this.player.body.x, y: this.player.body.y, z: this.player.body.z }),
       onKilled: (mob, drops) => {
         this.particles.burst(mob.body.x, mob.body.y + 0.5, mob.body.z, new THREE.Color(0.9, 0.9, 0.85), 14, 3, 3);
-        if (!this.creative) for (const [id, n] of drops) this.give(id, n);
+        if (!this.creative) for (const [id, n] of drops) this.drops.spawn(id, n, mob.body.x, mob.body.y + 0.4, mob.body.z);
       },
       sound: (kind, mob) => {
         const d = Math.hypot(mob.body.x - this.player.body.x, mob.body.z - this.player.body.z);
@@ -150,10 +154,13 @@ export class Game {
     });
     this.interaction = new Interaction(this);
     this.hand = new HandView(r.atlas);
+    this.drops = new DropManager(r.atlas);
+    this.fluids = new FluidSim(this.world);
+    this.world.onBlockChanged = (x, y, z) => this.fluids.touch(x, y, z);
     this.adaptive = new AdaptiveQuality(mobile ? 30 : 55);
 
     const scene = r.scene;
-    scene.add(this.sky.group, this.world.group, this.highlight.group, this.particles.mesh, this.mobs.group);
+    scene.add(this.sky.group, this.world.group, this.highlight.group, this.particles.mesh, this.mobs.group, this.drops.group);
 
     this.offInput = input.onEvent((e) => {
       if (this.paused || this.player.dead) return;
@@ -243,6 +250,11 @@ export class Game {
       this.time = 0.04;
     }
     this.player.ensureFree(this.world);
+    // Restore creatures saved near the player.
+    for (const m of this.meta.mobs ?? []) {
+      const mob = this.mobs.spawn(m.kind as MobKind, m.x, m.y, m.z);
+      mob.health = m.health;
+    }
     progress('Entering world…', 1);
     this.updateCamera(0);
     this.sky.update(this.time, this.camera.position, 0, this.world.renderDistance * CHUNK_SIZE);
@@ -329,18 +341,27 @@ export class Game {
     if (left > 0) this.hud.toast('Inventory full — item lost', true);
   }
 
-  giveDrops(blockId: number): void {
+  /** Spawn a broken block's drops as item entities at the block's center. */
+  dropBlockItems(blockId: number, x: number, y: number, z: number): void {
     for (const d of blockDef(blockId).drop ?? []) {
       if (d.chance !== undefined && Math.random() > d.chance) continue;
-      this.give(d.id, d.count);
+      this.drops.spawn(d.id, d.count, x + 0.5, y + 0.3, z + 0.5);
     }
   }
 
+  /** Q: throw one of the held item forward. */
   private dropSelected(): void {
     const s = this.inventory.slots[this.selected];
     if (!s) return;
+    const dur = s.dur;
     this.consumeHeld(1);
-    this.hud.toast(`Discarded ${itemName(s.id)}`);
+    const [fx, fz] = this.player.forward();
+    const p = this.player.body;
+    this.drops.spawn(s.id, 1, p.x + fx * 0.4, this.player.eyeY - 0.35, p.z + fz * 0.4, {
+      vx: fx * 5, vz: fz * 5, vy: 2.5, delay: 1.2, dur,
+    });
+    this.hand.doSwing();
+    this.hud.showItemName(`Dropped ${itemName(s.id)}`);
   }
 
   openInventory(): void {
@@ -372,7 +393,8 @@ export class Game {
     this.particles.limit = !this.caps.particles || s.particles === 'off' ? 0 : s.particles === 'low' ? Math.min(120, this.particles.capacity) : this.particles.capacity;
     this.sky.cloudsVisible = s.clouds && this.caps.clouds;
     this.r.setQuality(Math.min(s.resolutionScale, this.caps.resolution), this.mobile);
-    audio.setVolumes(s.master, s.effects, s.ambient);
+    audio.setVolumes(s.master, s.effects, s.ambient, s.music);
+    if (this.hud.minimap) this.hud.minimap.visible = s.showMap;
     this.player.autoJump = s.autoJump;
     this.debugOn = s.showDebug;
     this.mobs.maxPassive = this.mobile ? 5 : 8;
@@ -442,6 +464,7 @@ export class Game {
         this.day++;
       }
       this.mobs.update(dt, this.sky.state.day, p.dead, this.mobile ? 0.6 : 1);
+      this.fluids.update(dt);
       this.autosaveTimer -= dt;
       if (this.autosaveTimer <= 0) {
         this.autosaveTimer = AUTOSAVE_SEC;
@@ -460,7 +483,7 @@ export class Game {
     }
 
     const [fx, fz] = p.forward();
-    this.world.update(p.body.x, p.body.z, fx, fz);
+    this.world.update(p.body.x, p.body.z, fx, fz, !this.underground && p.eyeY > 30);
     this.updateCamera(dt);
 
     // Sky & lighting.
@@ -491,6 +514,14 @@ export class Game {
     if (hurt) hurt.style.opacity = String(Math.min(1, p.hurtFlash) * 0.9);
 
     this.particles.update(dt, this.world.isSolid);
+    const picked = this.drops.update(
+      active ? dt : 0,
+      this.world.collisionAt,
+      p.dead ? null : { x: p.body.x, y: p.body.y, z: p.body.z },
+      (id, n, dur) => this.inventory.add(id, n, dur),
+      st.brightness,
+    );
+    if (picked) audio.pickup();
 
     // HUD.
     this.hud.updateHotbar(this.inventory, this.selected);
@@ -502,6 +533,8 @@ export class Game {
       this.underground = p.isUnderground(this.world);
     }
     audio.updateAmbient(this.elapsed, p.body.y, st.day, this.underground);
+    audio.updateMusic(this.elapsed, st.day, this.underground);
+    this.hud.minimap?.update(dt, this.world, p.body.x, p.body.y, p.body.z, p.yaw);
 
     // FPS / debug.
     this.fpsAcc += dt;
@@ -555,6 +588,9 @@ export class Game {
       time: this.time,
       day: this.day,
       version: SAVE_VERSION,
+      mobs: this.mobs.mobs
+        .filter((m) => Math.hypot(m.body.x - p.body.x, m.body.z - p.body.z) < 64)
+        .map((m) => ({ kind: m.kind, x: m.body.x, y: m.body.y, z: m.body.z, health: m.health })),
       player: {
         x: p.body.x, y: p.body.y, z: p.body.z, yaw: p.yaw, pitch: p.pitch,
         health: p.dead ? 20 : p.health, hunger: p.dead ? 20 : p.hunger, saturation: p.saturation,
@@ -588,8 +624,9 @@ export class Game {
     this.stop();
     this.offInput();
     const scene = this.r.scene;
-    scene.remove(this.sky.group, this.world.group, this.highlight.group, this.particles.mesh, this.mobs.group);
+    scene.remove(this.sky.group, this.world.group, this.highlight.group, this.particles.mesh, this.mobs.group, this.drops.group);
     this.mobs.clear();
+    this.drops.dispose();
     this.world.dispose();
     this.sky.dispose();
     this.particles.dispose();

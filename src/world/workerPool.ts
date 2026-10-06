@@ -1,6 +1,7 @@
 import { TerrainGenerator } from './generator';
 import { meshChunk, type ChunkMeshes } from './mesher';
 import type { WorkerRequest, WorkerResponse } from './protocol';
+import { createChunkWorker } from './workerFactory';
 
 interface Pending {
   resolve: (v: unknown) => void;
@@ -28,7 +29,7 @@ export class WorkerPool {
     this.size = size;
     try {
       for (let i = 0; i < size; i++) {
-        const w = new Worker(new URL('./chunk.worker.ts', import.meta.url), { type: 'module' });
+        const w = createChunkWorker();
         w.onmessage = (ev: MessageEvent<WorkerResponse>) => this.onMessage(i, ev.data);
         w.onerror = (ev) => {
           console.error('[BlockForge] chunk worker crashed; switching to main-thread fallback', ev.message);
@@ -76,7 +77,7 @@ export class WorkerPool {
       if (!this.fallbackGen) this.fallbackGen = new TerrainGenerator(this.seed);
       return this.fallbackGen.generate(req.cx, req.cz);
     }
-    if (req.type === 'mesh') return meshChunk(req.pad, req.ao);
+    if (req.type === 'mesh') return meshChunk(req.pad, req.ao, req.emitters);
     return null;
   }
 
@@ -116,10 +117,10 @@ export class WorkerPool {
     return this.submit<Uint8Array>({ type: 'gen', job: this.nextJob++, cx, cz });
   }
 
-  mesh(pad: Uint8Array, ao: boolean): Promise<ChunkMeshes> {
+  mesh(pad: Uint8Array, ao: boolean, emitters?: Int16Array): Promise<ChunkMeshes> {
     // In fallback mode the pad must stay valid; otherwise transfer it.
     const transfer = this.fallback ? [] : [pad.buffer];
-    return this.submit<ChunkMeshes>({ type: 'mesh', job: this.nextJob++, pad, ao }, transfer);
+    return this.submit<ChunkMeshes>({ type: 'mesh', job: this.nextJob++, pad, ao, emitters }, transfer);
   }
 
   dispose(): void {

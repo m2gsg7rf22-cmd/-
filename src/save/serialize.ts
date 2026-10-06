@@ -18,6 +18,14 @@ export interface PlayerSave {
   spawn: { x: number; y: number; z: number };
 }
 
+export interface MobSave {
+  kind: 'grazer' | 'boar' | 'crawler';
+  x: number;
+  y: number;
+  z: number;
+  health: number;
+}
+
 export interface WorldMeta {
   id: string;
   name: string;
@@ -29,6 +37,7 @@ export interface WorldMeta {
   time: number;
   day: number;
   player: PlayerSave | null;
+  mobs?: MobSave[];
   version: number;
 }
 
@@ -98,6 +107,11 @@ export function validateMeta(raw: unknown): WorldMeta | null {
     time: finite(r.time) ? ((r.time % 1) + 1) % 1 : 0.1,
     day: finite(r.day) ? r.day : 0,
     player,
+    mobs: Array.isArray(r.mobs)
+      ? r.mobs
+          .filter((m): m is MobSave => !!m && ['grazer', 'boar', 'crawler'].includes(m.kind) && finite(m.x) && finite(m.y) && finite(m.z) && finite(m.health) && m.health > 0)
+          .slice(0, 40)
+      : [],
     version: finite(r.version) ? r.version : SAVE_VERSION,
   };
 }

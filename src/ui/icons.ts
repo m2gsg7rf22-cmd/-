@@ -1,4 +1,4 @@
-import { I, TOOL_BASE, TOOL_KINDS } from '../core/ids';
+import { B, I, TOOL_BASE, TOOL_KINDS } from '../core/ids';
 import { itemDef } from '../game/items';
 import { tileCanvas } from '../render/atlas';
 import { BLOCKS, RENDER } from '../world/blocks';
@@ -24,7 +24,7 @@ function blockIcon(id: number): string {
   const top = tileCanvas(atlas!, BLOCK_TILES[id * 3]);
   const side = tileCanvas(atlas!, BLOCK_TILES[id * 3 + 2]);
   const r = RENDER[id];
-  if (r === 3) {
+  if (r === 3 || id === B.TORCH) {
     ctx.drawImage(side, 4, 4, S - 8, S - 8);
     return c.toDataURL();
   }
@@ -182,6 +182,15 @@ function itemIcon(id: number): string {
         for (let y = 4; y < 12; y++) for (let x = 2; x < 12; x++) if (Math.hypot((x - 7) * 0.8, y - 8) < 4) px(x, y, y < 6 ? hi : col);
         for (let i = 0; i < 4; i++) px(11 + i, 11 + (i >> 1), '#f0ead8');
         px(14, 12, '#f0ead8'); px(14, 13, '#f0ead8');
+      });
+    case I.DOOR_ITEM:
+      return sprite((px) => {
+        for (let y = 1; y < 15; y++) for (let x = 4; x < 12; x++) {
+          const edge = x === 4 || x === 11 || y === 1 || y === 14;
+          const window = y > 2 && y < 7 && x > 5 && x < 10;
+          px(x, y, window ? '#9fd3e8' : edge ? shade(col, 0.7) : y % 4 === 0 ? shade(col, 0.85) : col);
+        }
+        px(10, 9, '#3a3a40');
       });
     case I.BREAD_LOAF:
       return sprite((px) => {

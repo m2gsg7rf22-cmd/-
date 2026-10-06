@@ -1,5 +1,5 @@
 import { TerrainGenerator } from '../src/world/generator';
-import { meshChunk } from '../src/world/mesher';
+import { meshChunk, mergeSections } from '../src/world/mesher';
 import { PAD_SIZE, WORLD_HEIGHT, CHUNK_SIZE } from '../src/core/constants';
 const g = new TerrainGenerator(42);
 let t = performance.now();
@@ -18,7 +18,7 @@ for (let x = -1; x <= 1; x++) for (let z = -1; z <= 1; z++) {
     pad.set(d.subarray((lx*16+lz)*WORLD_HEIGHT, (lx*16+lz+1)*WORLD_HEIGHT), ((px+1)*PAD_SIZE+(pz+1))*WORLD_HEIGHT);
   }
   const m = meshChunk(pad);
-  tris += m.opaque.indices.length/3 + m.transparent.indices.length/3;
+  tris += mergeSections(m.opaque).indices.length/3 + mergeSections(m.transparent).indices.length/3;
 }
 console.log('mesh per chunk ms', ((performance.now() - t) / 9).toFixed(2), 'tris/chunk', (tris/9)|0);
 }

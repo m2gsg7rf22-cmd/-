@@ -1,5 +1,5 @@
 import { PLAYER_EYE, PLAYER_HEIGHT, PLAYER_WIDTH, WORLD_HEIGHT } from '../core/constants';
-import { B } from '../core/ids';
+import { B, isWaterId } from '../core/ids';
 import type { InputManager } from '../input/input';
 import { blockDef, SOLID, type Surface } from '../world/blocks';
 import { UNLOADED, type World } from '../world/world';
@@ -142,8 +142,8 @@ export class Player {
     const mid = world.getBlock(b.x, b.y + 0.9, b.z);
     const head = world.getBlock(b.x, this.eyeY, b.z);
     const wasInWater = this.inWater;
-    this.inWater = feet === B.WATER || mid === B.WATER;
-    this.headInWater = head === B.WATER;
+    this.inWater = isWaterId(feet) || isWaterId(mid);
+    this.headInWater = isWaterId(head);
     if (this.inWater && !wasInWater && this.vy < -6) this.events.splash();
 
     if (!this.creative) this.flying = false;
@@ -207,11 +207,29 @@ export class Player {
     const ox = b.x;
     const oy = b.y;
     const oz = b.z;
-    const res = moveBody(b, this.vx * dt, this.vy * dt, this.vz * dt, world.isSolid);
+    const res = moveBody(b, this.vx * dt, this.vy * dt, this.vz * dt, world.collisionAt);
+    // Step assist: walk up slabs/stairs (≤ 0.6 blocks) without jumping.
+    if ((res.hitX || res.hitZ) && this.onGround && !this.flying && wl > 0.1) {
+      const lifted: Body = { ...b, y: b.y + 0.6 };
+      if (!collides(lifted, world.collisionAt)) {
+        const sx = b.x, sy = b.y, sz = b.z;
+        b.y += 0.6;
+        const r2 = moveBody(b, (res.hitX ? this.vx : 0) * dt, 0, (res.hitZ ? this.vz : 0) * dt, world.collisionAt);
+        const progressed = Math.hypot(b.x - sx, b.z - sz) > 0.0005;
+        if (progressed) {
+          // Settle back down onto the step.
+          moveBody(b, 0, -0.6, 0, world.collisionAt);
+          if (!r2.hitX) res.hitX = false;
+          if (!r2.hitZ) res.hitZ = false;
+        } else {
+          b.x = sx; b.y = sy; b.z = sz;
+        }
+      }
+    }
     if (res.hitX) this.vx = 0;
     if (res.hitZ) this.vz = 0;
     if (res.hitY) this.vy = 0;
-    this.onGround = res.onGround || (this.vy <= 0 && collides({ ...b, y: b.y - 0.02 }, world.isSolid) && !this.flying);
+    this.onGround = res.onGround || (this.vy <= 0 && collides({ ...b, y: b.y - 0.02 }, world.collisionAt) && !this.flying);
 
     // Descending into the ground ends flight.
     if (this.flying && res.onGround) this.flying = false;
@@ -223,7 +241,7 @@ export class Player {
     if (this.autoJump && this.onGround && !this.flying && (res.hitX || res.hitZ) && wl > 0.2) {
       const ahead = { ...b, x: b.x + wx * 0.35, z: b.z + wz * 0.35 };
       const up = { ...ahead, y: b.y + 1.05 };
-      if (collides(ahead, world.isSolid) && !collides(up, world.isSolid) && !collides({ ...b, y: b.y + 1.05 }, world.isSolid)) {
+      if (collides(ahead, world.collisionAt) && !collides(up, world.collisionAt) && !collides({ ...b, y: b.y + 1.05 }, world.collisionAt)) {
         this.vy = JUMP_V * 0.92;
         this.onGround = false;
       }
@@ -319,7 +337,7 @@ export class Player {
 
   /** Make sure the player isn't embedded in blocks (after load/spawn). */
   ensureFree(world: World): void {
-    unstick(this.body, world.isSolid, WORLD_HEIGHT);
+    unstick(this.body, world.collisionAt, WORLD_HEIGHT);
   }
 
   /** True if the player is standing in a column with sky access? (approx, for ambient). */

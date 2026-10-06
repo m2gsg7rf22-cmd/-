@@ -28,9 +28,15 @@ export class AudioEngine {
   private master!: GainNode;
   private fx!: GainNode;
   private amb!: GainNode;
+  private mus!: GainNode;
+  private musicDelay!: DelayNode;
+  private nextPhrase = 25;
+  private phraseEnd = 0;
+  private nextNote = 0;
+  private scale: number[] = [];
   private noise!: AudioBuffer;
   private wind: { src: AudioBufferSourceNode; gain: GainNode; filter: BiquadFilterNode } | null = null;
-  private volumes = { master: 0.8, effects: 0.9, ambient: 0.6 };
+  private volumes = { master: 0.8, effects: 0.9, ambient: 0.6, music: 0.5 };
   private nextChirp = 0;
   failed = false;
 
@@ -45,8 +51,21 @@ export class AudioEngine {
         this.master = this.ctx.createGain();
         this.fx = this.ctx.createGain();
         this.amb = this.ctx.createGain();
+        this.mus = this.ctx.createGain();
         this.fx.connect(this.master);
         this.amb.connect(this.master);
+        // Music bus with a soft feedback echo.
+        this.musicDelay = this.ctx.createDelay(1.5);
+        this.musicDelay.delayTime.value = 0.42;
+        const fb = this.ctx.createGain();
+        fb.gain.value = 0.35;
+        const lp = this.ctx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 2200;
+        this.mus.connect(this.master);
+        this.mus.connect(this.musicDelay);
+        this.musicDelay.connect(lp).connect(fb).connect(this.musicDelay);
+        lp.connect(this.master);
         this.master.connect(this.ctx.destination);
         const len = this.ctx.sampleRate;
         this.noise = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
@@ -61,8 +80,8 @@ export class AudioEngine {
     }
   }
 
-  setVolumes(master: number, effects: number, ambient: number): void {
-    this.volumes = { master, effects, ambient };
+  setVolumes(master: number, effects: number, ambient: number, music = this.volumes.music): void {
+    this.volumes = { master, effects, ambient, music };
     this.applyVolumes();
   }
 
@@ -71,6 +90,54 @@ export class AudioEngine {
     this.master.gain.value = this.volumes.master;
     this.fx.gain.value = this.volumes.effects;
     this.amb.gain.value = this.volumes.ambient;
+    this.mus.gain.value = this.volumes.music * 0.5;
+  }
+
+  /** A soft mallet/pad note on the music bus. */
+  private musicNote(freq: number, at: number, dur: number, vol: number, type: OscillatorType): void {
+    const ctx = this.ctx!;
+    const o = ctx.createOscillator();
+    o.type = type;
+    o.frequency.value = freq;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(vol, at + Math.min(0.6, dur * 0.25));
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    o.connect(g).connect(this.mus);
+    o.start(at);
+    o.stop(at + dur + 0.05);
+  }
+
+  /**
+   * Generative background music: occasional calm phrases (pentatonic, major by day,
+   * minor at night/underground) with long silences in between. Call every frame.
+   */
+  updateMusic(now: number, day: number, underground: boolean): void {
+    if (!this.ready || this.volumes.music <= 0) return;
+    const ctx = this.ctx!;
+    if (now < this.phraseEnd) {
+      if (now >= this.nextNote) {
+        const t = ctx.currentTime + 0.05;
+        const f = this.scale[Math.floor(Math.random() * this.scale.length)];
+        this.musicNote(f, t, 1.6 + Math.random() * 1.4, 0.07, 'triangle');
+        if (Math.random() < 0.35) this.musicNote(f * 2, t + 0.25, 1.2, 0.025, 'sine');
+        this.nextNote = now + 0.9 + Math.random() * 1.6;
+      }
+      return;
+    }
+    if (now < this.nextPhrase) return;
+    // Start a new phrase.
+    const minor = day < 0.4 || underground;
+    const root = [196, 220, 174.6, 233.1][Math.floor(Math.random() * 4)];
+    const steps = minor ? [0, 3, 5, 7, 10, 12, 15] : [0, 2, 4, 7, 9, 12, 14];
+    this.scale = steps.map((st) => root * Math.pow(2, st / 12));
+    const len = 28 + Math.random() * 22;
+    this.phraseEnd = now + len;
+    this.nextPhrase = this.phraseEnd + 60 + Math.random() * 120;
+    this.nextNote = now + 1;
+    // Pad chord under the phrase.
+    const t = ctx.currentTime + 0.1;
+    for (const k of [0, 2, 4]) this.musicNote(this.scale[k] / 2, t, len, 0.03, 'sine');
   }
 
   private get ready(): boolean {

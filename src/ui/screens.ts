@@ -296,6 +296,7 @@ export function settingsScreen(
     master: pct,
     effects: pct,
     ambient: pct,
+    music: pct,
     uiScale: pct,
   };
 
@@ -324,8 +325,10 @@ export function settingsScreen(
       h += row('Master Volume', '', range('master', 0, 1, 0.05, pct));
       h += row('Effects', '', range('effects', 0, 1, 0.05, pct));
       h += row('Ambient', 'Wind and wildlife', range('ambient', 0, 1, 0.05, pct));
+      h += row('Music', 'Calm procedural music now and then', range('music', 0, 1, 0.05, pct));
     } else {
       h += row('UI Scale', '', range('uiScale', 0.75, 1.5, 0.05, pct));
+      h += row('Compass & Minimap', '', toggle('showMap'));
       h += row('Reduced Motion', 'Disables view bobbing, FOV kick and UI animations', toggle('reducedMotion'));
       if (document.fullscreenEnabled) h += row('Fullscreen', '', `<button class="btn small" data-fs>Toggle</button>`);
     }

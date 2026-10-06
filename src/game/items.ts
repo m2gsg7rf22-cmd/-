@@ -25,7 +25,7 @@ export interface ItemDef {
 const items = new Map<number, ItemDef>();
 
 for (const b of BLOCKS) {
-  if (!b || b.id === B.AIR || b.id === B.WATER) continue;
+  if (!b || b.id === B.AIR || b.id === B.WATER || b.variant) continue;
   items.set(b.id, { id: b.id, name: b.name, maxStack: 64, block: b.id });
 }
 
@@ -42,6 +42,7 @@ const simple: [number, string, string, number?][] = [
   [I.RAW_MEAT, 'Raw Boar Meat', '#d76f74', 2],
   [I.ROAST_MEAT, 'Roast Meat', '#9a5a32', 8],
   [I.BREAD_LOAF, 'Seed Loaf', '#c8964e', 5],
+  [I.DOOR_ITEM, 'Ashwood Door', '#b8894f'],
 ];
 for (const [id, name, color, food] of simple) items.set(id, { id, name, maxStack: 64, color, food });
 
@@ -87,7 +88,7 @@ export function isTool(id: number): boolean {
 }
 
 export function isPlaceable(id: number): boolean {
-  return isBlockId(id) && id !== B.WATER;
+  return (isBlockId(id) && id !== B.WATER && !BLOCKS[id].variant) || id === I.DOOR_ITEM;
 }
 
 export function allItemIds(): number[] {

@@ -17,9 +17,9 @@ ctx.onmessage = (ev: MessageEvent<WorkerRequest>) => {
       const res: WorkerResponse = { type: 'gen', job: msg.job, cx: msg.cx, cz: msg.cz, data };
       ctx.postMessage(res, [data.buffer]);
     } else if (msg.type === 'mesh') {
-      const meshes = meshChunk(msg.pad, msg.ao);
+      const meshes = meshChunk(msg.pad, msg.ao, msg.emitters);
       const res: WorkerResponse = { type: 'mesh', job: msg.job, meshes };
-      const t = [meshes.opaque, meshes.transparent].flatMap((m) => [m.positions.buffer, m.uvs.buffer, m.tiles.buffer, m.light.buffer, m.indices.buffer]);
+      const t = [...meshes.opaque, ...meshes.transparent].flatMap((m) => [m.positions.buffer, m.uvs.buffer, m.tiles.buffer, m.light.buffer, m.indices.buffer]);
       ctx.postMessage(res, t);
     }
   } catch (e) {

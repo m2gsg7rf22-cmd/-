@@ -93,3 +93,22 @@ describe('raycast', () => {
     expect(h.ny).toBe(1);
   });
 });
+
+import { raycastShapes } from '../src/player/raycast';
+describe('raycastShapes', () => {
+  it('passes over the empty half of a slab and hits the box top face', () => {
+    const slab = [[0, 0, 0, 1, 0.5, 1]];
+    const at = (x: number, y: number, z: number) => (x === 2 && y === 0 && z === 0 ? slab : null);
+    // Ray skimming at y=0.75 misses the slab entirely.
+    expect(raycastShapes(0.5, 0.75, 0.5, 1, 0, 0, 6, at)).toBeNull();
+    // Ray going down onto the slab hits its top face (normal +y) at y=0.5.
+    const h = raycastShapes(2.5, 2, 0.5, 0, -1, 0, 6, at)!;
+    expect([h.x, h.y, h.z, h.ny]).toEqual([2, 0, 0, 1]);
+    expect(h.dist).toBeCloseTo(1.5, 5);
+  });
+  it('matches the DDA result for full cubes', () => {
+    const at = (x: number, y: number, z: number) => (x === 3 && y === 0 && z === 0 ? [[0, 0, 0, 1, 1, 1]] : null);
+    const h = raycastShapes(0.5, 0.5, 0.5, 1, 0.01, 0, 10, at)!;
+    expect([h.x, h.nx]).toEqual([3, -1]);
+  });
+});

@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { REACH, WORLD_HEIGHT } from '../core/constants';
-import { B } from '../core/ids';
-import { blockIntersectsBody } from '../player/physics';
-import { raycastVoxels, type RayHit } from '../player/raycast';
-import { blockDef, RENDER, SOLID } from '../world/blocks';
+import { B, I, isDoorId, isWaterId } from '../core/ids';
+import { raycastShapes, type RayHit } from '../player/raycast';
+import { blockDef, COLLISION, doorId, doorParts, RENDER, SELECTION, SOLID } from '../world/blocks';
 import { UNLOADED } from '../world/world';
 import type { Game } from './game';
 import { isPlaceable, itemDef } from './items';
@@ -13,10 +12,13 @@ const CREATIVE_BREAK_DELAY = 0.18;
 const PLACE_REPEAT = 0.24;
 const ATTACK_COOLDOWN = 0.45;
 
-/** Is this block targetable by the crosshair? (not air/water) */
-function targetable(id: number): boolean {
-  return id !== B.AIR && id !== B.WATER && id !== UNLOADED;
+/** Horizontal facing (0 N -z, 1 E +x, 2 S +z, 3 W -x) of a look direction. */
+export function facingOf(fx: number, fz: number): number {
+  if (Math.abs(fx) > Math.abs(fz)) return fx > 0 ? 1 : 3;
+  return fz > 0 ? 2 : 0;
 }
+
+const SLAB_FULL: Record<number, number> = { [B.SLAB_PLANKS]: B.PLANKS, [B.SLAB_BRICK]: B.SLATE_BRICKS };
 
 /** Break time in seconds, and whether the block will drop items. */
 export function breakInfo(blockId: number, toolId: number | null): { time: number; drops: boolean } {
@@ -72,15 +74,18 @@ export class Interaction {
 
     g.camera.getWorldDirection(this.dir);
     this.origin.set(p.body.x, p.eyeY, p.body.z);
-    const hit = raycastVoxels(this.origin.x, this.origin.y, this.origin.z, this.dir.x, this.dir.y, this.dir.z, REACH, (x, y, z) =>
-      targetable(g.world.getBlock(x, y, z)),
-    );
+    const hit = raycastShapes(this.origin.x, this.origin.y, this.origin.z, this.dir.x, this.dir.y, this.dir.z, REACH, (x, y, z) => {
+      const id = g.world.getBlock(x, y, z);
+      return id === UNLOADED ? null : SELECTION[id];
+    });
     const mobHit = g.mobs.raycast(this.origin, this.dir, REACH);
     this.targetMob = mobHit && (!hit || mobHit.dist < hit.dist) ? mobHit.mob : null;
     this.target = this.targetMob ? null : hit;
 
-    if (this.target) g.highlight.show(this.target.x, this.target.y, this.target.z);
-    else g.highlight.hide();
+    if (this.target) {
+      const boxes = SELECTION[g.world.getBlock(this.target.x, this.target.y, this.target.z)];
+      g.highlight.show(this.target.x, this.target.y, this.target.z, boxes ?? undefined);
+    } else g.highlight.hide();
 
     const primary = g.input.primary || this.primaryQueued;
     const primaryPressed = this.primaryQueued;
@@ -160,38 +165,47 @@ export class Interaction {
     }
   }
 
+  /** Blocks that need a solid block underneath (plants, cacti, torches, doors). */
+  private needsSupport(id: number): boolean {
+    return RENDER[id] === 3 || id === B.CACTUS || id === B.TORCH || (isDoorId(id) && !doorParts(id).upper);
+  }
+
   private breakBlock(x: number, y: number, z: number, id: number, drops: boolean): void {
     const g = this.g;
     if (!g.world.setBlock(x, y, z, B.AIR)) return;
     const def = blockDef(id);
     g.particles.blockBreak(x, y, z, id);
     g.sounds.breakBlock(def.surface);
-    if (drops && !g.creative) g.giveDrops(id);
-    // Plants and cacti lose their support.
-    const above = g.world.getBlock(x, y + 1, z);
-    if (above !== UNLOADED && (RENDER[above] === 3 || above === B.CACTUS)) {
-      this.breakBlock(x, y + 1, z, above, true);
-    }
-    // Fill from adjacent water so oceans don't get permanent dry holes at the surface.
-    if (!SOLID[id]) return;
-    for (const [dx, dy, dz] of [[0, 1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]]) {
-      if (g.world.getBlock(x + dx, y + dy, z + dz) === B.WATER) {
-        g.world.setBlock(x, y, z, B.WATER);
-        break;
+    if (drops && !g.creative) g.dropBlockItems(id, x, y, z);
+    // Doors are two blocks: remove the other half too.
+    if (isDoorId(id)) {
+      const upper = doorParts(id).upper;
+      const oy = upper ? y - 1 : y + 1;
+      const other = g.world.getBlock(x, oy, z);
+      if (isDoorId(other)) {
+        g.world.setBlock(x, oy, z, B.AIR);
+        // The lower half carries the door item.
+        if (upper && drops && !g.creative) g.dropBlockItems(other, x, oy, z);
       }
     }
+    // Plants, cacti, torches and doors above lose their support.
+    const above = g.world.getBlock(x, y + 1, z);
+    if (above !== UNLOADED && this.needsSupport(above)) this.breakBlock(x, y + 1, z, above, true);
   }
 
-  /** Use held item or place a block. Returns true if something happened. */
+  /** Use held item, toggle doors, open stations, or place a block. Returns true if something happened. */
   private use(): boolean {
     const g = this.g;
     const held = g.heldStack();
     const t = this.target;
-    // Interact with stations.
     if (t) {
       const id = g.world.getBlock(t.x, t.y, t.z);
       if (id === B.FORGE_BENCH || id === B.KILN) {
         g.openInventory();
+        return true;
+      }
+      if (isDoorId(id)) {
+        this.toggleDoor(t.x, t.y, t.z, id);
         return true;
       }
     }
@@ -211,33 +225,97 @@ export class Interaction {
     return false;
   }
 
-  private place(blockId: number, t: RayHit): boolean {
+  private toggleDoor(x: number, y: number, z: number, id: number): void {
     const g = this.g;
-    const targetId = g.world.getBlock(t.x, t.y, t.z);
-    // Placing into a replaceable block (tall grass) replaces it directly.
-    let x = t.x + t.nx;
-    let y = t.y + t.ny;
-    let z = t.z + t.nz;
-    if (blockDef(targetId).replaceable && targetId !== B.WATER) {
-      x = t.x;
-      y = t.y;
-      z = t.z;
-    }
+    const { upper, open, facing } = doorParts(id);
+    const ly = upper ? y - 1 : y;
+    g.world.setBlock(x, ly, z, doorId(false, !open, facing));
+    if (isDoorId(g.world.getBlock(x, ly + 1, z))) g.world.setBlock(x, ly + 1, z, doorId(true, !open, facing));
+    g.sounds.place('wood');
+    g.hand.doSwing();
+  }
+
+  /** Can a new block occupy (x,y,z) without overlapping the player or mobs? */
+  private cellFree(x: number, y: number, z: number, blockId: number): boolean {
+    const g = this.g;
     if (y < 1 || y >= WORLD_HEIGHT) return false;
     const existing = g.world.getBlock(x, y, z);
     if (existing === UNLOADED) return false;
     if (existing !== B.AIR && !blockDef(existing).replaceable) return false;
+    const boxes = COLLISION[blockId];
+    if (boxes) {
+      for (const bx of boxes) {
+        const hits = (body: { x: number; y: number; z: number; hw: number; h: number }) =>
+          x + bx[0] < body.x + body.hw && x + bx[3] > body.x - body.hw &&
+          y + bx[1] < body.y + body.h && y + bx[4] > body.y &&
+          z + bx[2] < body.z + body.hw && z + bx[5] > body.z - body.hw;
+        if (hits(g.player.body) || g.mobs.mobs.some((m) => hits(m.body))) return false;
+      }
+    }
+    return true;
+  }
+
+  private place(itemId: number, t: RayHit): boolean {
+    const g = this.g;
+    const targetId = g.world.getBlock(t.x, t.y, t.z);
+    const [fx, fz] = g.player.forward();
+    const facing = facingOf(fx, fz);
+
+    // Slab on top of the same slab merges into a full block.
+    if (SLAB_FULL[itemId] !== undefined && targetId === itemId && t.ny === 1) {
+      if (!this.cellFreeIgnoringTarget(t.x, t.y, t.z, SLAB_FULL[itemId])) return false;
+      g.world.setBlock(t.x, t.y, t.z, SLAB_FULL[itemId]);
+      return this.placed(blockDef(SLAB_FULL[itemId]).surface);
+    }
+
+    // Placing into a replaceable block (tall grass, flowing water) replaces it directly.
+    let x = t.x + t.nx;
+    let y = t.y + t.ny;
+    let z = t.z + t.nz;
+    if (blockDef(targetId).replaceable && !isWaterId(targetId)) {
+      x = t.x;
+      y = t.y;
+      z = t.z;
+    }
+
+    if (itemId === I.DOOR_ITEM) {
+      if (!SOLID[g.world.getBlock(x, y - 1, z)]) return false;
+      const lower = doorId(false, false, facing);
+      const upper = doorId(true, false, facing);
+      if (!this.cellFree(x, y, z, lower) || !this.cellFree(x, y + 1, z, upper)) return false;
+      g.world.setBlock(x, y, z, lower);
+      g.world.setBlock(x, y + 1, z, upper);
+      return this.placed('wood');
+    }
+
+    let blockId = itemId;
+    if (blockId === B.STAIRS_PLANKS || blockId === B.STAIRS_BRICK) blockId += facing;
+    if (!this.cellFree(x, y, z, blockId)) return false;
     const def = blockDef(blockId);
-    if (def.solid && blockIntersectsBody(x, y, z, g.player.body)) return false;
-    if (def.solid && g.mobs.mobs.some((m) => blockIntersectsBody(x, y, z, m.body))) return false;
-    // Plants need ground.
     if (def.render === 'cross') {
       const below = g.world.getBlock(x, y - 1, z);
       if (below !== B.GRASS && below !== B.DIRT && below !== B.SNOW_GRASS && below !== B.SAND) return false;
     }
+    if (blockId === B.TORCH && !SOLID[g.world.getBlock(x, y - 1, z)]) return false;
     if (!g.world.setBlock(x, y, z, blockId)) return false;
+    return this.placed(def.surface);
+  }
+
+  private cellFreeIgnoringTarget(x: number, y: number, z: number, blockId: number): boolean {
+    const g = this.g;
+    const prev = g.world.getBlock(x, y, z);
+    // Treat the slab cell as empty for the overlap test.
+    const boxes = COLLISION[blockId];
+    if (!boxes) return true;
+    const b = g.player.body;
+    const overlap = x < b.x + b.hw && x + 1 > b.x - b.hw && y < b.y + b.h && y + 1 > b.y && z < b.z + b.hw && z + 1 > b.z - b.hw;
+    return prev !== UNLOADED && !overlap;
+  }
+
+  private placed(surface: Parameters<Game['sounds']['place']>[0]): boolean {
+    const g = this.g;
     if (!g.creative) g.consumeHeld(1);
-    g.sounds.place(def.surface);
+    g.sounds.place(surface);
     g.hand.doSwing();
     return true;
   }

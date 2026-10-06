@@ -68,6 +68,7 @@ export class App {
     this.input = new InputManager(this.r.canvas);
     this.hud = new Hud(document.getElementById('hud')!, document.getElementById('touch')!);
     this.touch = new TouchControls(document.getElementById('touch')!, this.input);
+    this.hud.initMinimap(this.r.atlasCanvas);
     this.applyUiSettings();
 
     this.input.onEvent((e) => {
@@ -131,7 +132,7 @@ export class App {
     }
     document.body.classList.toggle('touch-ui', this.mobile);
     if (this.r) this.r.setQuality(s.resolutionScale, this.mobile);
-    audio.setVolumes(s.master, s.effects, s.ambient);
+    audio.setVolumes(s.master, s.effects, s.ambient, s.music);
     this.updateHudVisibility();
   }
 

@@ -80,7 +80,7 @@ export class HandView {
     }
     this.equip = 1;
     if (id < 0) return;
-    const isCube = id < 256 && RENDER[id] !== 3 && RENDER[id] !== 0;
+    const isCube = id < 256 && RENDER[id] !== 3 && RENDER[id] !== 0 && RENDER[id] !== 6;
     this.mesh = isCube ? this.buildBlock(id) : this.buildFlat(id);
     this.holder.add(this.mesh);
   }

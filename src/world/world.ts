@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { CHUNK_SIZE, PAD_SIZE, PAD_VOLUME, WORLD_HEIGHT } from '../core/constants';
 import { blockIndex, chunkKey, toChunk, toLocal } from '../core/coords';
-import { B } from '../core/ids';
+import { B, isWaterId } from '../core/ids';
 import { decodeRLE, encodeRLE } from '../save/serialize';
 import type { SaveStore } from '../save/db';
-import { SOLID } from './blocks';
+import { COLLISION, EMIT, OPAQUE, SOLID } from './blocks';
 import { TerrainGenerator } from './generator';
-import { meshChunk, type MeshData } from './mesher';
+import { meshChunk, SECTION_H, SECTIONS, type ChunkMeshes, type MeshData } from './mesher';
 import { WorkerPool } from './workerPool';
 
 /** Returned by getBlock for chunks that aren't loaded yet. */
@@ -21,9 +21,18 @@ interface ChunkEntry {
   version: number;
   meshedVersion: number;
   meshing: boolean;
-  opaque: THREE.Mesh | null;
-  trans: THREE.Mesh | null;
+  /** Per vertical section meshes. */
+  opaque: (THREE.Mesh | null)[];
+  trans: (THREE.Mesh | null)[];
   tris: number;
+  /** Light emitters in this chunk: packed [lx, y, lz, level]*. */
+  emitters: number[];
+  /** Per column: y of the topmost opaque block (for culling), and topmost visible block + its y (minimap). */
+  opaqueTop: Uint8Array;
+  topId: Uint8Array;
+  topY: Uint8Array;
+  /** Lowest opaque surface in the chunk: sections fully below it are buried. */
+  minSurface: number;
 }
 
 export interface WorldStats {
@@ -49,6 +58,10 @@ export class World {
   renderDistance: number;
   ao: boolean;
   onChunkError?: (msg: string) => void;
+  /** Called after any block change (fluids, item support checks…). */
+  onBlockChanged?: (x: number, y: number, z: number, oldId: number, newId: number) => void;
+  /** Cull fully buried mesh sections (camera above ground). */
+  cullBuried = true;
 
   constructor(
     seed: number,
@@ -101,6 +114,95 @@ export class World {
     return id === UNLOADED || SOLID[id] === 1;
   };
 
+  /** Collision shape of a cell for physics: true = full/unloaded, boxes for shaped blocks, null = passable. */
+  collisionAt = (x: number, y: number, z: number): true | readonly number[][] | null => {
+    const id = this.getBlock(x, y, z);
+    if (id === UNLOADED) return true;
+    return COLLISION[id];
+  };
+
+  /** Top visible block of a column (for the minimap); null if not loaded. */
+  columnTop(x: number, z: number): { id: number; y: number } | null {
+    const fx = Math.floor(x);
+    const fz = Math.floor(z);
+    const e = this.entryAt(toChunk(fx), toChunk(fz));
+    if (!e || !e.data) return null;
+    const i = toLocal(fx) * CHUNK_SIZE + toLocal(fz);
+    return { id: e.topId[i], y: e.topY[i] };
+  }
+
+  private scanColumn(e: ChunkEntry, lx: number, lz: number): void {
+    const d = e.data!;
+    const base = blockIndex(lx, 0, lz);
+    const ci = lx * CHUNK_SIZE + lz;
+    let ot = 0;
+    let tid = 0;
+    let ty = 0;
+    for (let y = WORLD_HEIGHT - 1; y >= 0; y--) {
+      const id = d[base + y];
+      if (id === 0) continue;
+      if (!tid) { tid = id; ty = y; }
+      if (OPAQUE[id]) { ot = y; break; }
+    }
+    e.opaqueTop[ci] = ot;
+    e.topId[ci] = tid;
+    e.topY[ci] = ty;
+  }
+
+  private analyze(e: ChunkEntry): void {
+    const d = e.data!;
+    e.emitters = [];
+    for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+      for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+        this.scanColumn(e, lx, lz);
+        const base = blockIndex(lx, 0, lz);
+        for (let y = 0; y < WORLD_HEIGHT; y++) {
+          const em = EMIT[d[base + y]];
+          if (em) e.emitters.push(lx, y, lz, em);
+        }
+      }
+    }
+    this.updateMinSurface(e);
+  }
+
+  private updateMinSurface(e: ChunkEntry): void {
+    let m = WORLD_HEIGHT;
+    for (let i = 0; i < 256; i++) m = Math.min(m, e.opaqueTop[i]);
+    e.minSurface = m;
+  }
+
+  /** Does any emitter (local coords of its chunk) reach the neighbor chunk at offset (dx,dz)? */
+  private emittersReach(em: number[], dx: number, dz: number): boolean {
+    for (let k = 0; k < em.length; k += 4) {
+      const lx = em[k] - dx * CHUNK_SIZE;
+      const lz = em[k + 2] - dz * CHUNK_SIZE;
+      // Distance from the emitter (in the neighbor's local space) to the neighbor's bounds.
+      const dist = Math.max(0, -lx, lx - (CHUNK_SIZE - 1)) + Math.max(0, -lz, lz - (CHUNK_SIZE - 1));
+      if (dist < em[k + 3]) return true;
+    }
+    return false;
+  }
+
+  /** Emitters from the 8 neighbor chunks that can reach into chunk (cx,cz), in its local coords. */
+  private externalEmitters(cx: number, cz: number): Int16Array | undefined {
+    const out: number[] = [];
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        if (!dx && !dz) continue;
+        const n = this.entryAt(cx + dx, cz + dz);
+        if (!n || !n.emitters.length) continue;
+        for (let k = 0; k < n.emitters.length; k += 4) {
+          const lx = n.emitters[k] + dx * CHUNK_SIZE;
+          const lz = n.emitters[k + 2] + dz * CHUNK_SIZE;
+          const lvl = n.emitters[k + 3];
+          const dist = Math.max(0, -1 - lx, lx - CHUNK_SIZE) + Math.max(0, -1 - lz, lz - CHUNK_SIZE);
+          if (dist < lvl) out.push(lx, n.emitters[k + 1], lz, lvl);
+        }
+      }
+    }
+    return out.length ? Int16Array.from(out) : undefined;
+  }
+
   isChunkLoaded(cx: number, cz: number): boolean {
     return !!this.entryAt(cx, cz)?.data;
   }
@@ -115,7 +217,7 @@ export class World {
     for (let y = WORLD_HEIGHT - 1; y >= 0; y--) {
       const id = this.getBlock(x, y, z);
       if (id === UNLOADED) return -1;
-      if (SOLID[id] || id === B.WATER) return y;
+      if (SOLID[id] || isWaterId(id)) return y;
     }
     return -1;
   }
@@ -126,7 +228,7 @@ export class World {
    */
   findSafeSpot(x: number, z: number, radius = 16): { x: number; y: number; z: number } | null {
     const ground = new Set<number>([B.GRASS, B.DIRT, B.SAND, B.SNOW_GRASS, B.GRAVEL, B.STONE, B.SNOW_BLOCK, B.SANDSTONE]);
-    const free = (id: number) => id !== UNLOADED && !SOLID[id] && id !== B.WATER;
+    const free = (id: number) => id !== UNLOADED && !SOLID[id] && !isWaterId(id);
     const fx = Math.floor(x);
     const fz = Math.floor(z);
     let fallback: { x: number; y: number; z: number } | null = null;
@@ -166,10 +268,27 @@ export class World {
     const lx = toLocal(fx);
     const lz = toLocal(fz);
     const i = blockIndex(lx, Math.floor(y), lz);
-    if (e.data[i] === id) return false;
+    const old = e.data[i];
+    if (old === id) return false;
     e.data[i] = id;
     e.version++;
     this.dirtySave.add(e.key);
+    this.scanColumn(e, lx, lz);
+    this.updateMinSurface(e);
+    const lightChanged = EMIT[old] > 0 || EMIT[id] > 0;
+    if (lightChanged) {
+      e.emitters = [];
+      const d = e.data;
+      for (let k = 0; k < d.length; k++) {
+        const em = EMIT[d[k]];
+        if (em) e.emitters.push(Math.floor(k / (CHUNK_SIZE * WORLD_HEIGHT)), k % WORLD_HEIGHT, Math.floor(k / WORLD_HEIGHT) % CHUNK_SIZE, em);
+      }
+      // Light reaches up to 15 blocks: every neighbor may need relighting.
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+        const n = this.entryAt(cx + dx, cz + dz);
+        if (n && n !== e && n.data) n.version++;
+      }
+    }
     // Rebuild this chunk immediately for instant feedback; neighbors via workers.
     if (immediate) this.meshNow(e);
     const nx = lx === 0 ? -1 : lx === CHUNK_SIZE - 1 ? 1 : 0;
@@ -184,6 +303,7 @@ export class World {
     if (nx) touch(nx, 0);
     if (nz) touch(0, nz);
     if (nx && nz) touch(nx, nz);
+    this.onBlockChanged?.(fx, Math.floor(y), fz, old, id);
     return true;
   }
 
@@ -213,8 +333,8 @@ export class World {
   private meshNow(e: ChunkEntry): void {
     if (!this.neighborsLoaded(e.cx, e.cz)) return;
     const v = e.version;
-    const m = meshChunk(this.buildPad(e.cx, e.cz), this.ao);
-    this.applyMesh(e, m.opaque, m.transparent, v);
+    const m = meshChunk(this.buildPad(e.cx, e.cz), this.ao, this.externalEmitters(e.cx, e.cz));
+    this.applyMesh(e, m, v);
   }
 
   private makeMesh(d: MeshData, mat: THREE.Material, e: ChunkEntry): THREE.Mesh | null {
@@ -223,7 +343,7 @@ export class World {
     g.setAttribute('position', new THREE.BufferAttribute(d.positions, 3));
     g.setAttribute('uv', new THREE.BufferAttribute(d.uvs, 2));
     g.setAttribute('tile', new THREE.BufferAttribute(d.tiles, 2));
-    g.setAttribute('light', new THREE.BufferAttribute(d.light, 2));
+    g.setAttribute('light', new THREE.BufferAttribute(d.light, 3));
     g.setIndex(new THREE.BufferAttribute(d.indices, 1));
     g.computeBoundingSphere();
     const m = new THREE.Mesh(g, mat);
@@ -235,33 +355,42 @@ export class World {
   }
 
   private disposeMeshes(e: ChunkEntry): void {
-    for (const m of [e.opaque, e.trans]) {
+    for (const m of [...e.opaque, ...e.trans]) {
       if (!m) continue;
       this.group.remove(m);
       m.geometry.dispose();
     }
-    e.opaque = null;
-    e.trans = null;
+    e.opaque = [];
+    e.trans = [];
     e.tris = 0;
   }
 
-  private applyMesh(e: ChunkEntry, opaque: MeshData, trans: MeshData, version: number): void {
+  private applyMesh(e: ChunkEntry, m: ChunkMeshes, version: number): void {
     if (this.disposed || this.chunks.get(e.key) !== e) return;
     if (version < e.meshedVersion) return; // stale result
     this.disposeMeshes(e);
-    e.opaque = this.makeMesh(opaque, this.materials.opaque, e);
-    e.trans = this.makeMesh(trans, this.materials.transparent, e);
-    if (e.trans) e.trans.renderOrder = 1;
-    if (e.opaque) this.group.add(e.opaque);
-    if (e.trans) this.group.add(e.trans);
-    e.tris = (opaque.indices.length + trans.indices.length) / 3;
+    let tris = 0;
+    for (let s = 0; s < SECTIONS; s++) {
+      const o = this.makeMesh(m.opaque[s], this.materials.opaque, e);
+      const t = this.makeMesh(m.transparent[s], this.materials.transparent, e);
+      if (o) this.group.add(o);
+      if (t) {
+        t.renderOrder = 1;
+        this.group.add(t);
+      }
+      e.opaque.push(o);
+      e.trans.push(t);
+      tris += (m.opaque[s].indices.length + m.transparent[s].indices.length) / 3;
+    }
+    e.tris = tris;
     e.meshedVersion = version;
   }
 
   private loadChunk(cx: number, cz: number): void {
     const key = chunkKey(cx, cz);
     const e: ChunkEntry = {
-      cx, cz, key, data: null, loading: true, version: 0, meshedVersion: -1, meshing: false, opaque: null, trans: null, tris: 0,
+      cx, cz, key, data: null, loading: true, version: 0, meshedVersion: -1, meshing: false, opaque: [], trans: [], tris: 0,
+      emitters: [], opaqueTop: new Uint8Array(256), topId: new Uint8Array(256), topY: new Uint8Array(256), minSurface: 0,
     };
     this.chunks.set(key, e);
     const done = (data: Uint8Array) => {
@@ -269,6 +398,16 @@ export class World {
       e.data = data;
       e.loading = false;
       this.lastEntry = null;
+      this.analyze(e);
+      // Neighbors meshed before this chunk existed need relighting — but only if one of
+      // this chunk's emitters actually reaches into them.
+      if (e.emitters.length) {
+        for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+          if (!dx && !dz) continue;
+          const n = this.entryAt(cx + dx, cz + dz);
+          if (n && n.data && n.meshedVersion >= 0 && this.emittersReach(e.emitters, dx, dz)) n.version++;
+        }
+      }
     };
     const fail = (err: unknown) => {
       if (this.disposed) return;
@@ -311,7 +450,7 @@ export class World {
    * Stream chunks around the player. Called every frame; does bounded work.
    * dirX/dirZ: horizontal look/move direction used to prioritize chunks ahead.
    */
-  update(px: number, pz: number, dirX: number, dirZ: number): void {
+  update(px: number, pz: number, dirX: number, dirZ: number, camAboveGround = false): void {
     const pcx = toChunk(px);
     const pcz = toChunk(pz);
     const R = this.renderDistance;
@@ -360,10 +499,10 @@ export class World {
         const v = e.version;
         e.meshing = true;
         this.pool
-          .mesh(this.buildPad(e.cx, e.cz), this.ao)
+          .mesh(this.buildPad(e.cx, e.cz), this.ao, this.externalEmitters(e.cx, e.cz))
           .then((m) => {
             e.meshing = false;
-            this.applyMesh(e, m.opaque, m.transparent, v);
+            this.applyMesh(e, m, v);
           })
           .catch((err) => {
             e.meshing = false;
@@ -378,10 +517,17 @@ export class World {
       const dx = e.cx - pcx;
       const dz = e.cz - pcz;
       if (dx * dx + dz * dz <= unloadR * unloadR) {
-        // Hide meshes outside render distance (e.g. after lowering the setting).
+        // Hide meshes outside render distance (e.g. after lowering the setting), and sections
+        // buried under the chunk's lowest surface when the camera is above ground and not adjacent.
         const vis = dx * dx + dz * dz <= (R + 0.5) * (R + 0.5);
-        if (e.opaque) e.opaque.visible = vis;
-        if (e.trans) e.trans.visible = vis;
+        const cull = this.cullBuried && camAboveGround && Math.max(Math.abs(dx), Math.abs(dz)) > 1;
+        for (let sct = 0; sct < e.opaque.length; sct++) {
+          const buried = cull && (sct + 1) * SECTION_H < e.minSurface - 2;
+          const o = e.opaque[sct];
+          const t = e.trans[sct];
+          if (o) o.visible = vis && !buried;
+          if (t) t.visible = vis && !buried;
+        }
         continue;
       }
       if (e.loading) continue;
