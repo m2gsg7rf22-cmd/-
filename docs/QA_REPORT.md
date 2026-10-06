@@ -85,3 +85,38 @@ Bugs found and fixed in round 2:
 - The compass never drew (NaN initial heading).
 - Spawning into a canopy when no open ground was nearby.
 - Dropped items in a freshly mined hole were just out of pickup reach.
+
+## Round 3 (controllers + mode switch) — automated results
+
+| Suite | Result |
+|---|---|
+| Unit tests | **86 / 86** (adds controller detection, glyphs, deadzone, spatial menu navigation, settings sanitizing) |
+| Controller QA (`npm run qa:gamepad`) | **13 / 13** on repeated runs |
+| Desktop E2E | 23 / 23 |
+| Touch | 15 / 15 |
+| Failures | 10 / 10 |
+| Bug hunt | 13 / 13 |
+| Feature QA | 11 / 11 (one earlier run missed the slab-merge check; it passed on the next two runs) |
+
+`scripts/gamepad.mjs` drives a virtual controller by replacing `navigator.getGamepads` before the page loads. It covers:
+- detection and the menu prompt bar
+- D-pad navigation to New World
+- picking Creative and creating the world, using only the controller
+- Xbox glyph hints in the HUD
+- stick movement and look direction (not inverted)
+- creative flight toggle, ascend and descend
+- RB/LB hotbar cycling
+- RT mining
+- Y inventory → RB library tab → A take → B close → LT place
+- Start pause → switch to Survival → B resume
+- the A press that closes a menu doesn't make the player jump
+- after swapping to a DualSense, the prompts change to ✕ ○ □ △ / R2 / L2
+- unplugging the controller mid-game pauses it
+
+Limits: these tests use a simulated controller, not physical hardware. Button positions follow the W3C "standard" mapping, which Chrome, Edge, Firefox and Safari use for Xbox, DualShock/DualSense and Switch Pro controllers. Rumble uses `vibrationActuator`, which some browsers (notably Firefox) don't support; there it is silently skipped.
+
+Bugs found in round 3:
+- The detection regex classified "Xbox Wireless Controller" as PlayStation, because a DualShock 4 also reports the name "Wireless Controller". Xbox is now checked first.
+- Center-to-center spatial navigation skipped the narrow mode buttons, so it now uses edge distance with a sideways penalty.
+- Test harness: button presses shorter than a slow software-GL frame were sometimes missed, so presses now wait for real animation frames. Terrain-dependent aiming was replaced with a flat platform fixture.
+- E2E: the mine-and-collect check now waits for the dropped item to be picked up, since drops are entities.
