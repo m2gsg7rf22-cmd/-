@@ -70,8 +70,8 @@ export class HandView {
       mesh.position.z = z;
       this.arm.add(mesh);
     };
-    part(0.17, 0.17, 0.42, 0x3f6f9a, 0.2); // sleeve
-    part(0.15, 0.15, 0.3, 0xd9a77e, -0.14); // forearm/hand
+    part(0.145, 0.145, 0.42, 0x3f6f9a, 0.2); // sleeve
+    part(0.13, 0.13, 0.3, 0xd9a77e, -0.14); // forearm/hand
     this.arm.rotation.set(0.12, 0.16, 0);
     this.holder.add(this.arm);
     this.grip.position.set(-0.02, 0.1, -0.3);
@@ -178,7 +178,7 @@ export class HandView {
     const by = Math.abs(Math.sin(bob)) * 0.018 * moving;
     // Keep the arm toward the bottom-right; adapt slightly for narrow (portrait) screens.
     const side = aspect < 1 ? 0.3 : 0.48;
-    this.holder.position.set(side + bx - a * 0.11, -0.42 + by - this.equip * 0.4 + Math.max(0, -a) * 0.08 - a * 0.05, -0.78 - a * 0.1);
+    this.holder.position.set(side + bx - a * 0.11, -0.45 + by - this.equip * 0.4 + Math.max(0, -a) * 0.08 - a * 0.05, -0.78 - a * 0.1);
     this.holder.rotation.set(-a * 0.95 + 0.05, 0.08 + a * 0.32, a * 0.3);
     // Short landscape phones: shrink so the arm doesn't crowd the hotbar/touch buttons.
     this.holder.scale.setScalar(aspect > 1.9 ? 0.7 : 1);

@@ -605,7 +605,10 @@ export class MobManager {
     this.spawnTimer -= dt;
     if (this.spawnTimer <= 0) {
       this.spawnTimer = 1.5;
-      this.trySpawn(day, p, mobileScale);
+      // Cavern and island floors are sparse, so the other dimensions try a few spots per tick.
+      const tries = this.dim === 'overworld' ? 1 : 4;
+      const before = this.mobs.length;
+      for (let i = 0; i < tries && this.mobs.length === before; i++) this.trySpawn(day, p, mobileScale);
     }
     this.updateShots(dt, p, playerDead);
     for (const m of [...this.mobs]) {

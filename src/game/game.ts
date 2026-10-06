@@ -296,6 +296,8 @@ export class Game {
       this.meta = { ...this.meta, arrival: undefined };
     }
     this.player.ensureFree(this.world);
+    // Never pull a player through a rift they were already standing in when the world loaded.
+    this.portalLock = true;
     // Restore creatures saved near the player (only those of this dimension).
     for (const m of (this.meta.mobsDim ?? 'overworld') === this.dim ? this.meta.mobs ?? [] : []) {
       const mob = this.mobs.spawn(m.kind as MobKind, m.x, m.y, m.z);
