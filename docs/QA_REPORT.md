@@ -121,3 +121,43 @@ Bugs found in round 3:
 - Test harness: button presses shorter than a slow software-GL frame were sometimes missed, so presses now wait for real animation frames. Terrain-dependent aiming was replaced with a flat platform fixture.
 - E2E: the mine-and-collect check now waits for the dropped item to be picked up, since drops are entities.
 - Single-file build: opened by double-click (plain `file://`, no browser flags), Chrome refused the inlined *module* worker, so terrain generation silently fell back to the slower main thread. This was pre-existing; the earlier single-file test launched Chrome with `--allow-file-access-from-files`, which hid it. The single build now inlines a classic (IIFE) worker. Verified with 3 workers and no fallback from `file://`, in the wrapped artifact page, and in the full controller suite run on `release/BlockForge.html` (13 / 13).
+
+## Round 4 (dimensions, creatures, textures, mining) — automated results
+
+| Suite | Result |
+|---|---|
+| Unit tests | **105 / 105** (adds rift frames: light, refuse, collapse, build/find; Emberdeep and Voidreach generators: determinism, sealing, magma level, seams, gate/plaza, spires; dimension save validation; content; tile-flag packing; swing curve) |
+| Dimension QA (`npm run qa:dimensions`) | **16 / 16** |
+| Desktop E2E | 23 / 23 |
+| Touch | 15 / 15 |
+| Failures | 10 / 10 |
+| Bug hunt | 13 / 13 |
+| Feature QA | 11 / 11 |
+| Controller QA | 13 / 13 |
+| Responsive | 11 / 11 viewports |
+
+`scripts/dimensions.mjs` covers:
+- lighting a Duskstone frame with the Ember Striker; an open frame does not light
+- rift → Emberdeep, arriving inside a linked rift, with no bounce-back
+- Emberdeep terrain contents
+- magma damage
+- rift back to the exact overworld portal
+- breaking the frame collapses the rift
+- the Void Gate round trip through Voidreach
+- death in Emberdeep → overworld spawn
+- save and page reload while in Emberdeep
+- per-dimension creature spawning
+- a line-up of all 10 creatures
+- projectile damage
+- the mining swing producing chips, crack stages and a broken block
+
+Bugs found and fixed in round 4:
+- After reloading a save made while standing in a rift, the player was immediately pulled back through it. Any world load now starts with the rift lock set, until the player steps out.
+- Lighting or collapsing a rift edits blocks from inside the block-change hook, which re-validated half-built rift sheets. The portal module now guards against re-entry.
+- Creatures spawned too rarely in Emberdeep and Voidreach, because most random columns have no floor. Those dimensions now try several spots per spawn tick.
+
+Known limits:
+- Magma is a static liquid: it doesn't flow, and it doesn't interact with water.
+- There is no boss in Voidreach.
+- Only one Emberdeep portal is linked at a time; a new one is created when you light a rift far from the previous one.
+- Tested under SwiftShader (software GL) in headless Chromium, not on physical GPUs or phones.

@@ -283,7 +283,8 @@ await step('ranged creatures hurt the player with projectiles', async () => {
     g.mobs.clear();
     g.creative = false; g.player.creative = false;
     g.player.health = 20;
-    g.mobs.spawn('bonewalker', f.fx + 0.5, f.fy, f.fz - 8);
+    g.time = 0.75; // night: Bonewalkers fade away in daylight
+    g.mobs.spawn('bonewalker', f.fx + 0.5, f.fy, f.fz - 6); // inside the cleared pad, so terrain can't block its shots
     g.mobs.enabled = true;
     return g.player.health;
   }, F);
@@ -300,7 +301,7 @@ await step('mining: the arm swings, each strike throws chips and advances the cr
   await page.evaluate(() => window.__bf.app.input.setTouchPrimary(true));
   let maxParts = 0, swings = 0, maxStage = -1, broken = false;
   const t0 = Date.now();
-  while (Date.now() - t0 < 6000 && !broken) {
+  while (Date.now() - t0 < 15000 && !broken) { // software GL can run at a few fps
     const s = await page.evaluate((c) => { const g = window.__bf.app.game; return { n: g.particles.mesh.count, sw: g.hand.swinging, stage: g.highlight.stage, id: g.world.getBlock(c.x, c.y, c.z) }; }, cell);
     maxParts = Math.max(maxParts, s.n);
     maxStage = Math.max(maxStage, s.stage);
