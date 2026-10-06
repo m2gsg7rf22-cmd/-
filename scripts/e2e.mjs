@@ -246,6 +246,8 @@ await step('mine block below (hold primary)', async () => {
     });
     throw new Error(`block still there (${after}) diag=${JSON.stringify(diag)}`);
   }
+  // The broken block drops as an item entity first; give it a moment to be picked up (slow software GL frames).
+  await until(() => window.__bf.app.game.inventory.toJSON().some(Boolean), null, 8000, 'item picked up').catch(() => {});
   const total = await page.evaluate(() => window.__bf.app.game.inventory.toJSON().filter(Boolean).reduce((a, s) => a + s.count, 0));
   assert(total > 0, 'nothing collected');
   const inv = await page.evaluate(() => window.__bf.app.game.inventory.toJSON().filter(Boolean));
