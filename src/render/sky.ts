@@ -17,6 +17,8 @@ uniform vec3 uSunDir;
 uniform float uNight;
 uniform vec3 uSunsetColor;
 uniform float uSunset;
+uniform float uMode;
+uniform float uTime;
 varying vec3 vDir;
 
 float hash(vec3 p) {
@@ -41,6 +43,28 @@ void main() {
   float h = clamp(dir.y, -1.0, 1.0);
   float t = pow(clamp(h, 0.0, 1.0), 0.55);
   vec3 col = mix(uHorizon, uTop, t);
+  if (uMode > 1.5) {
+    // Voidreach: deep violet void, drifting nebula bands and permanent stars.
+    col = mix(uHorizon, uTop, pow(abs(h), 0.6));
+    float band = sin(dir.x * 3.1 + dir.z * 2.3 + sin(dir.y * 4.0 + uTime * 0.05) * 1.5);
+    col += vec3(0.16, 0.05, 0.24) * smoothstep(0.55, 1.0, band) * (1.0 - abs(h));
+    vec3 cell = floor(dir * 420.0);
+    float s = hash(cell);
+    col += vec3(0.9, 0.85, 1.0) * step(0.9975, s) * (0.4 + 0.6 * hash(cell + 3.1));
+    gl_FragColor = vec4(col, 1.0);
+    #include <colorspace_fragment>
+    return;
+  }
+  if (uMode > 0.5) {
+    // Emberdeep: a smoky red haze with slowly drifting embers.
+    col = mix(uHorizon, uTop, pow(abs(h), 0.7));
+    vec3 cell = floor(dir * 160.0 + vec3(0.0, -uTime * 0.6, 0.0));
+    float e = step(0.996, hash(cell));
+    col += vec3(1.0, 0.45, 0.1) * e * 0.6;
+    gl_FragColor = vec4(col, 1.0);
+    #include <colorspace_fragment>
+    return;
+  }
   // Below the horizon the dome shows the plain horizon color — exactly what terrain fog fades to.
 
   // Sunset glow toward the sun.
@@ -164,8 +188,17 @@ export interface SkyState {
   sunDir: THREE.Vector3;
 }
 
+const EMBER_TOP = new THREE.Color(0.1, 0.02, 0.015);
+const EMBER_HORIZON = new THREE.Color(0.3, 0.07, 0.03);
+const EMBER_LIGHT = new THREE.Color(1.0, 0.6, 0.45);
+const VOID_TOP = new THREE.Color(0.02, 0.008, 0.05);
+const VOID_HORIZON = new THREE.Color(0.1, 0.05, 0.16);
+const VOID_LIGHT = new THREE.Color(0.82, 0.72, 1.0);
+
 export class Sky {
   readonly group = new THREE.Group();
+  /** 'overworld' runs the day cycle; the other dimensions have fixed skies. */
+  dim: 'overworld' | 'emberdeep' | 'voidreach' = 'overworld';
   private dome: THREE.Mesh;
   private skyMat: THREE.ShaderMaterial;
   private clouds: THREE.Mesh;
@@ -189,6 +222,8 @@ export class Sky {
         uNight: { value: 0 },
         uSunsetColor: { value: SUNSET.clone() },
         uSunset: { value: 0 },
+        uMode: { value: 0 },
+        uTime: { value: 0 },
       },
       vertexShader: skyVert,
       fragmentShader: skyFrag,
@@ -230,6 +265,24 @@ export class Sky {
    * Update for time of day t in [0,1): 0 = sunrise, 0.25 = noon, 0.5 = sunset, 0.75 = midnight.
    */
   update(t: number, camPos: THREE.Vector3, elapsed: number, viewDist: number): void {
+    const u0 = this.skyMat.uniforms;
+    u0.uTime.value = elapsed;
+    this.dome.position.copy(camPos);
+    if (this.dim !== 'overworld') {
+      const ember = this.dim === 'emberdeep';
+      u0.uMode.value = ember ? 1 : 2;
+      u0.uTop.value.copy(ember ? EMBER_TOP : VOID_TOP);
+      u0.uHorizon.value.copy(ember ? EMBER_HORIZON : VOID_HORIZON);
+      this.state.day = 0;
+      this.state.horizon.copy(u0.uHorizon.value);
+      this.state.top.copy(u0.uTop.value);
+      this.state.light.copy(ember ? EMBER_LIGHT : VOID_LIGHT);
+      this.state.brightness = ember ? 0.35 : 0.55;
+      this.state.sunDir.set(0.3, 1, 0.2).normalize();
+      this.clouds.visible = false;
+      return;
+    }
+    u0.uMode.value = 0;
     const a = t * Math.PI * 2;
     const sunDir = this.state.sunDir.set(Math.cos(a), Math.sin(a), 0.25).normalize();
     const sunY = sunDir.y;

@@ -8,6 +8,10 @@ export class BlockHighlight {
   private crack: THREE.Mesh;
   private crackUv: THREE.BufferAttribute;
   private stage = -1;
+  /** Impact shake (decays each frame). */
+  private shake = 0;
+  private center = new THREE.Vector3();
+  private size = new THREE.Vector3(1, 1, 1);
 
   constructor(atlas: THREE.Texture) {
     const eg = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.004, 1.004, 1.004));
@@ -37,8 +41,33 @@ export class BlockHighlight {
         x1 = Math.max(x1, b[3]); y1 = Math.max(y1, b[4]); z1 = Math.max(z1, b[5]);
       }
     }
-    this.group.position.set(x + (x0 + x1) / 2, y + (y0 + y1) / 2, z + (z0 + z1) / 2);
-    this.group.scale.set(Math.max(0.05, x1 - x0), Math.max(0.05, y1 - y0), Math.max(0.05, z1 - z0));
+    this.center.set(x + (x0 + x1) / 2, y + (y0 + y1) / 2, z + (z0 + z1) / 2);
+    this.size.set(Math.max(0.05, x1 - x0), Math.max(0.05, y1 - y0), Math.max(0.05, z1 - z0));
+    this.apply();
+  }
+
+  /** A mining strike: the outline and cracks jolt and swell slightly. */
+  pulse(): void {
+    this.shake = 1;
+  }
+
+  /** Decay the impact shake; call once per frame. */
+  tick(dt: number): void {
+    if (this.shake <= 0) return;
+    this.shake = Math.max(0, this.shake - dt * 7);
+    this.apply();
+  }
+
+  private apply(): void {
+    const k = this.shake;
+    const j = k * 0.025;
+    this.group.position.set(
+      this.center.x + (Math.random() - 0.5) * j,
+      this.center.y + (Math.random() - 0.5) * j,
+      this.center.z + (Math.random() - 0.5) * j,
+    );
+    const sc = 1 + k * 0.035;
+    this.group.scale.set(this.size.x * sc, this.size.y * sc, this.size.z * sc);
   }
 
   dispose(): void {
@@ -73,6 +102,8 @@ export class BlockHighlight {
     this.crackUv.needsUpdate = true;
   }
 }
+
+const DUST = new THREE.Color(0.86, 0.84, 0.8);
 
 interface Particle {
   x: number; y: number; z: number;
@@ -139,19 +170,37 @@ export class Particles {
     const cols = this.colorsForTile(BLOCK_TILES[blockId * 3 + 2]);
     const n = Math.min(amount, Math.ceil(this.limit / 8));
     for (let i = 0; i < n; i++) {
+      // Fragments burst outward from the block center.
+      const px = Math.random(), py = Math.random(), pz = Math.random();
       this.spawn(
-        x + 0.2 + Math.random() * 0.6, y + 0.2 + Math.random() * 0.6, z + 0.2 + Math.random() * 0.6,
-        (Math.random() - 0.5) * 3, Math.random() * 3 + 1, (Math.random() - 0.5) * 3,
-        0.5 + Math.random() * 0.5, 0.08 + Math.random() * 0.07, cols[i % cols.length],
+        x + 0.1 + px * 0.8, y + 0.1 + py * 0.8, z + 0.1 + pz * 0.8,
+        (px - 0.5) * 5, py * 3 + 1.5, (pz - 0.5) * 5,
+        0.55 + Math.random() * 0.6, 0.05 + Math.random() * 0.1, cols[i % cols.length],
       );
     }
   }
 
-  /** Small debris puff while mining. */
-  chip(x: number, y: number, z: number, blockId: number): void {
+  /** Debris chip knocked off a block face while mining (flies out along the face normal). */
+  chip(x: number, y: number, z: number, blockId: number, nx = 0, ny = 1, nz = 0): void {
     if (this.limit === 0) return;
     const cols = this.colorsForTile(BLOCK_TILES[blockId * 3 + 2]);
-    this.spawn(x, y, z, (Math.random() - 0.5) * 2, Math.random() * 2, (Math.random() - 0.5) * 2, 0.35, 0.06, cols[0]);
+    const c = cols[Math.floor(Math.random() * cols.length)];
+    const sp = 1.6 + Math.random() * 1.8;
+    this.spawn(
+      x + (Math.random() - 0.5) * 0.4 * (1 - Math.abs(nx)), y + (Math.random() - 0.5) * 0.4 * (1 - Math.abs(ny)), z + (Math.random() - 0.5) * 0.4 * (1 - Math.abs(nz)),
+      nx * sp + (Math.random() - 0.5) * 2, ny * sp + 1 + Math.random() * 2.2, nz * sp + (Math.random() - 0.5) * 2,
+      0.35 + Math.random() * 0.3, 0.045 + Math.random() * 0.05, c,
+    );
+  }
+
+  /** Soft pale puff when a block breaks. */
+  dust(x: number, y: number, z: number): void {
+    if (this.limit === 0) return;
+    const n = Math.min(6, Math.ceil(this.limit / 20));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      this.spawn(x + Math.cos(a) * 0.3, y - 0.2, z + Math.sin(a) * 0.3, Math.cos(a) * 1.4, 0.8 + Math.random(), Math.sin(a) * 1.4, 0.45, 0.13 + Math.random() * 0.05, DUST);
+    }
   }
 
   burst(x: number, y: number, z: number, color: THREE.Color, n: number, speed = 2, up = 2): void {

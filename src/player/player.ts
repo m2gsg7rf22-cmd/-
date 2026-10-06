@@ -1,5 +1,5 @@
 import { PLAYER_EYE, PLAYER_HEIGHT, PLAYER_WIDTH, WORLD_HEIGHT } from '../core/constants';
-import { B, isWaterId } from '../core/ids';
+import { B, isMagmaId, isWaterId } from '../core/ids';
 import type { InputManager } from '../input/input';
 import { blockDef, SOLID, type Surface } from '../world/blocks';
 import { UNLOADED, type World } from '../world/world';
@@ -37,6 +37,10 @@ export class Player {
   onGround = false;
   inWater = false;
   headInWater = false;
+  /** Wading in molten magma (Emberdeep): slow, and burns in survival. */
+  inMagma = false;
+  headInMagma = false;
+  private burnTimer = 0;
   flying = false;
   creative = false;
   sprinting = false;
@@ -142,7 +146,9 @@ export class Player {
     const mid = world.getBlock(b.x, b.y + 0.9, b.z);
     const head = world.getBlock(b.x, this.eyeY, b.z);
     const wasInWater = this.inWater;
-    this.inWater = isWaterId(feet) || isWaterId(mid);
+    this.inMagma = isMagmaId(feet) || isMagmaId(mid);
+    this.headInMagma = isMagmaId(head);
+    this.inWater = isWaterId(feet) || isWaterId(mid) || this.inMagma;
     this.headInWater = isWaterId(head);
     if (this.inWater && !wasInWater && this.vy < -6) this.events.splash();
 
@@ -160,6 +166,7 @@ export class Player {
     this.sprinting = input.sprint && mv.y > 0.3 && (this.creative || this.hunger > 6);
     let speed = this.flying ? (this.sprinting ? FLY_SPRINT : FLY) : this.inWater ? SWIM : this.sprinting ? SPRINT : WALK;
     if (this.inWater && this.sprinting) speed *= 1.3;
+    if (this.inMagma && !this.flying) speed *= 0.45;
 
     const tx = wx * speed;
     const tz = wz * speed;
@@ -318,6 +325,15 @@ export class Player {
         this.hurt(1, 'starve');
       }
     } else this.starveTimer = 0;
+
+    // Burning in magma.
+    if (this.inMagma) {
+      this.burnTimer -= dt;
+      if (this.burnTimer <= 0) {
+        this.burnTimer = 0.6;
+        this.hurt(3, 'magma');
+      }
+    } else this.burnTimer = 0;
 
     // Drowning.
     if (this.headInWater) {

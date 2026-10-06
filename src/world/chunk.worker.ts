@@ -1,16 +1,17 @@
 /// <reference lib="webworker" />
-import { TerrainGenerator } from './generator';
+import type { ChunkGenerator } from './dimension';
+import { createGenerator } from './generators';
 import { meshChunk } from './mesher';
 import type { WorkerRequest, WorkerResponse } from './protocol';
 
-let gen: TerrainGenerator | null = null;
+let gen: ChunkGenerator | null = null;
 const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
 ctx.onmessage = (ev: MessageEvent<WorkerRequest>) => {
   const msg = ev.data;
   try {
     if (msg.type === 'init') {
-      gen = new TerrainGenerator(msg.seed);
+      gen = createGenerator(msg.dim, msg.seed);
     } else if (msg.type === 'gen') {
       if (!gen) throw new Error('worker not initialized');
       const data = gen.generate(msg.cx, msg.cz);

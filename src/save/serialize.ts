@@ -1,5 +1,6 @@
 import { CHUNK_VOLUME } from '../core/constants';
 import type { ItemStack } from '../game/inventory';
+import { DIMS, isDim, type Dim } from '../world/dimension';
 
 export type GameMode = 'survival' | 'creative';
 
@@ -18,8 +19,17 @@ export interface PlayerSave {
   spawn: { x: number; y: number; z: number };
 }
 
+export interface Vec3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/** How the player arrives after a dimension change (resolved once the destination has loaded). */
+export type Arrival = 'rift' | 'gate' | 'return' | 'spawn';
+
 export interface MobSave {
-  kind: 'grazer' | 'boar' | 'crawler';
+  kind: string;
   x: number;
   y: number;
   z: number;
@@ -39,6 +49,16 @@ export interface WorldMeta {
   player: PlayerSave | null;
   mobs?: MobSave[];
   version: number;
+  /** Dimension the player is in (absent in old saves = overworld). */
+  dim?: Dim;
+  /** Last position in each dimension (where the player left it). */
+  dimPos?: Partial<Record<Dim, Vec3>>;
+  /** Emberdeep-side rift portal linked to the overworld. */
+  emberLink?: Vec3;
+  /** Pending arrival after travelling (cleared once placed). */
+  arrival?: Arrival;
+  /** Dimension the saved creatures belong to. */
+  mobsDim?: Dim;
 }
 
 export const SAVE_VERSION = 1;
@@ -109,11 +129,31 @@ export function validateMeta(raw: unknown): WorldMeta | null {
     player,
     mobs: Array.isArray(r.mobs)
       ? r.mobs
-          .filter((m): m is MobSave => !!m && ['grazer', 'boar', 'crawler'].includes(m.kind) && finite(m.x) && finite(m.y) && finite(m.z) && finite(m.health) && m.health > 0)
+          .filter((m): m is MobSave => !!m && typeof m.kind === 'string' && /^[a-z]{2,16}$/.test(m.kind) && finite(m.x) && finite(m.y) && finite(m.z) && finite(m.health) && m.health > 0)
           .slice(0, 40)
       : [],
     version: finite(r.version) ? r.version : SAVE_VERSION,
+    dim: isDim(r.dim) ? r.dim : 'overworld',
+    dimPos: validDimPos(r.dimPos),
+    emberLink: validVec(r.emberLink) ?? undefined,
+    arrival: r.arrival === 'rift' || r.arrival === 'gate' || r.arrival === 'return' || r.arrival === 'spawn' ? r.arrival : undefined,
+    mobsDim: isDim(r.mobsDim) ? r.mobsDim : 'overworld',
   };
+}
+
+function validVec(v: unknown): Vec3 | null {
+  const o = v as Partial<Vec3> | null | undefined;
+  return o && finite(o.x) && finite(o.y) && finite(o.z) ? { x: o.x, y: o.y, z: o.z } : null;
+}
+
+function validDimPos(v: unknown): Partial<Record<Dim, Vec3>> {
+  const out: Partial<Record<Dim, Vec3>> = {};
+  if (!v || typeof v !== 'object') return out;
+  for (const d of DIMS) {
+    const p = validVec((v as Record<string, unknown>)[d]);
+    if (p) out[d] = p;
+  }
+  return out;
 }
 
 export function newWorldId(): string {

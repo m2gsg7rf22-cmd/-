@@ -5,7 +5,8 @@ import { B, isWaterId } from '../core/ids';
 import { decodeRLE, encodeRLE } from '../save/serialize';
 import type { SaveStore } from '../save/db';
 import { COLLISION, EMIT, OPAQUE, SOLID } from './blocks';
-import { TerrainGenerator } from './generator';
+import { dimWorldId, type ChunkGenerator, type Dim } from './dimension';
+import { createGenerator } from './generators';
 import { meshChunk, SECTION_H, SECTIONS, type ChunkMeshes, type MeshData } from './mesher';
 import { WorkerPool } from './workerPool';
 
@@ -46,7 +47,9 @@ export interface WorldStats {
 
 export class World {
   readonly group = new THREE.Group();
-  readonly gen: TerrainGenerator;
+  readonly gen: ChunkGenerator;
+  /** Chunk storage id (world id + dimension). */
+  private worldId: string;
   private pool: WorkerPool;
   private chunks = new Map<string, ChunkEntry>();
   private savedKeys = new Set<string>();
@@ -65,15 +68,17 @@ export class World {
 
   constructor(
     seed: number,
-    private worldId: string,
+    readonly dim: Dim,
+    worldId: string,
     private store: SaveStore,
     private materials: { opaque: THREE.Material; transparent: THREE.Material },
     renderDistance: number,
     ao: boolean,
   ) {
-    this.gen = new TerrainGenerator(seed);
+    this.worldId = dimWorldId(worldId, dim);
+    this.gen = createGenerator(dim, seed);
     const hc = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency || 4 : 4;
-    this.pool = new WorkerPool(seed, Math.max(1, Math.min(4, hc - 1)));
+    this.pool = new WorkerPool(seed, dim, Math.max(1, Math.min(4, hc - 1)));
     this.renderDistance = renderDistance;
     this.ao = ao;
     this.group.name = 'world';

@@ -44,6 +44,31 @@ export const B = {
   LUMEN_LAMP: 60,
   /** Flowing water levels 1..7 are WATER_FLOW + level - 1 (source B.WATER = level 8). */
   WATER_FLOW: 61,
+  // ---- Emberdeep (the burning underworld) ----
+  CINDERROCK: 68,
+  ASHEN_SAND: 69,
+  GLOWCAP: 70,
+  /** Molten magma: the glowing surface layer emits light, deeper magma (MAGMA_DEEP) doesn't (cheaper lighting). */
+  MAGMA: 71,
+  BASALT: 72,
+  DUSKSTONE: 73,
+  /** Rift portal panels: RIFT_X spans the x/y plane (thin along z), RIFT_Z spans z/y (thin along x). */
+  RIFT_X: 74,
+  RIFT_Z: 75,
+  QUARTZ_ORE: 76,
+  EMBER_STALK: 77,
+  EMBER_CAP: 78,
+  EMBER_SPROUT: 79,
+  // ---- Voidreach (islands in the void) ----
+  VOIDSTONE: 80,
+  VOID_BRICKS: 81,
+  VOID_STALK: 82,
+  VOID_BLOOM: 83,
+  VOID_GATE: 84,
+  VOID_CRYSTAL: 85,
+  CINDER_BRICKS: 86,
+  BONE_BLOCK: 87,
+  MAGMA_DEEP: 88,
 } as const;
 
 export type BlockId = number;
@@ -63,6 +88,13 @@ export const I = {
   ROAST_MEAT: 266,
   BREAD_LOAF: 267,
   DOOR_ITEM: 268,
+  GLOW_DUST: 269,
+  CINDER_QUARTZ: 270,
+  VOID_PEARL: 271,
+  EMBER_STRIKER: 272,
+  MAGMA_GEL: 273,
+  BONE: 274,
+  FEATHER: 275,
 } as const;
 
 export const isWaterId = (id: number): boolean => id === 10 || (id >= 61 && id <= 67);
@@ -70,6 +102,10 @@ export const isWaterId = (id: number): boolean => id === 10 || (id >= 61 && id <
 export const waterLevel = (id: number): number => (id === 10 ? 8 : id >= 61 && id <= 67 ? id - 60 : 0);
 export const isDoorId = (id: number): boolean => id >= 44 && id < 60;
 export const isStairsId = (id: number): boolean => id >= 36 && id < 44;
+export const isMagmaId = (id: number): boolean => id === 71 || id === 88;
+export const isRiftId = (id: number): boolean => id === 74 || id === 75;
+/** Liquids the player swims/wades in (water and magma). */
+export const isLiquidId = (id: number): boolean => isWaterId(id) || isMagmaId(id);
 
 export type ToolKind = 'pickaxe' | 'axe' | 'shovel' | 'blade';
 export const TOOL_KINDS: ToolKind[] = ['pickaxe', 'axe', 'shovel', 'blade'];

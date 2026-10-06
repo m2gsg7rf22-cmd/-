@@ -2,6 +2,7 @@ import { CHUNK_SIZE, CHUNK_VOLUME, SEA_LEVEL, WORLD_HEIGHT } from '../core/const
 import { blockIndex } from '../core/coords';
 import { B } from '../core/ids';
 import { Simplex, hash2, hash3, mulberry32 } from '../core/noise';
+import type { ChunkGenerator } from './dimension';
 
 export const enum Biome {
   Ocean = 0,
@@ -54,7 +55,7 @@ function continentHeight(c: number): number {
  * Deterministic terrain generator. Every function is pure given the seed, so
  * chunks can be generated independently (in workers) and still line up.
  */
-export class TerrainGenerator {
+export class TerrainGenerator implements ChunkGenerator {
   readonly seed: number;
   private cont: Simplex;
   private hills: Simplex;
@@ -132,6 +133,10 @@ export class TerrainGenerator {
     else if (hu > 0.02) biome = Biome.Forest;
     else biome = Biome.Plains;
     return { height, biome, temp: tempAdj };
+  }
+
+  describe(x: number, z: number): string {
+    return `Biome ${BIOME_NAMES[this.column(Math.floor(x), Math.floor(z)).biome]}`;
   }
 
   /** Raw cave density at lattice point (world coords multiple of CAVE_STEP). */
@@ -276,6 +281,8 @@ export class TerrainGenerator {
       [B.COPPER_ORE, 9, 6, 5, 64],
       [B.IRON_ORE, 7, 5, 5, 46],
       [B.LUMEN_ORE, 2, 4, 3, 20],
+      // Duskstone: the rift-frame material, rare and deep (needs an Iron pickaxe).
+      [B.DUSKSTONE, 2, 6, 3, 18],
     ];
     for (const [id, count, size, minY, maxY] of veins) {
       for (let v = 0; v < count; v++) {

@@ -3,7 +3,7 @@ import { audio } from '../audio/audio';
 import { gamepad } from '../input/gamepad';
 import { CHUNK_SIZE, DAY_LENGTH, WORLD_HEIGHT } from '../core/constants';
 import { toChunk } from '../core/coords';
-import { B } from '../core/ids';
+import { B, isRiftId } from '../core/ids';
 import type { InputManager } from '../input/input';
 import type { TouchControls } from '../input/touch';
 import { MAX_AIR, Player } from '../player/player';
@@ -13,9 +13,10 @@ import { worldUniforms } from '../render/materials';
 import type { Renderer } from '../render/renderer';
 import { Sky } from '../render/sky';
 import type { SaveStore } from '../save/db';
-import { SAVE_VERSION, type WorldMeta } from '../save/serialize';
+import { SAVE_VERSION, type Arrival, type Vec3, type WorldMeta } from '../save/serialize';
 import type { Hud } from '../ui/hud';
-import { BIOME_NAMES } from '../world/generator';
+import { DIM_NAMES, EMBER_MAGMA_LEVEL, EMBER_SCALE, type Dim } from '../world/dimension';
+import { buildRift, checkRiftAround, findRift } from './portals';
 import { blockDef } from '../world/blocks';
 import { World } from '../world/world';
 import { AdaptiveQuality, type QualityStep } from './adaptive';
@@ -23,13 +24,17 @@ import type { Station } from './crafting';
 import { Interaction } from './interaction';
 import { HOTBAR_SIZE, Inventory, type ItemStack } from './inventory';
 import { itemName } from './items';
-import { MobManager, type MobKind } from './mobs';
+import { MOB_SPECS, MobManager, type MobKind } from './mobs';
 import { DropManager } from './drops';
 import { FluidSim } from '../world/fluids';
 import type { Settings } from './settings';
 
+export type TravelVia = 'rift' | 'gate' | 'respawn';
+
 export interface GameHost {
   onDeath(cause: string): void;
+  /** Leave this dimension (the app saves, then reloads the world in the target dimension). */
+  onTravel(target: Dim, via: TravelVia): void;
   onRequestPause(): void;
   onRequestInventory(): void;
   onFatal(err: unknown): void;
@@ -40,13 +45,32 @@ const DEATH_TEXT: Record<string, string> = {
   void: 'You fell out of the world.',
   starve: 'You starved.',
   drown: 'You ran out of air.',
-  crawler: 'A Shadow Crawler got you.',
+  magma: 'You fell into molten magma.',
 };
+
+function deathText(cause: string): string {
+  if (cause.startsWith('mob:')) {
+    const spec = MOB_SPECS[cause.slice(4) as MobKind];
+    return spec ? `${spec.name === 'Shadow Crawler' ? 'A Shadow Crawler' : `A ${spec.name}`} got you.` : 'You were defeated.';
+  }
+  return DEATH_TEXT[cause] ?? 'You were defeated.';
+}
+
+/** Ambient light per dimension (level and tint). */
+const AMBIENT: Record<Dim, [number, THREE.Color]> = {
+  overworld: [0.09, new THREE.Color(1, 1, 1)],
+  emberdeep: [0.36, new THREE.Color(1.0, 0.56, 0.42)],
+  voidreach: [0.2, new THREE.Color(0.8, 0.72, 1.0)],
+};
+const MAGMA_FOG = new THREE.Color(0.85, 0.28, 0.04);
+/** Seconds standing in a rift before it pulls the player through. */
+const RIFT_TIME = 2.2;
 
 const AUTOSAVE_SEC = 30;
 const UNDERWATER_FOG = new THREE.Color(0.05, 0.16, 0.32);
 
 export class Game {
+  readonly dim: Dim;
   readonly world: World;
   readonly player: Player;
   inventory: Inventory;
@@ -83,6 +107,11 @@ export class Game {
   private fpsFrames = 0;
   private offInput: () => void;
   private wasUnderwater = false;
+  private wasInMagma = false;
+  /** Set on arrival inside a rift; cleared once the player steps out of it. */
+  private portalLock = false;
+  private portalTime = 0;
+  private travelling = false;
   private lastFlying = false;
   private disposed = false;
 
@@ -101,7 +130,9 @@ export class Game {
     this.creative = meta.mode === 'creative';
     this.time = meta.time;
     this.day = meta.day;
-    this.world = new World(meta.seedNum, meta.id, store, r.materials, settings.renderDistance, settings.ao);
+    this.dim = meta.dim ?? 'overworld';
+    this.sky.dim = this.dim;
+    this.world = new World(meta.seedNum, this.dim, meta.id, store, r.materials, settings.renderDistance, settings.ao);
     this.world.onChunkError = () => this.hud.toast('A chunk failed to load — retrying', true);
     this.player = new Player({
       step: (s) => audio.step(s),
@@ -125,7 +156,7 @@ export class Game {
       death: (cause) => {
         audio.death();
         gamepad.rumble(1, 1, 450);
-        this.host.onDeath(DEATH_TEXT[cause] ?? 'You were defeated.');
+        this.host.onDeath(deathText(cause));
       },
     });
     this.player.creative = this.creative;
@@ -133,9 +164,9 @@ export class Game {
     this.highlight = new BlockHighlight(r.atlas);
     this.particles = new Particles(mobile ? 120 : 400, r.atlasCanvas);
     this.mobs = new MobManager(this.world, {
-      hurtPlayer: (amount, fx, fz) => {
+      hurtPlayer: (amount, fx, fz, cause) => {
         if (this.player.dead || this.creative) return;
-        this.player.hurt(amount, 'crawler');
+        this.player.hurt(amount, `mob:${cause}`);
         const dx = this.player.body.x - fx;
         const dz = this.player.body.z - fz;
         const l = Math.hypot(dx, dz) || 1;
@@ -152,14 +183,19 @@ export class Game {
         const d = Math.hypot(mob.body.x - this.player.body.x, mob.body.z - this.player.body.z);
         if (d > 24) return;
         if (kind === 'hiss') audio.mobHiss();
-        else audio.mobGrunt(mob.kind === 'boar' ? 0.8 : 1.2);
+        else if (kind === 'shoot') audio.mobShoot(MOB_SPECS[mob.kind].voice);
+        else if (kind === 'blink') audio.blink();
+        else audio.mobGrunt(MOB_SPECS[mob.kind].voice);
       },
-    });
+    }, this.dim);
     this.interaction = new Interaction(this);
     this.hand = new HandView(r.atlas);
     this.drops = new DropManager(r.atlas);
     this.fluids = new FluidSim(this.world);
-    this.world.onBlockChanged = (x, y, z) => this.fluids.touch(x, y, z);
+    this.world.onBlockChanged = (x, y, z) => {
+      this.fluids.touch(x, y, z);
+      if (checkRiftAround(this.world, x, y, z) > 0) audio.blink();
+    };
     this.adaptive = new AdaptiveQuality(mobile ? 30 : 55);
 
     const scene = r.scene;
@@ -210,6 +246,8 @@ export class Game {
       fresh = true;
       if (!this.creative) this.starterKit();
     }
+    const arrival = this.meta.arrival;
+    if (arrival === 'gate' && this.dim === 'voidreach') ({ x, y, z } = this.world.gen.findSpawn());
     this.player.setPosition(x, y, z);
 
     // Stream until the spawn neighborhood is generated AND meshed.
@@ -251,17 +289,111 @@ export class Game {
       this.player.setPosition(x, y, z);
       this.player.spawn = { x, y, z };
       this.time = 0.04;
+    } else if (arrival) {
+      ({ x, y, z } = this.resolveArrival(arrival, x, y, z));
+      this.player.setPosition(x, y, z);
+      this.player.vx = this.player.vy = this.player.vz = 0;
+      this.meta = { ...this.meta, arrival: undefined };
     }
     this.player.ensureFree(this.world);
-    // Restore creatures saved near the player.
-    for (const m of this.meta.mobs ?? []) {
+    // Restore creatures saved near the player (only those of this dimension).
+    for (const m of (this.meta.mobsDim ?? 'overworld') === this.dim ? this.meta.mobs ?? [] : []) {
       const mob = this.mobs.spawn(m.kind as MobKind, m.x, m.y, m.z);
       mob.health = m.health;
     }
     progress('Entering world…', 1);
     this.updateCamera(0);
     this.sky.update(this.time, this.camera.position, 0, this.world.renderDistance * CHUNK_SIZE);
-    if (fresh) await this.save();
+    if (fresh || arrival) await this.save();
+    if (this.dim !== 'overworld') this.hud.toast(DIM_NAMES[this.dim], false, 3500);
+  }
+
+  /** Place the player after a dimension change, once the destination chunks exist. */
+  private resolveArrival(kind: Arrival, x: number, y: number, z: number): Vec3 {
+    const w = this.world;
+    if (kind === 'rift') {
+      let cell = findRift(w, x, y, z, 14, 48);
+      if (!cell) {
+        const spot = this.dim === 'emberdeep' ? this.emberSpot(x, y, z) : w.findSafeSpot(x, z, 16) ?? { x, y: Math.max(2, w.surfaceY(x, z) + 1), z };
+        cell = buildRift(w, spot.x, spot.y, spot.z);
+      }
+      if (this.dim === 'emberdeep') this.meta = { ...this.meta, emberLink: { x: cell.x, y: cell.y, z: cell.z } };
+      // Arriving inside a rift must not bounce the player straight back.
+      this.portalLock = true;
+      return { x: cell.x + 0.5, y: cell.y, z: cell.z + 0.5 };
+    }
+    if (kind === 'gate') return w.gen.findSpawn();
+    if (kind === 'spawn') return { ...this.player.spawn };
+    return w.findSafeSpot(x, z, 24) ?? { x, y: Math.max(y, w.surfaceY(x, z) + 1), z };
+  }
+
+  /** A standing spot in Emberdeep near (x,y,z): rock floor above the magma sea with headroom. */
+  private emberSpot(x: number, y: number, z: number): Vec3 {
+    const w = this.world;
+    const free = (id: number) => id !== 255 && id !== B.MAGMA && id !== B.MAGMA_DEEP && !blockDef(id).solid;
+    const hint = Math.max(EMBER_MAGMA_LEVEL + 2, Math.min(100, Math.floor(y)));
+    for (let r = 0; r <= 12; r++) {
+      for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
+        if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+        const cx = Math.floor(x) + dx, cz = Math.floor(z) + dz;
+        for (let d = 0; d < 70; d++) {
+          const yy = hint + (d % 2 === 0 ? d / 2 : -(d + 1) / 2);
+          if (yy <= EMBER_MAGMA_LEVEL + 1 || yy > 110) continue;
+          const below = w.getBlock(cx, yy - 1, cz);
+          if (below === 255 || !blockDef(below).solid) continue;
+          if (free(w.getBlock(cx, yy, cz)) && free(w.getBlock(cx, yy + 1, cz)) && free(w.getBlock(cx, yy + 2, cz))) return { x: cx, y: yy, z: cz };
+        }
+      }
+    }
+    return { x: Math.floor(x), y: hint, z: Math.floor(z) };
+  }
+
+  /** World meta for leaving this dimension (saved by the app before reloading at the destination). */
+  travelMeta(target: Dim, via: TravelVia): WorldMeta {
+    const snap = this.snapshotMeta();
+    const b = this.player.body;
+    const here: Vec3 = { x: b.x, y: b.y, z: b.z };
+    const dimPos = { ...(snap.dimPos ?? {}), [this.dim]: here };
+    const spawn = { ...this.player.spawn };
+    let dest: Vec3;
+    let arrival: Arrival;
+    if (via === 'respawn') {
+      dest = spawn;
+      arrival = 'spawn';
+    } else if (via === 'rift') {
+      arrival = 'rift';
+      if (target === 'emberdeep') {
+        const scaled = { x: here.x / EMBER_SCALE, y: 64, z: here.z / EMBER_SCALE };
+        const link = snap.emberLink;
+        // Reuse the linked portal unless this rift is far from the one that made the link.
+        dest = link && Math.hypot(link.x - scaled.x, link.z - scaled.z) < 48 ? link : scaled;
+      } else {
+        const back = dimPos.overworld;
+        dest = back ?? { x: here.x * EMBER_SCALE, y: 70, z: here.z * EMBER_SCALE };
+      }
+    } else if (target === 'voidreach') {
+      dest = { x: 0.5, y: 70, z: 0.5 };
+      arrival = 'gate';
+    } else {
+      dest = dimPos.overworld ?? spawn;
+      arrival = 'return';
+    }
+    const player = snap.player!;
+    return {
+      ...snap,
+      dim: target,
+      dimPos,
+      arrival,
+      mobs: [],
+      mobsDim: target,
+      emberLink: target === 'emberdeep' && via === 'rift' && dest !== snap.emberLink ? undefined : snap.emberLink,
+      player: {
+        ...player,
+        x: dest.x, y: dest.y, z: dest.z,
+        flying: player.flying && this.creative,
+        ...(via === 'respawn' ? { health: 20, hunger: 20, saturation: 5 } : {}),
+      },
+    };
   }
 
   private starterKit(): void {
@@ -304,6 +436,11 @@ export class Game {
   }
 
   respawn(): void {
+    if (this.dim !== 'overworld') {
+      // Respawning always happens at the overworld spawn point.
+      this.host.onTravel('overworld', 'respawn');
+      return;
+    }
     this.player.respawn();
     this.needsUnstick = true;
     this.interaction.reset();
@@ -409,7 +546,7 @@ export class Game {
     this.sky.cloudsVisible = s.clouds && this.caps.clouds;
     this.r.setQuality(Math.min(s.resolutionScale, this.caps.resolution), this.mobile);
     audio.setVolumes(s.master, s.effects, s.ambient, s.music);
-    if (this.hud.minimap) this.hud.minimap.visible = s.showMap;
+    if (this.hud.minimap) this.hud.minimap.visible = s.showMap && this.dim !== 'emberdeep';
     this.player.autoJump = s.autoJump;
     this.debugOn = s.showDebug;
     this.mobs.maxPassive = this.mobile ? 5 : 8;
@@ -478,6 +615,7 @@ export class Game {
         this.day++;
       }
       this.mobs.update(dt, this.sky.state.day, p.dead, this.mobile ? 0.6 : 1);
+      this.updateRift(dt);
       this.fluids.update(dt);
       this.autosaveTimer -= dt;
       if (this.autosaveTimer <= 0) {
@@ -507,9 +645,16 @@ export class Game {
     worldUniforms.uDaylight.value = st.brightness;
     worldUniforms.uLightColor.value.copy(st.light);
     worldUniforms.uTime.value = this.elapsed;
+    worldUniforms.uAmbient.value = AMBIENT[this.dim][0];
+    worldUniforms.uAmbientColor.value.copy(AMBIENT[this.dim][1]);
     this.mobs.setLight(st.brightness, st.sunDir);
     const underwater = p.headInWater;
-    if (underwater) {
+    if (p.headInMagma) {
+      worldUniforms.uFogColor.value.copy(MAGMA_FOG);
+      worldUniforms.uSkyTop.value.copy(MAGMA_FOG);
+      worldUniforms.uFogNear.value = 0.3;
+      worldUniforms.uFogFar.value = 3.5;
+    } else if (underwater) {
       worldUniforms.uFogColor.value.copy(UNDERWATER_FOG).multiplyScalar(0.4 + st.brightness * 0.6);
       worldUniforms.uSkyTop.value.copy(worldUniforms.uFogColor.value);
       worldUniforms.uFogNear.value = 1;
@@ -519,6 +664,15 @@ export class Game {
       worldUniforms.uSkyTop.value.copy(st.top);
       worldUniforms.uFogFar.value = Math.max(32, viewDist - 4);
       worldUniforms.uFogNear.value = worldUniforms.uFogFar.value * 0.55;
+      if (this.dim === 'emberdeep') {
+        // Thick, hot haze.
+        worldUniforms.uFogFar.value = Math.max(28, Math.min(72, viewDist * 0.8));
+        worldUniforms.uFogNear.value = worldUniforms.uFogFar.value * 0.2;
+      }
+    }
+    if (p.headInMagma !== this.wasInMagma) {
+      this.wasInMagma = p.headInMagma;
+      document.getElementById('overlay-magma')?.classList.toggle('on', p.headInMagma);
     }
     if (underwater !== this.wasUnderwater) {
       this.wasUnderwater = underwater;
@@ -528,6 +682,7 @@ export class Game {
     if (hurt) hurt.style.opacity = String(Math.min(1, p.hurtFlash) * 0.9);
 
     this.particles.update(dt, this.world.isSolid);
+    this.highlight.tick(dt);
     const picked = this.drops.update(
       active ? dt : 0,
       this.world.collisionAt,
@@ -546,9 +701,11 @@ export class Game {
       this.undergroundTimer = 1;
       this.underground = p.isUnderground(this.world);
     }
-    audio.updateAmbient(this.elapsed, p.body.y, st.day, this.underground);
-    audio.updateMusic(this.elapsed, st.day, this.underground);
-    this.hud.minimap?.update(dt, this.world, p.body.x, p.body.y, p.body.z, p.yaw);
+    const enclosed = this.underground || this.dim === 'emberdeep';
+    audio.updateAmbient(this.elapsed, p.body.y, st.day, enclosed);
+    audio.updateMusic(this.elapsed, st.day, enclosed);
+    // Emberdeep has a solid roof, so a top-down map would only show the ceiling.
+    if (this.dim !== 'emberdeep') this.hud.minimap?.update(dt, this.world, p.body.x, p.body.y, p.body.z, p.yaw);
 
     // FPS / debug.
     this.fpsAcc += dt;
@@ -575,16 +732,45 @@ export class Game {
   private underground = false;
   private undergroundTimer = 0;
 
+  /** Standing in a rift long enough pulls the player through to the linked dimension. */
+  private updateRift(dt: number): void {
+    const p = this.player;
+    const b = p.body;
+    const inRift = isRiftId(this.world.getBlock(b.x, b.y + 0.2, b.z)) || isRiftId(this.world.getBlock(b.x, b.y + 1.2, b.z));
+    if (!inRift) this.portalLock = false;
+    if (inRift && !this.portalLock && !this.travelling && !p.dead) {
+      this.portalTime += dt;
+      if (this.portalTime >= (this.creative ? 0.8 : RIFT_TIME)) {
+        this.travelling = true;
+        audio.blink();
+        this.host.onTravel(this.dim === 'emberdeep' ? 'overworld' : 'emberdeep', 'rift');
+      }
+    } else this.portalTime = Math.max(0, this.portalTime - dt * 2);
+    const fx = document.getElementById('overlay-rift');
+    if (fx) fx.style.opacity = String(Math.min(1, this.portalTime / RIFT_TIME) * 0.95);
+  }
+
+  toast(msg: string): void {
+    this.hud.toast(msg);
+  }
+
+  /** Use a Void Gate: to Voidreach, or home to the overworld from there. */
+  useVoidGate(): void {
+    if (this.travelling) return;
+    this.travelling = true;
+    audio.blink();
+    this.host.onTravel(this.dim === 'voidreach' ? 'overworld' : 'voidreach', 'gate');
+  }
+
   private debugText(): string {
     const p = this.player;
     const ws = this.world.stats();
     const ri = this.r.info();
-    const col = this.world.gen.column(Math.floor(p.body.x), Math.floor(p.body.z));
     const mem = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
     return [
       `BlockForge  ${this.fps.toFixed(0)} fps`,
       `XYZ ${p.body.x.toFixed(1)} ${p.body.y.toFixed(1)} ${p.body.z.toFixed(1)}`,
-      `Chunk ${toChunk(p.body.x)}, ${toChunk(p.body.z)}  Biome ${BIOME_NAMES[col.biome]}`,
+      `Chunk ${toChunk(p.body.x)}, ${toChunk(p.body.z)}  ${this.world.gen.describe(p.body.x, p.body.z)}`,
       `Chunks ${ws.meshed}/${ws.loaded} loaded  jobs ${ws.pending}  workers ${ws.fallback ? 'main-thread' : ws.workers}`,
       `Draw calls ${ri.calls}  tris ${(ri.triangles / 1000).toFixed(0)}k  geos ${ri.geometries}`,
       `Mobs ${this.mobs.mobs.length}  RD ${this.world.renderDistance}  res ${(this.r.renderer.getPixelRatio()).toFixed(2)}`,
@@ -602,6 +788,7 @@ export class Game {
       time: this.time,
       day: this.day,
       version: SAVE_VERSION,
+      mobsDim: this.dim,
       mobs: this.mobs.mobs
         .filter((m) => Math.hypot(m.body.x - p.body.x, m.body.z - p.body.z) < 64)
         .map((m) => ({ kind: m.kind, x: m.body.x, y: m.body.y, z: m.body.z, health: m.health })),
@@ -639,7 +826,7 @@ export class Game {
     this.offInput();
     const scene = this.r.scene;
     scene.remove(this.sky.group, this.world.group, this.highlight.group, this.particles.mesh, this.mobs.group, this.drops.group);
-    this.mobs.clear();
+    this.mobs.dispose();
     this.drops.dispose();
     this.world.dispose();
     this.sky.dispose();
@@ -648,6 +835,9 @@ export class Game {
     this.hand.dispose();
     this.hud.onHotbarSelect = undefined;
     document.getElementById('overlay-water')?.classList.remove('on');
+    document.getElementById('overlay-magma')?.classList.remove('on');
+    const rift = document.getElementById('overlay-rift');
+    if (rift) rift.style.opacity = '0';
     const hurt = document.getElementById('overlay-hurt');
     if (hurt) hurt.style.opacity = '0';
   }

@@ -2,7 +2,7 @@ import { CHUNK_SIZE, PAD_SIZE, PAD_VOLUME, WORLD_HEIGHT } from '../core/constant
 import { padIndex } from '../core/coords';
 import { B, isWaterId, waterLevel } from '../core/ids';
 import { BLOCKS, EMIT, OPAQUE, RENDER } from './blocks';
-import { BLOCK_TILES, tileRect } from './tiles';
+import { BLOCK_TILES, tileBase } from './tiles';
 
 /**
  * Geometry buffers for one mesh.
@@ -350,7 +350,7 @@ export function meshChunk(pad: Uint8Array, aoEnabled = true, emitters?: Int16Arr
             continue;
           }
 
-          const [u0, v0] = tileRect(tile);
+          const [u0, v0] = tileBase(tile);
           for (let c = 0; c < 4; c++) {
             const off = fc.corners[c];
             corner[c * 3] = x + off[0];
@@ -373,7 +373,7 @@ export function meshChunk(pad: Uint8Array, aoEnabled = true, emitters?: Int16Arr
 
   function emitCross(id: number, x: number, y: number, z: number): void {
     const tile = BLOCK_TILES[id * 3 + 2];
-    const [u0, v0] = tileRect(tile);
+    const [u0, v0] = tileBase(tile);
     const s = skyAt(x, y, z) / 15;
     const bl = blkAt(x, y, z) / 15;
     const l = [0.9, s, bl, 0.9, s, bl, 0.9, s, bl, 0.9, s, bl];
@@ -410,7 +410,7 @@ export function meshChunk(pad: Uint8Array, aoEnabled = true, emitters?: Int16Arr
         const s = skyAt(sx, sy, sz) / 15;
         const bl = glows ? 1 : blkAt(sx, sy, sz) / 15;
         const tile = BLOCK_TILES[id * 3 + fc.tile];
-        const [u0, v0] = tileRect(tile);
+        const [u0, v0] = tileBase(tile);
         const c0 = fc.corners[0];
         const c1 = fc.corners[1];
         for (let c = 0; c < 4; c++) {
@@ -437,7 +437,7 @@ export function meshChunk(pad: Uint8Array, aoEnabled = true, emitters?: Int16Arr
   function emitWater(x: number, y: number, z: number): void {
     const h = waterHeight(pad, x, y, z);
     const tile = BLOCK_TILES[B.WATER * 3];
-    const [u0, v0] = tileRect(tile);
+    const [u0, v0] = tileBase(tile);
     const bld = transB[sectionOf(y)];
     for (let f = 0; f < 6; f++) {
       const fc = FACES[f];
@@ -554,7 +554,7 @@ export function meshChunk(pad: Uint8Array, aoEnabled = true, emitters?: Int16Arr
     const W = size[fc.uAxis] - 0.0001;
     const Hh = size[fc.vAxis] - 0.0001;
     uvs[0] = 0; uvs[1] = 0; uvs[2] = W; uvs[3] = 0; uvs[4] = W; uvs[5] = Hh; uvs[6] = 0; uvs[7] = Hh;
-    const [u0, v0] = tileRect(tile);
+    const [u0, v0] = tileBase(tile);
     const y0 = nAxis === 1 ? s : origin[1];
     opaqueB[sectionOf(y0)].quad(corner, uvs, u0, v0, lights, ((ao >> 8) & 1) === 1);
   }

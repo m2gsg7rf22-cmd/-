@@ -235,6 +235,14 @@ export class AudioEngine {
   mobGrunt(pitch: number): void {
     this.tone(120 * pitch, 0.25, 0.18, 'sawtooth', 80 * pitch);
   }
+  mobShoot(pitch: number): void {
+    this.tone(320 * pitch, 0.12, 0.12, 'square', 140 * pitch);
+  }
+  /** Teleport / rift whoosh. */
+  blink(): void {
+    this.tone(180, 0.35, 0.16, 'sine', 900);
+    this.burst({ type: 'bandpass', freq: 1400, q: 1.2, dur: 0.35, gain: 0.3 }, 0.3, 0.6);
+  }
   mobHiss(): void {
     this.burst({ type: 'highpass', freq: 3000, q: 0.5, dur: 0.4, gain: 0.5 }, 0.5, 0.8);
   }

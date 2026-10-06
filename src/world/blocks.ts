@@ -129,6 +129,32 @@ for (let l = 1; l <= 7; l++) {
   def({ id: B.WATER_FLOW + l - 1, name: 'Flowing Water', render: 'water', solid: false, opaque: false, hardness: Infinity, tiles: t3('water'), drop: [], surface: 'water', replaceable: true, variant: true });
 }
 
+// ---- Emberdeep ----
+def({ id: B.CINDERROCK, name: 'Cinderrock', hardness: 0.9, tool: 'pickaxe', minTier: 0, tiles: t3('cinderrock') });
+def({ id: B.ASHEN_SAND, name: 'Ashen Sand', hardness: 0.6, tool: 'shovel', tiles: t3('ashen_sand'), surface: 'sand' });
+def({ id: B.GLOWCAP, name: 'Glowcap Cluster', hardness: 0.4, tiles: t3('glowcap'), surface: 'glass', light: 15, drop: [{ id: I.GLOW_DUST, count: 3 }] });
+def({ id: B.MAGMA, name: 'Molten Magma', solid: false, hardness: Infinity, tiles: t3('magma'), drop: [], surface: 'water', light: 13, replaceable: true });
+def({ id: B.MAGMA_DEEP, name: 'Molten Magma', solid: false, hardness: Infinity, tiles: t3('magma'), drop: [], surface: 'water', variant: true, replaceable: true });
+def({ id: B.BASALT, name: 'Scorched Basalt', hardness: 1.4, tool: 'pickaxe', minTier: 0, tiles: ['basalt_top', 'basalt_top', 'basalt_side'] });
+def({ id: B.DUSKSTONE, name: 'Duskstone', hardness: 9, tool: 'pickaxe', minTier: 3, tiles: t3('duskstone') });
+def({ id: B.RIFT_X, name: 'Rift', render: 'shape', solid: false, opaque: false, hardness: Infinity, tiles: t3('rift'), surface: 'glass', light: 11, drop: [], variant: true,
+  boxes: [[0, 0, 6 * P, 1, 1, 10 * P]] });
+def({ id: B.RIFT_Z, name: 'Rift', render: 'shape', solid: false, opaque: false, hardness: Infinity, tiles: t3('rift'), surface: 'glass', light: 11, drop: [], variant: true,
+  boxes: [[6 * P, 0, 0, 10 * P, 1, 1]] });
+def({ id: B.QUARTZ_ORE, name: 'Cinder Quartz Ore', hardness: 1.6, tool: 'pickaxe', minTier: 0, tiles: t3('quartz_ore'), drop: [{ id: I.CINDER_QUARTZ, count: 1 }] });
+def({ id: B.EMBER_STALK, name: 'Emberwood Stalk', hardness: 1.8, tool: 'axe', tiles: ['ember_stalk_top', 'ember_stalk_top', 'ember_stalk'], surface: 'wood' });
+def({ id: B.EMBER_CAP, name: 'Ember Cap', hardness: 0.8, tool: 'axe', tiles: t3('ember_cap'), surface: 'plant', light: 6 });
+def({ id: B.EMBER_SPROUT, name: 'Ember Sprout', render: 'cross', solid: false, opaque: false, hardness: 0.05, tiles: t3('ember_sprout'), surface: 'plant', replaceable: true, light: 4 });
+def({ id: B.CINDER_BRICKS, name: 'Cinder Bricks', hardness: 2, tool: 'pickaxe', minTier: 0, tiles: t3('cinder_bricks') });
+// ---- Voidreach ----
+def({ id: B.VOIDSTONE, name: 'Voidstone', hardness: 2.6, tool: 'pickaxe', minTier: 0, tiles: t3('voidstone') });
+def({ id: B.VOID_BRICKS, name: 'Voidstone Bricks', hardness: 2.6, tool: 'pickaxe', minTier: 0, tiles: t3('void_bricks') });
+def({ id: B.VOID_STALK, name: 'Voidbloom Stalk', render: 'cutout', opaque: false, hardness: 0.5, tool: 'axe', tiles: ['void_stalk_top', 'void_stalk_top', 'void_stalk'], surface: 'wood' });
+def({ id: B.VOID_BLOOM, name: 'Voidbloom', render: 'cutout', opaque: false, hardness: 0.4, tiles: t3('void_bloom'), surface: 'plant', light: 9 });
+def({ id: B.VOID_GATE, name: 'Void Gate', hardness: 5, tool: 'pickaxe', minTier: 0, tiles: ['void_gate_top', 'void_gate_top', 'void_gate_side'], surface: 'glass', light: 10 });
+def({ id: B.VOID_CRYSTAL, name: 'Void Crystal', render: 'glass', opaque: false, hardness: 0.6, tiles: t3('void_crystal'), surface: 'glass', light: 15, drop: [{ id: I.VOID_PEARL, count: 1 }] });
+def({ id: B.BONE_BLOCK, name: 'Bone Block', hardness: 2, tool: 'pickaxe', minTier: 0, tiles: ['bone_top', 'bone_top', 'bone_side'] });
+
 export const BLOCKS: readonly BlockDef[] = defs;
 export const BLOCK_COUNT = defs.length;
 
@@ -156,6 +182,8 @@ for (const d of defs) {
   SELECTION[d.id] = d.render === 'none' || d.render === 'water' ? null : d.render === 'cross' ? SELECT_PLANT : (d.boxes ?? FULL_BOX);
 }
 EMIT[B.LUMEN_ORE] = 6;
+// Rift panels can't be targeted (you aim through them at the frame); they collapse when the frame breaks.
+SELECTION[B.RIFT_X] = SELECTION[B.RIFT_Z] = null;
 
 export function isBlockId(id: number): boolean {
   return id > 0 && id < 256 && defs[id] !== undefined;

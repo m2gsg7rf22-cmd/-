@@ -52,6 +52,9 @@ html, body {
 #overlay-water { background: radial-gradient(ellipse at center, rgba(30, 80, 160, 0.25), rgba(10, 30, 80, 0.55)); }
 #overlay-water.on { opacity: 1; }
 #overlay-hurt { background: radial-gradient(ellipse at center, transparent 45%, rgba(200, 20, 20, 0.55)); }
+#overlay-magma { background: radial-gradient(ellipse at center, rgba(255, 120, 20, 0.55), rgba(160, 30, 0, 0.85)); }
+#overlay-magma.on { opacity: 1; }
+#overlay-rift { background: radial-gradient(ellipse at center, rgba(150, 60, 255, 0.2), rgba(70, 10, 140, 0.75)); transition: none; }
 
 /* ---------- buttons ---------- */
 .btn {

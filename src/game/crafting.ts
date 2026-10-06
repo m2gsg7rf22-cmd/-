@@ -33,6 +33,16 @@ r('stairs_brick', [B.STAIRS_BRICK, 4], [[B.SLATE_BRICKS, 6]], 'bench');
 r('door', [I.DOOR_ITEM, 1], [[B.PLANKS, 6]], 'bench');
 r('lumen_lamp', [B.LUMEN_LAMP, 1], [[B.GLASS, 1], [I.LUMEN_SHARD, 1]], 'bench');
 r('slate_bricks', [B.SLATE_BRICKS, 4], [[B.RUBBLE, 4]], 'bench');
+// Travel between dimensions.
+r('ember_striker', [I.EMBER_STRIKER, 1], [[I.IRON_INGOT, 1], [I.EMBER, 1]]);
+r('void_gate', [B.VOID_GATE, 1], [[I.VOID_PEARL, 4], [B.DUSKSTONE, 4], [I.LUMEN_SHARD, 1]], 'bench');
+// Emberdeep and Voidreach materials.
+r('glowcap', [B.GLOWCAP, 1], [[I.GLOW_DUST, 4]]);
+r('glow_torch', [B.TORCH, 4], [[I.STICK, 1], [I.GLOW_DUST, 1]]);
+r('void_bricks', [B.VOID_BRICKS, 4], [[B.VOIDSTONE, 4]], 'bench');
+r('bone_block', [B.BONE_BLOCK, 1], [[I.BONE, 4]]);
+r('lumen_lamp_quartz', [B.LUMEN_LAMP, 2], [[B.GLASS, 2], [I.CINDER_QUARTZ, 1], [I.GLOW_DUST, 2]], 'bench');
+r('planks_ember', [B.PLANKS, 4], [[B.EMBER_STALK, 1]]);
 
 const materials: [number, number][] = [
   [0, B.PLANKS],
@@ -60,6 +70,9 @@ r('glass', [B.GLASS, 4], [[B.SAND, 4], [I.EMBER, 1]], 'kiln');
 r('roast_meat', [I.ROAST_MEAT, 2], [[I.RAW_MEAT, 2], [I.EMBER, 1]], 'kiln');
 r('seed_loaf', [I.BREAD_LOAF, 1], [[I.BERRIES, 4], [I.EMBER, 1]], 'kiln');
 r('stone', [B.STONE, 4], [[B.RUBBLE, 4], [I.EMBER, 1]], 'kiln');
+r('cinder_bricks', [B.CINDER_BRICKS, 4], [[B.CINDERROCK, 4], [I.EMBER, 1]], 'kiln');
+r('ember_from_gel', [I.EMBER, 3], [[I.MAGMA_GEL, 1]], 'kiln');
+r('glass_ash', [B.GLASS, 3], [[B.ASHEN_SAND, 4], [I.MAGMA_GEL, 1]], 'kiln');
 
 export const RECIPES: readonly Recipe[] = R;
 

@@ -1,4 +1,5 @@
-import { TerrainGenerator } from './generator';
+import type { ChunkGenerator, Dim } from './dimension';
+import { createGenerator } from './generators';
 import { meshChunk, type ChunkMeshes } from './mesher';
 import type { WorkerRequest, WorkerResponse } from './protocol';
 import { createChunkWorker } from './workerFactory';
@@ -19,12 +20,12 @@ export class WorkerPool {
   private load: number[] = [];
   private pending = new Map<number, Pending>();
   private nextJob = 1;
-  private fallbackGen: TerrainGenerator | null = null;
+  private fallbackGen: ChunkGenerator | null = null;
   private seed: number;
   fallback = false;
   readonly size: number;
 
-  constructor(seed: number, size: number) {
+  constructor(seed: number, private dim: Dim, size: number) {
     this.seed = seed;
     this.size = size;
     try {
@@ -36,7 +37,7 @@ export class WorkerPool {
           ev.preventDefault();
           this.enterFallback();
         };
-        w.postMessage({ type: 'init', seed } satisfies WorkerRequest);
+        w.postMessage({ type: 'init', seed, dim } satisfies WorkerRequest);
         this.workers.push(w);
         this.load.push(0);
       }
@@ -74,7 +75,7 @@ export class WorkerPool {
 
   private runSync(req: WorkerRequest): unknown {
     if (req.type === 'gen') {
-      if (!this.fallbackGen) this.fallbackGen = new TerrainGenerator(this.seed);
+      if (!this.fallbackGen) this.fallbackGen = createGenerator(this.dim, this.seed);
       return this.fallbackGen.generate(req.cx, req.cz);
     }
     if (req.type === 'mesh') return meshChunk(req.pad, req.ao, req.emitters);

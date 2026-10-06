@@ -39,12 +39,19 @@ const simple: [number, string, string, number?][] = [
   [I.RAW_IRON, 'Raw Iron', '#c9a48c'],
   [I.BERRIES, 'Berries', '#c82846', 2],
   [I.APPLE, 'Orchard Apple', '#d8452f', 4],
-  [I.RAW_MEAT, 'Raw Boar Meat', '#d76f74', 2],
+  [I.RAW_MEAT, 'Raw Meat', '#d76f74', 2],
   [I.ROAST_MEAT, 'Roast Meat', '#9a5a32', 8],
   [I.BREAD_LOAF, 'Seed Loaf', '#c8964e', 5],
   [I.DOOR_ITEM, 'Ashwood Door', '#b8894f'],
+  [I.GLOW_DUST, 'Glow Dust', '#ffd36a'],
+  [I.CINDER_QUARTZ, 'Cinder Quartz', '#efe7dc'],
+  [I.VOID_PEARL, 'Void Pearl', '#7a3fd0'],
+  [I.MAGMA_GEL, 'Magma Gel', '#ff8a2a'],
+  [I.BONE, 'Bone', '#e2dcc8'],
+  [I.FEATHER, 'Feather', '#f4f0e6'],
 ];
 for (const [id, name, color, food] of simple) items.set(id, { id, name, maxStack: 64, color, food });
+items.set(I.EMBER_STRIKER, { id: I.EMBER_STRIKER, name: 'Ember Striker', maxStack: 1, color: '#c8c4be' });
 
 export const TIER_SPEED = [2, 3.5, 5, 7, 10];
 export const TIER_DURABILITY = [60, 130, 220, 400, 1000];

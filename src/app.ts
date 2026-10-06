@@ -1,7 +1,7 @@
 import { audio } from './audio/audio';
 import { benchmarkPreset, detectDevice, resolveMobile, type DeviceInfo } from './core/device';
 import { seedFromString } from './core/noise';
-import { Game } from './game/game';
+import { Game, type TravelVia } from './game/game';
 import { applyPreset, loadSettings, saveSettings, type Settings } from './game/settings';
 import { InputManager } from './input/input';
 import { TouchControls } from './input/touch';
@@ -13,6 +13,7 @@ import { initIcons } from './ui/icons';
 import { InventoryScreen } from './ui/inventoryScreen';
 import { gamepad, glyph, glyphClass, PB, type PadType } from './input/gamepad';
 import { PadNav } from './ui/padNav';
+import { DIM_NAMES, type Dim } from './world/dimension';
 import {
   actions, confirmDialog, deathScreen, el, errorScreen, loadingScreen, mainMenu, MenuBackground, newWorldScreen,
   pauseScreen, promptDialog, rotateOverlay, settingsScreen, toggleFullscreen, worldsScreen,
@@ -41,6 +42,7 @@ export class App {
   private expectUnlock = false;
   private clickHint: HTMLElement;
   private loadToken = 0;
+  private travelling = false;
 
   constructor() {
     this.ui = document.getElementById('ui')!;
@@ -410,6 +412,23 @@ export class App {
     void this.loadWorld(meta);
   }
 
+  /** Leave the current dimension: save, then load the world again at the destination. */
+  private async travel(target: Dim, via: TravelVia): Promise<void> {
+    const g = this.game;
+    if (!g || this.travelling) return;
+    this.travelling = true;
+    try {
+      g.setPaused(true);
+      g.stop();
+      await g.save().catch(() => undefined);
+      const meta = g.travelMeta(target, via);
+      await this.store.putWorld(meta).catch(() => undefined);
+      await this.loadWorld(meta);
+    } finally {
+      this.travelling = false;
+    }
+  }
+
   private async loadWorld(meta: WorldMeta): Promise<void> {
     const token = ++this.loadToken;
     this.disposeGame();
@@ -419,11 +438,14 @@ export class App {
     const stage = ls.querySelector('.stage') as HTMLElement;
     const bar = ls.querySelector('.bar > i') as HTMLElement;
     const detail = ls.querySelector('[data-detail]') as HTMLElement;
-    detail.textContent = `${meta.name} · seed ${meta.seed}`;
+    const dim = meta.dim ?? 'overworld';
+    detail.textContent = dim === 'overworld' ? `${meta.name} · seed ${meta.seed}` : `${meta.name} · ${DIM_NAMES[dim]}`;
+    if (meta.arrival && meta.arrival !== 'spawn') stage.textContent = `Entering ${DIM_NAMES[dim]}…`;
     this.hud.reset();
     try {
       const game = new Game(meta, this.r, this.input, this.touch, this.hud, this.store, this.settings, this.mobile, {
         onDeath: (reason) => this.onDeath(reason),
+        onTravel: (target, via) => void this.travel(target, via),
         onRequestPause: () => this.pause(),
         onRequestInventory: () => this.openInventory(),
         onFatal: (e) => this.fatal(e),
@@ -571,6 +593,11 @@ export class App {
     actions(d, {
       respawn: () => {
         if (!this.game) return;
+        if (this.game.dim !== 'overworld') {
+          // Death in another dimension: respawn at the overworld spawn point.
+          void this.travel('overworld', 'respawn');
+          return;
+        }
         this.game.respawn();
         this.showScreen(null);
         this.game.setPaused(false);

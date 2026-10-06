@@ -8,6 +8,7 @@ import { UNLOADED } from '../world/world';
 import type { Game } from './game';
 import { isPlaceable, itemDef } from './items';
 import type { Mob } from './mobs';
+import { igniteRift } from './portals';
 
 const CREATIVE_BREAK_DELAY = 0.18;
 const PLACE_REPEAT = 0.24;
@@ -38,8 +39,6 @@ export class Interaction {
   targetMob: Mob | null = null;
   private mineKey = '';
   private progress = 0;
-  private chipTimer = 0;
-  private hitSoundTimer = 0;
   private breakCooldown = 0;
   private placeTimer = 0;
   private attackCd = 0;
@@ -146,15 +145,12 @@ export class Interaction {
     if (!Number.isFinite(info.time)) return;
     this.progress += dt / info.time;
     g.highlight.setProgress(this.progress);
-    this.chipTimer -= dt;
-    this.hitSoundTimer -= dt;
-    if (this.chipTimer <= 0) {
-      this.chipTimer = 0.12;
-      g.particles.chip(t.x + 0.5 + t.nx * 0.52, t.y + 0.5 + t.ny * 0.52, t.z + 0.5 + t.nz * 0.52, id);
-    }
-    if (this.hitSoundTimer <= 0) {
-      this.hitSoundTimer = 0.25;
+    // Each strike of the swing lands on the block: chips fly off the struck face and the crack shudders.
+    if (g.hand.consumeImpact()) {
+      const fx = t.x + 0.5 + t.nx * 0.52, fy = t.y + 0.5 + t.ny * 0.52, fz = t.z + 0.5 + t.nz * 0.52;
+      for (let i = 0; i < 4; i++) g.particles.chip(fx, fy, fz, id, t.nx, t.ny, t.nz);
       g.sounds.hit(def.surface);
+      g.highlight.pulse();
     }
     if (this.progress >= 1) {
       this.breakBlock(t.x, t.y, t.z, id, info.drops);
@@ -175,7 +171,8 @@ export class Interaction {
     const g = this.g;
     if (!g.world.setBlock(x, y, z, B.AIR)) return;
     const def = blockDef(id);
-    g.particles.blockBreak(x, y, z, id);
+    g.particles.blockBreak(x, y, z, id, 22);
+    g.particles.dust(x + 0.5, y + 0.5, z + 0.5);
     g.sounds.breakBlock(def.surface);
     gamepad.rumble(0.15, 0.3, 70);
     if (drops && !g.creative) g.dropBlockItems(id, x, y, z);
@@ -210,7 +207,13 @@ export class Interaction {
         this.toggleDoor(t.x, t.y, t.z, id);
         return true;
       }
+      if (id === B.VOID_GATE) {
+        g.hand.doSwing();
+        g.useVoidGate();
+        return true;
+      }
     }
+    if (held && held.id === I.EMBER_STRIKER && t) return this.strike(t);
     if (held) {
       const def = itemDef(held.id);
       if (def?.food) {
@@ -225,6 +228,25 @@ export class Interaction {
       if (t && isPlaceable(held.id)) return this.place(held.id, t);
     }
     return false;
+  }
+
+  /** Ember Striker: sparks, and lights a rift inside a complete Duskstone frame. */
+  private strike(t: RayHit): boolean {
+    const g = this.g;
+    const x = t.x + t.nx, y = t.y + t.ny, z = t.z + t.nz;
+    g.hand.doSwing();
+    g.particles.burst(x + 0.5 - t.nx * 0.4, y + 0.5 - t.ny * 0.4, z + 0.5 - t.nz * 0.4, new THREE.Color(1, 0.62, 0.2), 8, 2, 2);
+    g.sounds.hit('stone');
+    if (g.dim === 'voidreach') {
+      if (g.world.getBlock(t.x, t.y, t.z) === B.DUSKSTONE) g.toast('Rifts will not open in the void.');
+      return true;
+    }
+    if (igniteRift(g.world, x, y, z)) {
+      g.sounds.blink();
+      g.toast('A rift tears open. Step inside to cross.');
+      gamepad.rumble(0.5, 0.6, 220);
+    }
+    return true;
   }
 
   private toggleDoor(x: number, y: number, z: number, id: number): void {
@@ -296,7 +318,7 @@ export class Interaction {
     const def = blockDef(blockId);
     if (def.render === 'cross') {
       const below = g.world.getBlock(x, y - 1, z);
-      if (below !== B.GRASS && below !== B.DIRT && below !== B.SNOW_GRASS && below !== B.SAND) return false;
+      if (below !== B.GRASS && below !== B.DIRT && below !== B.SNOW_GRASS && below !== B.SAND && below !== B.CINDERROCK && below !== B.ASHEN_SAND) return false;
     }
     if (blockId === B.TORCH && !SOLID[g.world.getBlock(x, y - 1, z)]) return false;
     if (!g.world.setBlock(x, y, z, blockId)) return false;

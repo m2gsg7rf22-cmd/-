@@ -1,4 +1,5 @@
 import { validateMeta, type WorldMeta } from './serialize';
+import { DIMS, dimWorldId } from '../world/dimension';
 
 export interface ChunkRecord {
   id: string; // `${world}|${cx},${cz}`
@@ -67,8 +68,11 @@ class IdbStore implements SaveStore {
     const tx = this.db.transaction(['worlds', 'chunks'], 'readwrite');
     tx.objectStore('worlds').delete(id);
     const idx = tx.objectStore('chunks').index('world');
-    const keys = await req(idx.getAllKeys(IDBKeyRange.only(id)));
-    for (const k of keys) tx.objectStore('chunks').delete(k);
+    // Every dimension stores its chunks under its own id.
+    for (const d of DIMS) {
+      const keys = await req(idx.getAllKeys(IDBKeyRange.only(dimWorldId(id, d))));
+      for (const k of keys) tx.objectStore('chunks').delete(k);
+    }
     await txDone(tx);
   }
 
@@ -110,7 +114,7 @@ export class MemoryStore implements SaveStore {
   }
   async deleteWorld(id: string): Promise<void> {
     this.worlds.delete(id);
-    this.chunks.delete(id);
+    for (const d of DIMS) this.chunks.delete(dimWorldId(id, d));
   }
   async listChunkKeys(world: string): Promise<string[]> {
     return [...(this.chunks.get(world)?.keys() ?? [])];

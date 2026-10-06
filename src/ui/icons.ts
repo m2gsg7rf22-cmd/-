@@ -197,6 +197,61 @@ function itemIcon(id: number): string {
         for (let y = 5; y < 12; y++) for (let x = 2; x < 14; x++) if (Math.hypot((x - 8) * 0.6, y - 9) < 3.6) px(x, y, y < 7 ? hi : col);
         px(6, 7, lo); px(9, 7, lo); px(12, 8, lo);
       });
+    case I.GLOW_DUST:
+      return sprite((px) => {
+        for (let y = 7; y < 14; y++) for (let x = 2; x < 14; x++) if (Math.hypot((x - 8) * 0.7, (y - 12) * 1.4) < 4.2) px(x, y, (x + y) % 3 === 0 ? hi : col);
+        for (const [x, y] of [[5, 5], [10, 4], [8, 2], [12, 7], [3, 8]]) px(x, y, '#fff6c8');
+      });
+    case I.CINDER_QUARTZ:
+      return sprite((px) => {
+        for (const [cx, w, top] of [[6, 2, 4], [10, 2, 6], [8, 3, 2]]) {
+          for (let y = top; y < 14; y++) for (let x = cx - w; x <= cx + w; x++) {
+            if (y < top + (Math.abs(x - cx))) continue;
+            px(x, y, x < cx ? hi : x > cx ? lo : col);
+          }
+        }
+      });
+    case I.VOID_PEARL:
+      return sprite((px) => {
+        for (let y = 3; y < 14; y++) for (let x = 3; x < 14; x++) {
+          const d = Math.hypot(x - 8.5, y - 8.5);
+          if (d < 5) px(x, y, d < 2 ? '#e0b8ff' : d < 3.5 ? col : lo);
+        }
+        px(6, 6, '#ffffff'); px(7, 6, '#f0e0ff');
+      });
+    case I.MAGMA_GEL:
+      return sprite((px) => {
+        for (let y = 4; y < 14; y++) for (let x = 2; x < 14; x++) {
+          const d = Math.hypot((x - 8) * 0.85, (y - 9.5) * 1.1);
+          if (d < 5 + Math.sin(x * 1.7) * 0.5) px(x, y, d < 2.2 ? '#ffe08a' : d < 3.8 ? col : '#a8380e');
+        }
+        px(6, 7, '#fff4c0');
+      });
+    case I.BONE:
+      return sprite((px) => {
+        for (let i = 4; i < 12; i++) { px(i, 15 - i, col); px(i + 1, 15 - i, lo); }
+        for (const [x, y] of [[2, 12], [3, 13], [2, 13], [3, 11], [12, 3], [13, 2], [12, 2], [13, 4]]) px(x, y, hi);
+      });
+    case I.FEATHER:
+      return sprite((px) => {
+        for (let i = 2; i < 14; i++) {
+          px(i, 15 - i, '#b8ae98');
+          const w = Math.min(3, Math.floor((14 - i) / 3) + 1);
+          for (let k = 1; k <= w; k++) { px(i - k, 15 - i - k + 1, col); px(i + k - 1, 15 - i + k, hi); }
+        }
+      });
+    case I.EMBER_STRIKER:
+      return sprite((px) => {
+        // Steel ring (C shape) and a chunk of ember stone.
+        for (let a = 0; a < 26; a++) {
+          const t = 0.4 + (a / 26) * 5.2;
+          const x = Math.round(6 + Math.cos(t) * 4);
+          const y = Math.round(6 + Math.sin(t) * 4);
+          px(x, y, a % 3 === 0 ? '#f2f2f6' : '#a8a8b0');
+        }
+        for (let y = 9; y < 14; y++) for (let x = 9; x < 14; x++) if (Math.hypot(x - 11, y - 11.5) < 2.6) px(x, y, y < 11 ? '#5a4038' : '#3a2a28');
+        px(10, 10, '#ff7a2a'); px(12, 12, '#ffb04a');
+      });
     default:
       return sprite((px) => { for (let y = 4; y < 12; y++) for (let x = 4; x < 12; x++) px(x, y, col); });
   }
