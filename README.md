@@ -18,7 +18,9 @@ npm run build        # typecheck + bundle into dist/
 npm run preview      # http://localhost:4173
 ```
 
-`dist/` is a static site that can be hosted anywhere (it uses relative paths).
+`dist/` is a static site that can be hosted anywhere (it uses relative paths), with a generated service worker that precaches every asset for offline play.
+
+**Single file:** `npm run build:single` produces `dist-single/index.html`, the whole game (worker included) in one HTML file you can open directly from disk. No server is needed.
 
 ### Desktop controls
 
@@ -63,11 +65,17 @@ All controls are multitouch: you can move, look and jump at the same time.
 - **Tools:** Pickaxe, Hatchet, Spade and Blade in five tiers (Timber → Flint → Copper → Iron → Lumen), each with its own speed, durability and harvest level.
 - **Survival:** health, hunger, sprint cost, fall damage, drowning and regeneration. On death you see "YOU FELL" with Respawn or Main Menu, and you keep your inventory.
 - **Creative:** a full block library, flight, instant breaking, and no damage or hunger.
+- **Building:** slabs (two stacked slabs become a full block), stairs that face away from you, doors that open and close, glass, bricks.
+- **Light:** torches (stick + ember) and Lumen Lamps light up caves and nights. Light flood-fills across chunk borders, and Lumen crystal ore glows faintly.
+- **Drops:** broken blocks and defeated creatures drop items that bob on the ground; walk near to pick them up. Q throws the held item.
+- **Water:** flows downhill and spreads 7 blocks from a source, dries up when the source is removed, and two adjacent sources make a new one.
+- **Navigation:** compass bar and minimap (toggle in Settings → Interface).
 - **Creatures:**
   - Grazer and Voxel Boar are passive, flee when hit and drop meat.
   - The Shadow Crawler is hostile at night and fades away in daylight.
 - **World:** a 20-minute day/night cycle with sun, moon, stars and drifting clouds; animated translucent water; and fog that blends into the sky.
-- **Saving:** autosave every 30 s, plus saving on pause, tab hide and Save & Quit. Saves cover world edits, player position, inventory, health, hunger, time of day and settings.
+- **Music:** calm, procedurally generated phrases now and then (Settings → Audio → Music).
+- **Saving:** autosave every 30 s, plus saving on pause, tab hide and Save & Quit. Saves cover world edits, player position, inventory, health, hunger, time of day, nearby creatures and settings.
 
 ## Settings
 
@@ -97,6 +105,7 @@ npm run qa:failures    # no IndexedDB/workers/WebGL/audio/pointer lock, corrupte
 npm run qa:bughunt     # input spam, pause mid-action, death in menus, reload mid-save…
 npm run qa:memory      # long flight; geometry/heap/chunk counts must plateau
 npm run qa:visual      # day/sunset/night/underwater/cave/mobs screenshots
+node scripts/features.mjs  # torches, slabs/stairs/doors, water flow, drops, minimap, creature saving
 ```
 
 ### Architecture

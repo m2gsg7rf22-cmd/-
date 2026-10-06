@@ -222,6 +222,20 @@ export class World {
     return -1;
   }
 
+  /** Natural ground under canopies/plants (skips leaves, logs, plants); -1 if water or unloaded on top. */
+  private groundY(x: number, z: number, ground: Set<number>): number {
+    for (let y = WORLD_HEIGHT - 1; y >= 0; y--) {
+      const id = this.getBlock(x, y, z);
+      if (id === UNLOADED) return -1;
+      if (id === B.AIR || id === B.ASH_LEAVES || id === B.PINE_LEAVES || id === B.ASH_LOG || id === B.PINE_LOG || !SOLID[id]) {
+        if (isWaterId(id)) return -1;
+        continue;
+      }
+      return ground.has(id) ? y : -1;
+    }
+    return -1;
+  }
+
   /**
    * Find a safe standing spot near (x,z) using real block data: ground must be natural
    * terrain (not leaves/logs/water) with two free blocks above. Returns feet position or null.
@@ -238,9 +252,8 @@ export class World {
           if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
           const cx = fx + dx;
           const cz = fz + dz;
-          const y = this.surfaceY(cx + 0.5, cz + 0.5);
+          const y = this.groundY(cx, cz, ground);
           if (y < 0) continue;
-          if (!ground.has(this.getBlock(cx, y, cz))) continue;
           if (!free(this.getBlock(cx, y + 1, cz)) || !free(this.getBlock(cx, y + 2, cz))) continue;
           const spot = { x: cx + 0.5, y: y + 1, z: cz + 0.5 };
           // Prefer open spots: all 4 neighbors walkable at feet and head level.
