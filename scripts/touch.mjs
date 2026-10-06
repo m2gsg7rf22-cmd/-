@@ -163,6 +163,8 @@ await step('mine button breaks block; place button places', async () => {
   await touch('touchStart', [[mx, my, 40]]);
   await until((t) => window.__bf.app.game.world.getBlock(t.x, t.y, t.z) === 0, t, 20000);
   await touch('touchEnd', []);
+  // Broken blocks drop as items; wait for the magnet pickup.
+  await until(() => window.__bf.app.game.inventory.count(2) >= 1, null, 15000).catch(() => {});
   const cnt = await page.evaluate(() => window.__bf.app.game.inventory.count(2));
   assert(cnt >= 1, 'no dirt collected');
   // Place it back.
