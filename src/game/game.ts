@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { audio } from '../audio/audio';
+import { gamepad } from '../input/gamepad';
 import { CHUNK_SIZE, DAY_LENGTH, WORLD_HEIGHT } from '../core/constants';
 import { toChunk } from '../core/coords';
 import { B } from '../core/ids';
@@ -114,6 +115,7 @@ export class Game {
       },
       damage: () => {
         audio.damage();
+        gamepad.rumble(0.7, 0.5, 180);
         this.particles.burst(this.player.body.x, this.player.eyeY - 0.4, this.player.body.z, new THREE.Color(0.75, 0.1, 0.1), 5);
       },
       splash: () => {
@@ -122,6 +124,7 @@ export class Game {
       },
       death: (cause) => {
         audio.death();
+        gamepad.rumble(1, 1, 450);
         this.host.onDeath(DEATH_TEXT[cause] ?? 'You were defeated.');
       },
     });
@@ -341,6 +344,18 @@ export class Game {
     if (left > 0) this.hud.toast('Inventory full — item lost', true);
   }
 
+  /** Switch between Survival and Creative for this world (saved with the world). */
+  setMode(mode: 'survival' | 'creative'): void {
+    this.creative = mode === 'creative';
+    this.meta = { ...this.meta, mode };
+    this.player.creative = this.creative;
+    if (!this.creative) this.player.flying = false;
+    this.hud.setMode(this.creative);
+    this.hud.reset();
+    this.hud.toast(this.creative ? 'Creative mode: unlimited blocks, flight, no damage' : 'Survival mode');
+    void this.save().catch(() => undefined);
+  }
+
   /** Spawn a broken block's drops as item entities at the block's center. */
   dropBlockItems(blockId: number, x: number, y: number, z: number): void {
     for (const d of blockDef(blockId).drop ?? []) {
@@ -440,7 +455,6 @@ export class Game {
 
   private frame(dt: number): void {
     this.elapsed += dt;
-    this.input.pollGamepad();
     const p = this.player;
     const s = this.settings;
     const look = this.input.consumeLook(dt, s.mouseSens, s.touchSens, s.invertY);

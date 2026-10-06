@@ -1,3 +1,5 @@
+import { PB, type PadSnapshot } from './gamepad';
+
 /**
  * Central input ownership. All gameplay input (keyboard, mouse, pointer lock, touch, gamepad)
  * flows through here; UI code only toggles `gameplay` and listens to semantic events.
@@ -47,8 +49,7 @@ export class InputManager {
   private wheel = 0;
   private hotbarPick = -1;
 
-  private pad = { x: 0, y: 0, lx: 0, ly: 0, jump: false, primary: false, secondary: false, sprint: false };
-  private padPrev: boolean[] = [];
+  private pad = { x: 0, y: 0, lx: 0, ly: 0, jump: false, primary: false, secondary: false, sprint: false, descend: false };
 
   pointerLocked = false;
   private lockErrors = 0;
@@ -305,36 +306,61 @@ export class InputManager {
 
   // ---- per-frame queries ----
 
-  /** Poll gamepads (call once per frame). */
-  pollGamepad(): void {
-    const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
-    const gp = pads && Array.from(pads).find((p) => p && p.connected);
-    if (!gp) {
-      this.pad.x = this.pad.y = this.pad.lx = this.pad.ly = 0;
-      this.pad.jump = this.pad.primary = this.pad.secondary = this.pad.sprint = false;
+  /**
+   * Apply this frame's gamepad snapshot (polled once per frame by the app).
+   * Buttons held from before gameplay started (e.g. the A press that closed a menu)
+   * are ignored until released, so they don't leak into the game.
+   */
+  applyPad(s: PadSnapshot): void {
+    const P = this.pad;
+    if (!s.connected) {
+      P.x = P.y = P.lx = P.ly = 0;
+      P.jump = P.primary = P.secondary = P.sprint = P.descend = false;
+      this.padBlocked.fill(false);
       return;
     }
-    const dz = (v: number) => (Math.abs(v) < 0.15 ? 0 : v);
-    this.pad.x = dz(gp.axes[0] ?? 0);
-    this.pad.y = -dz(gp.axes[1] ?? 0);
-    this.pad.lx = dz(gp.axes[2] ?? 0);
-    this.pad.ly = dz(gp.axes[3] ?? 0);
-    const btn = (i: number) => !!gp.buttons[i]?.pressed;
-    const edge = (i: number) => btn(i) && !this.padPrev[i];
-    if (this._gameplay) {
-      this.pad.jump = btn(0);
-      this.pad.sprint = btn(10);
-      if (edge(7)) this.emit('primaryDown');
-      if (edge(6)) this.emit('secondaryDown');
-      this.pad.primary = btn(7);
-      this.pad.secondary = btn(6);
-      if (edge(5)) this.hotbarPick = -2; // next
-      if (edge(4)) this.hotbarPick = -3; // prev
+    if (this._gameplay && !this.padWasGameplay) {
+      for (let i = 0; i < s.down.length; i++) this.padBlocked[i] = s.down[i];
     }
-    if (edge(3)) this.emit('inventory');
-    if (edge(9)) this.emit('pause');
-    this.padPrev = gp.buttons.map((b) => b.pressed);
+    this.padWasGameplay = this._gameplay;
+    for (let i = 0; i < s.down.length; i++) if (!s.down[i]) this.padBlocked[i] = false;
+    const held = (i: number) => s.down[i] && !this.padBlocked[i];
+    const hit = (i: number) => s.pressed[i] && !this.padBlocked[i];
+
+    // Menu-level buttons work in and out of gameplay.
+    if (s.pressed[PB.START]) this.emit('pause');
+    if (s.pressed[PB.NORTH] && (this._gameplay || this.padInventoryOpen)) this.emit('inventory');
+    if (!this._gameplay) {
+      P.x = P.y = P.lx = P.ly = 0;
+      P.jump = P.primary = P.secondary = P.sprint = P.descend = false;
+      return;
+    }
+    P.x = s.lx;
+    P.y = s.ly;
+    P.lx = s.rx;
+    P.ly = s.ry;
+    P.jump = held(PB.SOUTH);
+    P.descend = held(PB.EAST);
+    P.primary = held(PB.RT);
+    P.secondary = held(PB.LT);
+    if (hit(PB.RT)) this.emit('primaryDown');
+    if (hit(PB.LT)) this.emit('secondaryDown');
+    if (hit(PB.RB) || hit(PB.RIGHT)) this.hotbarPick = -2;
+    if (hit(PB.LB) || hit(PB.LEFT)) this.hotbarPick = -3;
+    if (hit(PB.WEST)) this.emit('drop');
+    if (hit(PB.UP)) this.emit('toggleFly');
+    // Click the left stick to sprint; it stays on until you stop moving.
+    if (hit(PB.L3)) this.padSprintLatch = !this.padSprintLatch;
+    if (Math.hypot(s.lx, s.ly) < 0.3) this.padSprintLatch = false;
+    P.sprint = this.padSprintLatch;
   }
+
+  /** Set by the app while the inventory is open, so the inventory button also closes it. */
+  padInventoryOpen = false;
+  private padBlocked: boolean[] = new Array(17).fill(false);
+  private padWasGameplay = false;
+  private padSprintLatch = false;
+  padSens = 1;
 
   /** Movement input: x = strafe right, y = forward. Magnitude ≤ 1. */
   moveVector(): { x: number; y: number } {
@@ -364,7 +390,7 @@ export class InputManager {
   }
 
   get descend(): boolean {
-    return this._gameplay && (this.keys.has('ControlLeft') || this.keys.has('KeyC') || this.touchDescend);
+    return this._gameplay && (this.keys.has('ControlLeft') || this.keys.has('KeyC') || this.touchDescend || this.pad.descend);
   }
 
   get primary(): boolean {
@@ -379,8 +405,8 @@ export class InputManager {
   consumeLook(dt: number, mouseSens: number, touchSens: number, invertY: boolean): { dx: number; dy: number } {
     const M = 0.0022 * mouseSens;
     const T = 0.0055 * touchSens;
-    const dx = this.lookX * M + this.touchLookX * T + this.pad.lx * 2.6 * dt;
-    let dy = this.lookY * M + this.touchLookY * T + this.pad.ly * 2.0 * dt;
+    const dx = this.lookX * M + this.touchLookX * T + this.pad.lx * 3.2 * this.padSens * dt;
+    let dy = this.lookY * M + this.touchLookY * T + this.pad.ly * 2.4 * this.padSens * dt;
     if (invertY) dy = -dy;
     this.lookX = this.lookY = this.touchLookX = this.touchLookY = 0;
     return { dx, dy };

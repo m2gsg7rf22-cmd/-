@@ -1,5 +1,6 @@
 export type Quality = 'low' | 'medium' | 'high' | 'ultra';
 export type DeviceMode = 'auto' | 'desktop' | 'mobile';
+export type PadLayoutSetting = 'auto' | 'xbox' | 'playstation' | 'nintendo';
 
 export interface Settings {
   renderDistance: number;
@@ -11,6 +12,9 @@ export interface Settings {
   resolutionScale: number;
   mouseSens: number;
   touchSens: number;
+  padSens: number;
+  vibration: boolean;
+  padLayout: PadLayoutSetting;
   invertY: boolean;
   master: number;
   effects: number;
@@ -43,6 +47,9 @@ export function defaultSettings(): Settings {
     fov: 75,
     mouseSens: 1,
     touchSens: 1,
+    padSens: 1,
+    vibration: true,
+    padLayout: 'auto',
     invertY: false,
     master: 0.8,
     effects: 0.9,
@@ -80,6 +87,9 @@ export function sanitizeSettings(raw: unknown): Settings {
     resolutionScale: clamp(r.resolutionScale, 0.4, 1, d.resolutionScale),
     mouseSens: clamp(r.mouseSens, 0.1, 4, d.mouseSens),
     touchSens: clamp(r.touchSens, 0.1, 4, d.touchSens),
+    padSens: clamp(r.padSens, 0.2, 3, d.padSens),
+    vibration: bool(r.vibration, d.vibration),
+    padLayout: pick(r.padLayout, ['auto', 'xbox', 'playstation', 'nintendo'] as const, d.padLayout),
     invertY: bool(r.invertY, d.invertY),
     master: clamp(r.master, 0, 1, d.master),
     effects: clamp(r.effects, 0, 1, d.effects),

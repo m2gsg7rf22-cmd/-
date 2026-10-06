@@ -187,7 +187,7 @@ export function loadingScreen(): HTMLElement {
     </div>`);
 }
 
-export function pauseScreen(): HTMLElement {
+export function pauseScreen(creative = false): HTMLElement {
   return el(`
     <div class="screen dim" data-screen="pause">
       <div class="panel" style="width:min(380px,100%)">
@@ -195,6 +195,7 @@ export function pauseScreen(): HTMLElement {
         <div class="stack">
           <button class="btn primary" data-act="resume">Resume</button>
           <button class="btn" data-act="settings">Settings</button>
+          <button class="btn" data-act="mode">${creative ? 'Switch to Survival' : 'Switch to Creative'}</button>
           <button class="btn" data-act="fullscreen" ${document.fullscreenEnabled ? '' : 'hidden'}>Toggle Fullscreen</button>
           <button class="btn" data-act="savequit">Save &amp; Quit</button>
         </div>
@@ -293,6 +294,7 @@ export function settingsScreen(
     resolutionScale: pct,
     mouseSens: (v) => v.toFixed(2),
     touchSens: (v) => v.toFixed(2),
+    padSens: (v) => v.toFixed(2),
     master: pct,
     effects: pct,
     ambient: pct,
@@ -321,6 +323,9 @@ export function settingsScreen(
       h += row('Touch Sensitivity', '', range('touchSens', 0.1, 3, 0.05, fmts.touchSens!));
       h += row('Invert Y', '', toggle('invertY'));
       h += row('Auto-Jump', 'Hop up single blocks automatically', toggle('autoJump'));
+      h += row('Controller Sensitivity', 'Right stick look speed (Xbox, PlayStation, Switch controllers)', range('padSens', 0.2, 3, 0.05, fmts.padSens!));
+      h += row('Controller Vibration', '', toggle('vibration'));
+      h += row('Button Prompts', 'Auto-detects the controller; override if needed', seg('padLayout', [['auto', 'Auto'], ['xbox', 'Xbox'], ['playstation', 'PlayStation'], ['nintendo', 'Nintendo']]));
     } else if (tab === 'audio') {
       h += row('Master Volume', '', range('master', 0, 1, 0.05, pct));
       h += row('Effects', '', range('effects', 0, 1, 0.05, pct));

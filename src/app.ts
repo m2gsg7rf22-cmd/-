@@ -11,6 +11,8 @@ import { newWorldId, SAVE_VERSION, type GameMode, type WorldMeta } from './save/
 import { Hud } from './ui/hud';
 import { initIcons } from './ui/icons';
 import { InventoryScreen } from './ui/inventoryScreen';
+import { gamepad, glyph, glyphClass, PB, type PadType } from './input/gamepad';
+import { PadNav } from './ui/padNav';
 import {
   actions, confirmDialog, deathScreen, el, errorScreen, loadingScreen, mainMenu, MenuBackground, newWorldScreen,
   pauseScreen, promptDialog, rotateOverlay, settingsScreen, toggleFullscreen, worldsScreen,
@@ -69,6 +71,7 @@ export class App {
     this.hud = new Hud(document.getElementById('hud')!, document.getElementById('touch')!);
     this.touch = new TouchControls(document.getElementById('touch')!, this.input);
     this.hud.initMinimap(this.r.atlasCanvas);
+    this.startPadLoop();
     this.applyUiSettings();
 
     this.input.onEvent((e) => {
@@ -115,6 +118,7 @@ export class App {
   private exposeDebug(): void {
     (window as unknown as { __bf: unknown }).__bf = {
       app: this,
+      pad: gamepad,
       get state() { return (window as unknown as { __bf: { app: App } }).__bf.app.state; },
     };
   }
@@ -133,6 +137,10 @@ export class App {
     document.body.classList.toggle('touch-ui', this.mobile);
     if (this.r) this.r.setQuality(s.resolutionScale, this.mobile);
     audio.setVolumes(s.master, s.effects, s.ambient, s.music);
+    gamepad.vibration = s.vibration;
+    gamepad.layout = s.padLayout;
+    if (this.input) this.input.padSens = s.padSens;
+    this.padKey = '';
     this.updateHudVisibility();
   }
 
@@ -167,8 +175,80 @@ export class App {
     this.updateOrientation();
   }
 
+  // ---------------- gamepad ----------------
+
+  private padNav!: PadNav;
+  private padBar!: HTMLElement;
+  private padHints!: HTMLElement;
+  private padKey = '';
+
+  /** One loop owns gamepad polling: gameplay mapping + menu navigation + prompt bars. */
+  private startPadLoop(): void {
+    this.padNav = new PadNav(this.ui);
+    this.padBar = el(`<div class="pad-bar" hidden></div>`);
+    this.padHints = el(`<div class="pad-hints" hidden></div>`);
+    document.getElementById('app')!.appendChild(this.padBar);
+    document.getElementById('hud')!.appendChild(this.padHints);
+    const names: Record<PadType, string> = { xbox: 'Xbox controller', playstation: 'PlayStation controller', nintendo: 'Nintendo controller', generic: 'Controller' };
+    gamepad.onConnect = (_id, type) => {
+      if (this.state !== 'menu' && this.state !== 'boot') this.hud.toast(`${names[type]} connected`);
+      else this.flashMenuToast(`${names[type]} connected — use it to navigate`);
+    };
+    gamepad.onDisconnect = () => {
+      if (this.state === 'playing') this.pause();
+      this.hud.toast('Controller disconnected', true);
+    };
+    let last = performance.now();
+    const loop = (t: number) => {
+      requestAnimationFrame(loop);
+      const dt = Math.min(0.1, (t - last) / 1000);
+      last = t;
+      const s = gamepad.poll();
+      this.input.padInventoryOpen = this.state === 'inventory';
+      this.input.applyPad(s);
+      const navOn = s.connected && gamepad.active && this.state !== 'playing' && this.state !== 'boot' && this.state !== 'loading';
+      if (navOn) this.padNav.update(s, dt);
+      else this.padNav.clear();
+      this.updatePadPrompts(s.connected && gamepad.active);
+    };
+    requestAnimationFrame(loop);
+  }
+
+  private flashMenuToast(msg: string): void {
+    const t = el(`<div class="toast" style="position:fixed;left:50%;top:calc(14px + var(--sat));transform:translateX(-50%);z-index:70">${msg}</div>`);
+    document.getElementById('app')!.appendChild(t);
+    setTimeout(() => t.remove(), 2600);
+  }
+
+  private chip(b: number, label: string): string {
+    const type = gamepad.type;
+    return `<span class="pad-chip"><span class="pg ${glyphClass(type, b)}">${glyph(type, b)}</span>${label}</span>`;
+  }
+
+  private updatePadPrompts(active: boolean): void {
+    const creative = !!this.game?.creative;
+    const key = `${active}|${this.state}|${gamepad.type}|${creative}`;
+    if (key === this.padKey) return;
+    this.padKey = key;
+    document.body.classList.toggle('pad-active', active);
+    this.updateClickHint();
+    const playing = this.state === 'playing';
+    this.padHints.hidden = !(active && playing);
+    this.padBar.hidden = !(active && !playing && this.state !== 'boot' && this.state !== 'loading');
+    if (active && playing) {
+      this.padHints.innerHTML = [
+        this.chip(PB.RT, 'Mine'), this.chip(PB.LT, 'Place'), this.chip(PB.SOUTH, 'Jump'),
+        this.chip(PB.NORTH, 'Inventory'), this.chip(PB.RB, 'Item'), this.chip(PB.WEST, 'Drop'),
+        creative ? this.chip(PB.UP, 'Fly') : this.chip(PB.L3, 'Sprint'),
+        creative ? this.chip(PB.EAST, 'Descend') : '', this.chip(PB.START, 'Pause'),
+      ].join('');
+    } else if (active) {
+      this.padBar.innerHTML = [this.chip(PB.SOUTH, 'Select'), this.chip(PB.EAST, 'Back'), this.chip(PB.LB, 'Tabs'), this.state === 'inventory' ? this.chip(PB.WEST, 'Split') : ''].join('');
+    }
+  }
+
   private updateClickHint(): void {
-    const show = this.state === 'playing' && !this.mobile && !this.input?.pointerLocked && !this.input?.useDragFallback;
+    const show = this.state === 'playing' && !this.mobile && !gamepad.active && !this.input?.pointerLocked && !this.input?.useDragFallback;
     this.clickHint.hidden = !show;
   }
 
@@ -415,13 +495,18 @@ export class App {
   }
 
   private showPause(): void {
-    const p = pauseScreen();
+    const p = pauseScreen(!!this.game?.creative);
     this.showScreen(p);
     actions(p, {
       resume: () => this.resume(),
       settings: () => this.showSettings(() => this.showPause()),
       fullscreen: () => toggleFullscreen(),
       savequit: () => void this.saveAndQuit(),
+      mode: () => {
+        if (!this.game) return;
+        this.game.setMode(this.game.creative ? 'survival' : 'creative');
+        this.showPause();
+      },
     });
   }
 

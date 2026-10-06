@@ -39,7 +39,40 @@ npm run preview      # http://localhost:4173
 | Discard held item | Q |
 | Debug overlay | F3 |
 
-Gamepads work too: left stick moves, right stick looks, A jumps, RT/LT mine and place, LB/RB change slot, Y opens the inventory, Start pauses.
+### Controllers (Xbox, PlayStation, Nintendo Switch)
+
+Plug in or pair a controller (USB or Bluetooth) and press any button. The game detects the controller family, then shows matching button prompts in menus and in the HUD. You can play the whole game with it, including the main menu, world creation, inventory, crafting and settings. Touch controls hide while a controller is in use.
+
+| Action | Xbox | PlayStation | Nintendo |
+|---|---|---|---|
+| Move / look | Left stick / right stick | Left stick / right stick | Left stick / right stick |
+| Jump (creative: fly up) | A | ✕ | B |
+| Descend while flying | B | ○ | A |
+| Mine / attack | RT | R2 | ZR |
+| Place / use | LT | L2 | ZL |
+| Next / previous slot | RB / LB (or D-pad → / ←) | R1 / L1 | R / L |
+| Inventory | Y | △ | X |
+| Drop held item | X | □ | Y |
+| Sprint | Click left stick | L3 | Click left stick |
+| Toggle flight (creative) | D-pad ↑ | D-pad ↑ | D-pad ↑ |
+| Pause | Menu | Options | + |
+
+In menus: the D-pad or left stick moves focus, the bottom face button selects, the right face button goes back, and the bumpers switch tabs. Ranges change with ←/→. In the inventory, the left face button splits a stack.
+
+Buttons are mapped by position, so a Nintendo controller selects with its bottom button (B), the same physical spot as Xbox A.
+
+The controller vibrates when you take damage, die, or break a block. If it disconnects mid-game, the game pauses.
+
+Settings → Controls has three controller options:
+- **Controller sensitivity**
+- **Vibration** on/off
+- **Button prompts:** Auto, Xbox, PlayStation or Nintendo
+
+The game uses the browser Gamepad API (standard mapping), which Chrome, Edge, Firefox and Safari support. Some browsers only expose a controller after a button press.
+
+### Survival ↔ Creative
+
+You pick the mode when you create a world. You can also switch the current world any time from the pause menu (**Switch to Creative / Switch to Survival**). The choice is saved with the world.
 
 ### Mobile controls
 
@@ -85,7 +118,7 @@ All controls are multitouch: you can move, look and jump at the same time.
   - Ambient occlusion, particles, clouds, FOV, resolution scale.
   - Adaptive quality, which steps down one setting at a time if FPS stays low; it uses hysteresis and a cooldown.
   - Debug overlay.
-- **Controls:** Auto/Desktop/Mobile scheme, mouse and touch sensitivity, invert Y, auto-jump.
+- **Controls:** Auto/Desktop/Mobile scheme, mouse, touch and controller sensitivity, invert Y, auto-jump, controller vibration, controller button prompts (Auto/Xbox/PlayStation/Nintendo).
 - **Audio:** master, effects, ambient. All sound is procedural Web Audio.
 - **Interface:** UI scale, reduced motion, fullscreen.
 
@@ -105,6 +138,7 @@ npm run qa:failures    # no IndexedDB/workers/WebGL/audio/pointer lock, corrupte
 npm run qa:bughunt     # input spam, pause mid-action, death in menus, reload mid-save…
 npm run qa:memory      # long flight; geometry/heap/chunk counts must plateau
 npm run qa:visual      # day/sunset/night/underwater/cave/mobs screenshots
+npm run qa:gamepad     # virtual Xbox/DualSense controller: menus, creative world, flight, mine/place, inventory, pause, mode switch, unplug
 node scripts/features.mjs  # torches, slabs/stairs/doors, water flow, drops, minimap, creature saving
 ```
 
@@ -116,11 +150,11 @@ src/
   world/     blocks, tiles, generator, mesher (greedy + AO + skylight), worker pool, chunk streaming
   render/    renderer (resize/DPR), procedural texture atlas, shaders, sky, particles, highlight, held item
   player/    physics (swept AABB), raycast (DDA), player controller + survival rules
-  input/     input manager (keyboard/mouse/pointer lock/gamepad), touch controls
+  input/     input manager (keyboard/mouse/pointer lock), gamepad manager (detection, deadzones, glyphs, rumble), touch controls
   game/      game loop, interaction, inventory, crafting, items, mobs, settings, adaptive quality
   save/      IndexedDB store (+ memory fallback), serialization (RLE chunks, validated metadata)
   audio/     procedural Web Audio engine
-  ui/        HUD, menus, settings, inventory screen, icons
+  ui/        HUD, menus, settings, inventory screen, icons, gamepad menu navigation (spatial focus)
 ```
 
 ## Third-party code & research

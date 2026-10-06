@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { REACH, WORLD_HEIGHT } from '../core/constants';
 import { B, I, isDoorId, isWaterId } from '../core/ids';
+import { gamepad } from '../input/gamepad';
 import { raycastShapes, type RayHit } from '../player/raycast';
 import { blockDef, COLLISION, doorId, doorParts, RENDER, SELECTION, SOLID } from '../world/blocks';
 import { UNLOADED } from '../world/world';
@@ -176,6 +177,7 @@ export class Interaction {
     const def = blockDef(id);
     g.particles.blockBreak(x, y, z, id);
     g.sounds.breakBlock(def.surface);
+    gamepad.rumble(0.15, 0.3, 70);
     if (drops && !g.creative) g.dropBlockItems(id, x, y, z);
     // Doors are two blocks: remove the other half too.
     if (isDoorId(id)) {

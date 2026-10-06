@@ -17,6 +17,7 @@
     "qa:bughunt": "node scripts/bughunt.mjs",
     "qa:memory": "node scripts/memory.mjs",
     "qa:visual": "node scripts/visual.mjs",
+    "qa:gamepad": "node scripts/gamepad.mjs",
     "build:single": "tsc --noEmit && vite build --mode single"
   },
   "dependencies": {
