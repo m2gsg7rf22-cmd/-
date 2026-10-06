@@ -54,3 +54,34 @@ No real phone, Safari or Firefox was available. Touch was tested via CDP touch-e
 - **Greedy meshing:** reduced triangles by about 21% on mixed terrain (cross-plants dominate the remainder).
 - **Frame cost:** under SwiftShader, JS frame cost was about 16 ms with 69 draw calls at render distance 4. The ~5–10 FPS seen was limited by software rasterization.
 - **Real-GPU FPS was NOT measured:** no hardware GPU was available. Adaptive quality is implemented and unit-tested.
+
+## Round 2 (new features) — automated results
+| Suite | Result |
+|---|---|
+| Unit tests | **81 / 81** (adds fluids, block light, shapes, sections, shape raycast, slab step-up) |
+| Feature QA (`scripts/features.mjs`) | **11 / 11** |
+| Spawn quality (`scripts/spawns.mjs`) | 8 / 8 random seeds on natural ground |
+| Desktop E2E | 23 / 23 |
+| Touch | 15 / 15 |
+| Failures | 10 / 10 |
+| Bug hunt | 13 / 13 |
+| Memory | PASS |
+| Responsive | 11 / 11 viewports |
+| Single-file build (`file://` and wrapped artifact page) | boots, generates terrain in an inline worker, saves to IndexedDB, 0 errors |
+
+Feature QA covers:
+- torch placement and night lighting
+- slab placement and slab-to-full-block merge
+- stairs orientation
+- door placement, open/close, and breaking (both halves removed, one door dropped)
+- step-up onto slabs
+- water flow and receding
+- item drop + pickup, and Q to throw
+- minimap and compass rendering
+- creature persistence across reload
+
+Bugs found and fixed in round 2:
+- Chunks with light emitters relit all neighbors on load, which multiplied meshing work during streaming.
+- The compass never drew (NaN initial heading).
+- Spawning into a canopy when no open ground was nearby.
+- Dropped items in a freshly mined hole were just out of pickup reach.

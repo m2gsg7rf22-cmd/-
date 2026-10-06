@@ -20,7 +20,7 @@ export interface DropEntity {
 
 const MAX_DROPS = 160;
 const DESPAWN = 300;
-const PICKUP_R = 1.6;
+const PICKUP_R = 2.0;
 
 /** Dropped item stacks lying in the world. */
 export class DropManager {
@@ -124,8 +124,9 @@ export class DropManager {
       }
       let magnet = false;
       if (player && d.age > d.delay) {
+        // Distance to the nearest point of the player's body (feet to head), not a single point.
         const dx = player.x - d.body.x;
-        const dy = player.y + 0.8 - d.body.y;
+        const dy = Math.min(player.y + 1.6, Math.max(player.y + 0.2, d.body.y)) - d.body.y;
         const dz = player.z - d.body.z;
         const dist = Math.hypot(dx, dy, dz);
         if (dist < 0.75) {

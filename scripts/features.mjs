@@ -38,7 +38,9 @@ async function useOn(cell, face, yOff = 0) {
     throw new Error('aim failed: ' + JSON.stringify({ want: cell, ...info }));
   }
   await page.evaluate(() => window.__bf.app.input.triggerEvent('secondaryDown'));
-  await page.waitForTimeout(500);
+  // Wait until the game has actually processed the queued action (frames can be slow under software GL).
+  await until(() => !window.__bf.app.game.interaction.placeQueued, null, 15000, 'use processed');
+  await page.waitForTimeout(200);
 }
 
 await page.goto(URL_);
@@ -128,7 +130,8 @@ await step('door: place (2 blocks), open/close, break drops one door', async () 
 await step('walk up a slab without jumping (step assist)', async () => {
   const r = await page.evaluate(({ fx, fy, fz }) => {
     const g = window.__bf.app.game;
-    for (let dz = -5; dz <= -2; dz++) g.world.setBlock(fx - 5, fy, fz + dz, 34, false);
+    // A slab floor several blocks long so the player stays on it while settling.
+    for (let sx = fx - 5; sx <= fx - 1; sx++) for (let dz = -5; dz <= -2; dz++) g.world.setBlock(sx, fy, fz + dz, 34, false);
     g.player.setPosition(fx - 4.5 - 1, fy, fz - 3.5);
     g.player.yaw = -Math.PI / 2; // face +x
     g.player.pitch = 0;
@@ -138,6 +141,7 @@ await step('walk up a slab without jumping (step assist)', async () => {
   await page.waitForTimeout(300);
   await page.keyboard.down('KeyW');
   await until((f) => window.__bf.app.game.player.body.x > f.fx - 4.7, F, 6000, 'reach slab');
+  await until((f) => Math.abs(window.__bf.app.game.player.body.y - (f.fy + 0.5)) < 0.05, F, 6000, 'settle on slab').catch(() => {});
   await page.keyboard.up('KeyW');
   const y = await page.evaluate(() => window.__bf.app.game.player.body.y);
   assert(Math.abs(y - (F.fy + 0.5)) < 0.05, `y ${y}`);
