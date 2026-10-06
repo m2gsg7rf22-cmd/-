@@ -126,6 +126,7 @@ await step('left stick moves, right stick looks (axes not inverted)', async () =
 });
 
 await step('creative: D-pad up toggles flight, A ascends, B descends', async () => {
+  await platform(); // open sky above, so terrain overhangs can't block the climb
   await press(B.UP);
   await until(() => window.__bf.app.game.player.flying, null, 5000, 'flying');
   const y0 = await page.evaluate(() => window.__bf.app.game.player.body.y);
@@ -166,6 +167,7 @@ await step('LT places from the creative library (via inventory with the controll
   const lib = await page.evaluate(() => document.querySelector('.pad-focus')?.dataset.lib);
   assert(lib, 'no library item focused');
   await press(B.A);
+  await until((id) => window.__bf.app.game.inventory.count(Number(id)) > 0, lib, 5000, 'library take ' + lib + ' focus ' + (await focused()));
   await page.screenshot({ path: `${OUT}/03-inventory.png` });
   await press(B.B); // close
   await until(() => window.__bf.state === 'playing', null, 5000, 'closed');
