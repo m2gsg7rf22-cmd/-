@@ -58,7 +58,9 @@ export default defineConfig(({ mode }) => {
   const single = mode === 'single';
   return {
     base: './',
-    worker: { format: 'es' },
+    // The single file is often opened straight from disk (file://, opaque origin), where Chrome refuses
+    // module workers from blob URLs; a classic (IIFE) worker loads fine there.
+    worker: { format: single ? 'iife' : 'es' },
     define: { __SINGLE_FILE__: JSON.stringify(single) },
     resolve: single
       ? { alias: [{ find: /^\.\/workerFactory$/, replacement: fileURLToPath(new URL('./src/world/workerFactory.inline.ts', import.meta.url)) }] }
