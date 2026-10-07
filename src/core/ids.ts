@@ -76,6 +76,10 @@ export const B = {
   VOID_EGG: 92,
   CRIMSON_TURF: 93,
   EMBER_WART: 94,
+  /** Ring of 12 frames around a 3x3 hole; filling every frame with a Void Eye opens a Void Portal. */
+  VOID_FRAME: 95,
+  VOID_FRAME_EYE: 96,
+  VOID_PORTAL: 97,
 } as const;
 
 export type BlockId = number;
@@ -102,6 +106,11 @@ export const I = {
   MAGMA_GEL: 273,
   BONE: 274,
   FEATHER: 275,
+  /** Builds a complete, lit Duskstone rift portal in one placement. */
+  RIFT_KIT: 276,
+  FLINT: 277,
+  /** Void Pearl + Glow Dust: shows the way to a Void Sanctum and fills portal frames. */
+  VOID_EYE: 278,
 } as const;
 
 export const isWaterId = (id: number): boolean => id === 10 || (id >= 61 && id <= 67);

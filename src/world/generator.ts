@@ -270,6 +270,7 @@ export class TerrainGenerator implements ChunkGenerator {
     this.placeOres(data, cx, cz);
     this.placePlants(data, cols, bx, bz);
     this.placeTrees(data, cx, cz);
+    this.placeSanctums(data, cx, cz);
     return data;
   }
 
@@ -464,4 +465,86 @@ export class TerrainGenerator implements ChunkGenerator {
     const c = this.column(0, 0);
     return { x: 0.5, z: 0.5, y: Math.max(c.height, SEA_LEVEL) + 2 };
   }
+
+  /**
+   * Void Sanctum in a 384-block region cell, or null: an underground hall holding a ring of
+   * Void Portal Frames. (x, z) is the ring center; y is the hall floor.
+   */
+  sanctumIn(i: number, j: number): { x: number; y: number; z: number } | null {
+    if (hash2(this.seed, i, j, 81) > 0.85) return null;
+    const x = i * SANCTUM_CELL + 64 + Math.floor(hash2(this.seed, i, j, 82) * (SANCTUM_CELL - 128));
+    const z = j * SANCTUM_CELL + 64 + Math.floor(hash2(this.seed, i, j, 83) * (SANCTUM_CELL - 128));
+    const y = Math.min(26, this.column(x, z).height - 14);
+    if (y < 8) return null;
+    return { x, y, z };
+  }
+
+  /** Closest Void Sanctum to (x, z) (searched a few region cells around). */
+  nearestSanctum(x: number, z: number): { x: number; y: number; z: number } | null {
+    const ci = Math.floor(x / SANCTUM_CELL), cj = Math.floor(z / SANCTUM_CELL);
+    let best: { x: number; y: number; z: number } | null = null;
+    let bd = Infinity;
+    for (let i = ci - 2; i <= ci + 2; i++) for (let j = cj - 2; j <= cj + 2; j++) {
+      const s = this.sanctumIn(i, j);
+      if (!s) continue;
+      const d = Math.hypot(s.x - x, s.z - z);
+      if (d < bd) { bd = d; best = s; }
+    }
+    return best;
+  }
+
+  private placeSanctums(data: Uint8Array, cx: number, cz: number): void {
+    const bx = cx * CHUNK_SIZE, bz = cz * CHUNK_SIZE;
+    const ci = Math.floor(bx / SANCTUM_CELL), cj = Math.floor(bz / SANCTUM_CELL);
+    for (let i = ci - 1; i <= ci + 1; i++) for (let j = cj - 1; j <= cj + 1; j++) {
+      const s = this.sanctumIn(i, j);
+      if (!s) continue;
+      // Hall: x -7..7, plus a corridor east to x = 22.
+      if (s.x + 23 < bx || s.x - 8 >= bx + CHUNK_SIZE || s.z + 8 < bz || s.z - 8 >= bz + CHUNK_SIZE) continue;
+      this.buildSanctum(data, bx, bz, s, i * 7919 + j);
+    }
+  }
+
+  private buildSanctum(data: Uint8Array, bx: number, bz: number, s: { x: number; y: number; z: number }, salt: number): void {
+    const put = (x: number, y: number, z: number, id: number) => {
+      const lx = x - bx, lz = z - bz;
+      if (lx < 0 || lz < 0 || lx >= CHUNK_SIZE || lz >= CHUNK_SIZE || y < 1 || y >= WORLD_HEIGHT) return;
+      data[blockIndex(lx, y, lz)] = id;
+    };
+    const f = s.y;
+    // Hall shell and air.
+    for (let dx = -7; dx <= 7; dx++) for (let dz = -7; dz <= 7; dz++) {
+      const wall = Math.abs(dx) === 7 || Math.abs(dz) === 7;
+      for (let y = f; y <= f + 8; y++) {
+        const shell = wall || y === f || y === f + 8;
+        put(s.x + dx, y, s.z + dz, shell ? B.SLATE_BRICKS : B.AIR);
+      }
+    }
+    // Lamps in the ceiling.
+    for (const [dx, dz] of [[-5, -5], [5, -5], [-5, 5], [5, 5]]) put(s.x + dx, f + 8, s.z + dz, B.LUMEN_LAMP);
+    // Dais with a magma pool under the portal, and the ring of frames on top.
+    for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) put(s.x + dx, f + 1, s.z + dz, B.SLATE_BRICKS);
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+      put(s.x + dx, f + 1, s.z + dz, B.MAGMA);
+      put(s.x + dx, f + 2, s.z + dz, B.AIR);
+    }
+    let k = 0;
+    for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
+      const edge = Math.abs(dx) === 2 || Math.abs(dz) === 2;
+      if (!edge || (Math.abs(dx) === 2 && Math.abs(dz) === 2)) continue;
+      // A few frames already hold an eye.
+      put(s.x + dx, f + 2, s.z + dz, hash2(this.seed, salt, k++, 84) < 0.12 ? B.VOID_FRAME_EYE : B.VOID_FRAME);
+    }
+    // Corridor leading east out of the hall.
+    for (let dx = 7; dx <= 22; dx++) for (let dz = -2; dz <= 2; dz++) {
+      for (let y = f; y <= f + 4; y++) {
+        const shell = Math.abs(dz) === 2 || y === f || y === f + 4;
+        put(s.x + dx, y, s.z + dz, shell && !(dx === 7 && Math.abs(dz) < 2 && y > f && y < f + 4) ? B.SLATE_BRICKS : B.AIR);
+      }
+    }
+    put(s.x + 7, f + 1, s.z, B.AIR);
+    put(s.x + 15, f + 1, s.z - 1, B.TORCH);
+  }
 }
+
+const SANCTUM_CELL = 384;

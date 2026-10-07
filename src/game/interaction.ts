@@ -8,7 +8,14 @@ import { UNLOADED } from '../world/world';
 import type { Game } from './game';
 import { isPlaceable, itemDef } from './items';
 import type { Mob } from './mobs';
-import { igniteRift } from './portals';
+import { buildRift, igniteRift, insertVoidEye } from './portals';
+
+/** Compass word for a horizontal direction (north = -z). */
+export function compassWord(dx: number, dz: number): string {
+  const names = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'];
+  const a = Math.atan2(dx, -dz); // 0 = north, clockwise
+  return names[(Math.round(a / (Math.PI / 4)) + 8) % 8];
+}
 
 const CREATIVE_BREAK_DELAY = 0.18;
 const PLACE_REPEAT = 0.24;
@@ -214,6 +221,8 @@ export class Interaction {
       }
     }
     if (held && held.id === I.EMBER_STRIKER && t) return this.strike(t);
+    if (held && held.id === I.RIFT_KIT && t) return this.placeRiftKit(t);
+    if (held && held.id === I.VOID_EYE) return this.useVoidEye(t);
     if (held) {
       const def = itemDef(held.id);
       if (def?.food) {
@@ -228,6 +237,75 @@ export class Interaction {
       if (t && isPlaceable(held.id)) return this.place(held.id, t);
     }
     return false;
+  }
+
+  /**
+   * Void Eye: placed into a Void Portal Frame it may open the portal; used anywhere else it
+   * drifts toward the nearest Void Sanctum and shows the way.
+   */
+  private useVoidEye(t: RayHit | null): boolean {
+    const g = this.g;
+    g.hand.doSwing();
+    if (t && g.world.getBlock(t.x, t.y, t.z) === B.VOID_FRAME) {
+      const r = insertVoidEye(g.world, t.x, t.y, t.z);
+      if (!g.creative) g.consumeHeld(1);
+      g.sounds.place('stone');
+      g.particles.burst(t.x + 0.5, t.y + 1, t.z + 0.5, new THREE.Color(0.3, 0.9, 0.65), 8, 1.5, 2);
+      if (r === 'opened') {
+        g.sounds.blink();
+        gamepad.rumble(0.8, 0.8, 400);
+        g.toast('The Void Portal opens! Jump in to reach Voidreach.');
+      }
+      return true;
+    }
+    if (t && g.world.getBlock(t.x, t.y, t.z) === B.VOID_FRAME_EYE) {
+      g.toast('This frame already holds an eye.');
+      return false;
+    }
+    const p = g.player;
+    const gen = g.world.gen as { nearestSanctum?: (x: number, z: number) => { x: number; y: number; z: number } | null };
+    const target = g.dim === 'overworld' && gen.nearestSanctum ? gen.nearestSanctum(p.body.x, p.body.z) : null;
+    if (!target) {
+      g.toast('The Void Eye spins aimlessly here.');
+      return true;
+    }
+    const dx = target.x + 0.5 - p.body.x, dz = target.z + 0.5 - p.body.z;
+    const dist = Math.hypot(dx, dz);
+    // A trail of green sparks drifting toward the sanctum.
+    for (let i = 1; i <= 10; i++) {
+      const k = Math.min(1, (i * 1.2) / Math.max(1, dist));
+      g.particles.burst(p.body.x + dx * k, p.eyeY + i * 0.15, p.body.z + dz * k, new THREE.Color(0.35, 0.95, 0.7), 2, 0.4, 0.6);
+    }
+    if (dist < 12) g.toast(`The eye sinks into the ground: the Void Sanctum is right below you (about ${Math.max(1, Math.round(p.body.y - target.y))} blocks down).`);
+    else g.toast(`The Void Eye drifts ${compassWord(dx, dz)}, about ${Math.round(dist)} blocks away.`);
+    if (!g.creative && Math.random() < 0.2) {
+      g.consumeHeld(1);
+      g.toast('The Void Eye shattered.');
+    }
+    return true;
+  }
+
+  /** Rift Portal Kit: a complete, lit portal frame in one go, standing on the targeted surface. */
+  private placeRiftKit(t: RayHit): boolean {
+    const g = this.g;
+    if (g.dim === 'voidreach') {
+      g.toast('Rifts will not open in the void.');
+      return true;
+    }
+    const x = t.x + t.nx, y = t.y + t.ny, z = t.z + t.nz;
+    // Build beside the player, never around them.
+    const b = g.player.body;
+    const inside = Math.floor(b.z) === z && Math.floor(b.x) >= x - 1 && Math.floor(b.x) <= x + 2 && Math.floor(b.y) >= y - 1 && Math.floor(b.y) <= y + 3;
+    if (inside) {
+      g.toast('Step back a little to build the portal.');
+      return false;
+    }
+    buildRift(g.world, x, y, z);
+    if (!g.creative) g.consumeHeld(1);
+    g.hand.doSwing();
+    g.sounds.blink();
+    g.toast('Portal built. Step inside to cross to Emberdeep.');
+    return true;
   }
 
   /** Ember Striker: sparks, and lights a rift inside a complete Duskstone frame. */

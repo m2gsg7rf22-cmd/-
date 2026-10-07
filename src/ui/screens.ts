@@ -119,6 +119,7 @@ export function mainMenu(hasWorlds: boolean, persistent: boolean): HTMLElement {
           <button class="btn" data-act="worlds">Worlds</button>
           <button class="btn" data-act="new">New World</button>
           <button class="btn" data-act="settings">Settings</button>
+          <button class="btn ghost" data-act="exit">Exit Game</button>
         </div>
       </div>
       <div class="menu-foot"><span>v0.1 · original voxel sandbox</span><span>${persistent ? '' : 'Storage unavailable — worlds won’t persist'}</span></div>
@@ -187,6 +188,18 @@ export function loadingScreen(): HTMLElement {
     </div>`);
 }
 
+/** Shown after "Exit Game" when the browser won't let the page close itself (e.g. embedded or not opened by script). */
+export function goodbyeScreen(): HTMLElement {
+  return el(`
+    <div class="screen solid" data-screen="goodbye">
+      <div class="panel" style="text-align:center">
+        <h2>See you soon!</h2>
+        <p>Your worlds are saved. You can close this tab or window now.</p>
+        <div class="row" style="justify-content:center"><button class="btn primary" data-act="back">Back to the menu</button></div>
+      </div>
+    </div>`);
+}
+
 export function pauseScreen(creative = false): HTMLElement {
   return el(`
     <div class="screen dim" data-screen="pause">
@@ -197,7 +210,7 @@ export function pauseScreen(creative = false): HTMLElement {
           <button class="btn" data-act="settings">Settings</button>
           <button class="btn" data-act="mode">${creative ? 'Switch to Survival' : 'Switch to Creative'}</button>
           <button class="btn" data-act="fullscreen" ${document.fullscreenEnabled ? '' : 'hidden'}>Toggle Fullscreen</button>
-          <button class="btn" data-act="savequit">Save &amp; Quit</button>
+          <button class="btn" data-act="savequit">Save &amp; Exit to Menu</button>
         </div>
       </div>
     </div>`);
@@ -334,6 +347,7 @@ export function settingsScreen(
     } else {
       h += row('UI Scale', '', range('uiScale', 0.75, 1.5, 0.05, pct));
       h += row('Compass & Minimap', '', toggle('showMap'));
+      h += row('Block names', 'Name of the block or creature you aim at', toggle('showNames'));
       h += row('Reduced Motion', 'Disables view bobbing, FOV kick and UI animations', toggle('reducedMotion'));
       if (document.fullscreenEnabled) h += row('Fullscreen', '', `<button class="btn small" data-fs>Toggle</button>`);
     }

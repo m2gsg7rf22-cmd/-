@@ -57,7 +57,7 @@ def({ id: B.STONE, name: 'Stone', hardness: 2.2, tool: 'pickaxe', minTier: 0, ti
 def({ id: B.RUBBLE, name: 'Rubble', hardness: 2.4, tool: 'pickaxe', minTier: 0, tiles: t3('rubble') });
 def({ id: B.SAND, name: 'Sand', hardness: 0.5, tool: 'shovel', tiles: t3('sand'), surface: 'sand' });
 def({ id: B.SANDSTONE, name: 'Sandstone', hardness: 1.6, tool: 'pickaxe', minTier: 0, tiles: ['sandstone_top', 'sandstone_top', 'sandstone'] });
-def({ id: B.GRAVEL, name: 'Gravel', hardness: 0.6, tool: 'shovel', tiles: t3('gravel'), surface: 'gravel' });
+def({ id: B.GRAVEL, name: 'Gravel', hardness: 0.6, tool: 'shovel', tiles: t3('gravel'), surface: 'gravel', drop: [{ id: B.GRAVEL, count: 1 }, { id: I.FLINT, count: 1, chance: 0.15 }] });
 def({ id: B.SNOW_GRASS, name: 'Frost Turf', hardness: 0.6, tool: 'shovel', tiles: ['snow', 'dirt', 'snow_side'], drop: [{ id: B.DIRT, count: 1 }], surface: 'snow' });
 def({ id: B.ICE, name: 'Ice', render: 'glass', opaque: false, hardness: 0.5, tool: 'pickaxe', tiles: t3('ice'), surface: 'glass', drop: [] });
 def({ id: B.WATER, name: 'Water', render: 'water', solid: false, opaque: false, hardness: Infinity, tiles: t3('water'), drop: [], surface: 'water', replaceable: true });
@@ -136,7 +136,7 @@ def({ id: B.GLOWCAP, name: 'Glowcap Cluster', hardness: 0.4, tiles: t3('glowcap'
 def({ id: B.MAGMA, name: 'Molten Magma', solid: false, hardness: Infinity, tiles: t3('magma'), drop: [], surface: 'water', light: 13, replaceable: true });
 def({ id: B.MAGMA_DEEP, name: 'Molten Magma', solid: false, hardness: Infinity, tiles: t3('magma'), drop: [], surface: 'water', variant: true, replaceable: true });
 def({ id: B.BASALT, name: 'Scorched Basalt', hardness: 1.4, tool: 'pickaxe', minTier: 0, tiles: ['basalt_top', 'basalt_top', 'basalt_side'] });
-def({ id: B.DUSKSTONE, name: 'Duskstone', hardness: 9, tool: 'pickaxe', minTier: 3, tiles: t3('duskstone') });
+def({ id: B.DUSKSTONE, name: 'Obsidian', hardness: 9, tool: 'pickaxe', minTier: 3, tiles: t3('duskstone') });
 def({ id: B.RIFT_X, name: 'Rift', render: 'shape', solid: false, opaque: false, hardness: Infinity, tiles: t3('rift'), surface: 'glass', light: 11, drop: [], variant: true,
   boxes: [[0, 0, 6 * P, 1, 1, 10 * P]] });
 def({ id: B.RIFT_Z, name: 'Rift', render: 'shape', solid: false, opaque: false, hardness: Infinity, tiles: t3('rift'), surface: 'glass', light: 11, drop: [], variant: true,
@@ -161,6 +161,11 @@ def({ id: B.VOID_EGG, name: 'Void Dragon Egg', render: 'shape', opaque: false, h
   boxes: [[3 * P, 0, 3 * P, 13 * P, 9 * P, 13 * P], [4 * P, 9 * P, 4 * P, 12 * P, 13 * P, 12 * P], [6 * P, 13 * P, 6 * P, 10 * P, 15 * P, 10 * P]] });
 def({ id: B.CRIMSON_TURF, name: 'Crimson Turf', hardness: 0.9, tool: 'pickaxe', minTier: 0, tiles: ['crimson_top', 'cinderrock', 'crimson_side'], drop: [{ id: B.CINDERROCK, count: 1 }] });
 def({ id: B.EMBER_WART, name: 'Ember Wart Block', hardness: 0.9, tool: 'axe', tiles: t3('ember_wart'), surface: 'plant' });
+const FRAME_BOX = [[0, 0, 0, 1, 13 * P, 1]];
+def({ id: B.VOID_FRAME, name: 'Void Portal Frame', render: 'shape', opaque: false, hardness: Infinity, tiles: ['vframe_top', 'voidstone', 'vframe_side'], surface: 'stone', boxes: FRAME_BOX, drop: [] });
+def({ id: B.VOID_FRAME_EYE, name: 'Void Portal Frame (with Eye)', render: 'shape', opaque: false, hardness: Infinity, tiles: ['vframe_eye_top', 'voidstone', 'vframe_side'], surface: 'stone', light: 3, boxes: FRAME_BOX, drop: [], variant: true });
+def({ id: B.VOID_PORTAL, name: 'Void Portal', render: 'shape', solid: false, opaque: false, hardness: Infinity, tiles: ['void_gate_top', 'void_gate_top', 'void_gate_top'], surface: 'glass', light: 15, drop: [], variant: true,
+  boxes: [[0, 11 * P, 0, 1, 12 * P, 1]] });
 def({ id: B.BONE_BLOCK, name: 'Bone Block', hardness: 2, tool: 'pickaxe', minTier: 0, tiles: ['bone_top', 'bone_top', 'bone_side'] });
 
 export const BLOCKS: readonly BlockDef[] = defs;
@@ -191,7 +196,7 @@ for (const d of defs) {
 }
 EMIT[B.LUMEN_ORE] = 6;
 // Rift panels can't be targeted (you aim through them at the frame); they collapse when the frame breaks.
-SELECTION[B.RIFT_X] = SELECTION[B.RIFT_Z] = null;
+SELECTION[B.RIFT_X] = SELECTION[B.RIFT_Z] = SELECTION[B.VOID_PORTAL] = null;
 
 export function isBlockId(id: number): boolean {
   return id > 0 && id < 256 && defs[id] !== undefined;

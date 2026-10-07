@@ -738,6 +738,32 @@ const painters: Record<string, (t: Tile) => void> = {
     // Fill the rest so box faces sampling outside the column still show the rod colors.
     for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (x < 7 || x > 8) t.set(x, y, y >= 13 ? [96, 74, 104] : [244, 240, 230]);
   },
+  vframe_side: (t) => {
+    // Pale stone base with a teal-green upper band of carved panels.
+    t.fill((x, y) => {
+      if (y >= 9) return scale(ramp(vnoise(x, y, 8, t.seed) + dither(x, y, 0.2), [[200, 200, 150], [214, 214, 164], [226, 226, 176]]), y === 9 ? 0.8 : 1);
+      const panel = x % 4 === 0 || y === 0 || y === 8;
+      return scale(mix([52, 112, 98], [80, 146, 126], vnoise(x, y, 4, t.seed)), panel ? 0.72 : 1 + dither(x, y, 0.06));
+    });
+  },
+  vframe_top: (t) => {
+    t.fill((x, y) => {
+      const r = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5));
+      if (r < 3.5) return [18, 30, 30]; // empty eye socket
+      if (r < 4.5) return [40, 70, 64];
+      const c = mix([56, 118, 104], [84, 150, 130], vnoise(x, y, 4, t.seed));
+      return scale(c, r > 6.5 ? 0.75 : 1 + dither(x, y, 0.06));
+    });
+  },
+  vframe_eye_top: (t) => {
+    painters.vframe_top(t);
+    for (let y = 4; y < 12; y++) for (let x = 4; x < 12; x++) {
+      const d = Math.hypot(x - 7.5, y - 7.5);
+      if (d > 3.8) continue;
+      t.set(x, y, d < 1.3 ? [12, 26, 20] : d < 2.6 ? [80, 200, 150] : [40, 140, 100]);
+    }
+    t.set(6, 6, [220, 255, 236]);
+  },
   void_egg: (t) => {
     t.fill((x, y) => {
       const n = vnoise(x, y, 4, t.seed);

@@ -1,7 +1,7 @@
 import { audio } from '../audio/audio';
 import { canCraft, craft, hasIngredients, RECIPES, STATION_LABEL, type Station } from '../game/crafting';
 import { HOTBAR_SIZE, type Inventory } from '../game/inventory';
-import { allItemIds, itemName, maxStack } from '../game/items';
+import { allItemIds, isTool, itemHint, itemName, maxStack, TRAVEL_ITEMS } from '../game/items';
 import { iconFor } from './icons';
 import { slotHTML } from './hud';
 
@@ -22,6 +22,8 @@ export class InventoryScreen {
   private dragFrom = -1;
   private stations = new Set<Station>();
   private cleanup: (() => void)[] = [];
+  /** Name (and use) of the item under the pointer / controller focus. */
+  private nameLine = '';
 
   constructor(parent: HTMLElement, private host: InventoryHost, private onClose: () => void) {
     this.el = document.createElement('div');
@@ -39,7 +41,7 @@ export class InventoryScreen {
     const slot = (i: number) => {
       const s = inv.slots[i];
       const cls = ['slot', i === this.picked ? 'picked' : ''].join(' ');
-      return `<div class="${cls}" data-slot="${i}" title="${s ? itemName(s.id) : ''}">${slotHTML(s)}</div>`;
+      return `<div class="${cls}" data-slot="${i}" data-name="${s ? s.id : ''}" title="${s ? itemName(s.id) : ''}">${slotHTML(s)}</div>`;
     };
     let grid = '';
     for (let i = HOTBAR_SIZE; i < inv.slots.length; i++) grid += slot(i);
@@ -52,9 +54,17 @@ export class InventoryScreen {
 
     let right = '';
     if (this.tab === 'library' && this.host.creative) {
-      right = `<div class="library">${allItemIds()
-        .map((id) => `<div class="slot" data-lib="${id}" title="${itemName(id)}"><img src="${iconFor(id)}" alt=""></div>`)
-        .join('')}</div>`;
+      const lib = (id: number) => `<div class="slot" data-lib="${id}" data-name="${id}" title="${itemName(id)}"><img src="${iconFor(id)}" alt=""></div>`;
+      const rest = allItemIds().filter((id) => !TRAVEL_ITEMS.includes(id));
+      const blocks = rest.filter((id) => id < 256);
+      const items = rest.filter((id) => id >= 256 && !isTool(id));
+      const tools = rest.filter((id) => isTool(id));
+      right = `<div class="library">
+        <div class="lib-head">Travel between worlds</div>${TRAVEL_ITEMS.map(lib).join('')}
+        <div class="lib-head">Blocks</div>${blocks.map(lib).join('')}
+        <div class="lib-head">Items</div>${items.map(lib).join('')}
+        <div class="lib-head">Tools</div>${tools.map(lib).join('')}
+      </div>`;
     } else {
       const st = this.stations;
       const stationsHtml = (['bench', 'kiln'] as Station[])
@@ -79,7 +89,7 @@ export class InventoryScreen {
     const pickedStack = this.picked >= 0 ? inv.slots[this.picked] : null;
     this.el.innerHTML = `
       <div class="panel wide">
-        <div class="inv-head"><h2>Inventory</h2><button class="btn small" data-act="close">Close</button></div>
+        <div class="inv-head"><h2>Inventory</h2><div class="inv-name" aria-live="polite">${this.nameLine}</div><button class="btn small" data-act="close">Close</button></div>
         <div class="inv-layout">
           <div>
             <div class="inv-grid">${grid}</div>
@@ -100,6 +110,16 @@ export class InventoryScreen {
       this.cleanup.push(() => this.el.removeEventListener(type, fn));
     };
     on('contextmenu', (e) => e.preventDefault());
+    // Show the name (and use) of whatever the pointer or the controller focus is on.
+    const showName = (e: Event) => {
+      const n = (e.target as HTMLElement).closest('[data-name]') as HTMLElement | null;
+      const id = n && n.dataset.name ? Number(n.dataset.name) : NaN;
+      this.nameLine = Number.isFinite(id) ? `<b>${itemName(id)}</b>${itemHint(id) ? ` <span>${itemHint(id)}</span>` : ''}` : '';
+      const bar = this.el.querySelector('.inv-name');
+      if (bar) bar.innerHTML = this.nameLine;
+    };
+    on('pointerover', showName);
+    on('padfocus', showName);
     on('click', (e) => {
       const t = e.target as HTMLElement;
       const act = t.closest('[data-act]') as HTMLElement | null;

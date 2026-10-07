@@ -12,6 +12,7 @@ export const TILE_NAMES = [
   'ember_stalk', 'ember_stalk_top', 'ember_cap', 'ember_sprout', 'cinder_bricks', 'voidstone', 'void_bricks',
   'void_stalk', 'void_stalk_top', 'void_bloom', 'void_gate_top', 'void_gate_side', 'void_crystal', 'bone_top', 'bone_side',
   'ember_wart', 'crimson_top', 'crimson_side', 'purpur', 'purpur_pillar', 'purpur_pillar_top', 'end_rod', 'void_egg',
+  'vframe_top', 'vframe_eye_top', 'vframe_side',
 ] as const;
 
 export type TileName = (typeof TILE_NAMES)[number];

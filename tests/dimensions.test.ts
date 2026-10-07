@@ -278,3 +278,49 @@ describe('Void Dragon and new structures', () => {
     expect(bricks).toBeGreaterThan(0);
   });
 });
+
+describe('original-style travel', () => {
+  it('twelve eyed frames around a 3x3 hole open the Void Portal; eleven do not', async () => {
+    const { insertVoidEye, VOID_RING } = await import('../src/game/portals');
+    const w = new MapWorld();
+    for (const [dx, dz] of VOID_RING) w.setBlock(10 + dx, 30, 10 + dz, B.VOID_FRAME);
+    const results = VOID_RING.map(([dx, dz]) => insertVoidEye(w, 10 + dx, 30, 10 + dz));
+    expect(results.slice(0, 11).every((r) => r === 'filled')).toBe(true);
+    expect(results[11]).toBe('opened');
+    expect(count(w, B.VOID_PORTAL)).toBe(9);
+    expect(insertVoidEye(w, 10, 30, 10)).toBe('none');
+  });
+
+  it('the overworld hides Void Sanctums with a frame ring over a magma pool', async () => {
+    const { TerrainGenerator } = await import('../src/world/generator');
+    const g = new TerrainGenerator(2024);
+    const s = g.nearestSanctum(0, 0)!;
+    expect(s).toBeTruthy();
+    const cx = Math.floor(s.x / CHUNK_SIZE), cz = Math.floor(s.z / CHUNK_SIZE);
+    const at = (x: number, y: number, z: number) => {
+      const ccx = Math.floor(x / CHUNK_SIZE), ccz = Math.floor(z / CHUNK_SIZE);
+      return g.generate(ccx, ccz)[blockIndex(x - ccx * CHUNK_SIZE, y, z - ccz * CHUNK_SIZE)];
+    };
+    expect(cx).toBe(Math.floor(s.x / CHUNK_SIZE));
+    expect(cz).toBe(Math.floor(s.z / CHUNK_SIZE));
+    const frames = [[0, -2], [2, 0], [-1, 2]].map(([dx, dz]) => at(s.x + dx, s.y + 2, s.z + dz));
+    for (const f of frames) expect([B.VOID_FRAME, B.VOID_FRAME_EYE]).toContain(f);
+    expect(at(s.x, s.y + 1, s.z)).toBe(B.MAGMA);
+    expect(at(s.x, s.y + 2, s.z)).toBe(B.AIR);
+    expect(at(s.x - 7, s.y + 3, s.z)).toBe(B.SLATE_BRICKS);
+  });
+
+  it('flint comes from gravel and makes Flint and Steel; Void Eyes are craftable', () => {
+    expect(BLOCKS[B.GRAVEL].drop!.some((d) => d.id === 277 && d.chance! > 0)).toBe(true);
+    expect(RECIPES.find((r) => r.id === 'flint_and_steel')!.ingredients.map((i) => i[0])).toContain(277);
+    expect(RECIPES.find((r) => r.id === 'void_eye')).toBeTruthy();
+    expect(BLOCKS[B.DUSKSTONE].name).toBe('Obsidian');
+  });
+
+  it('compass words for eye directions', async () => {
+    const { compassWord } = await import('../src/game/interaction');
+    expect(compassWord(0, -1)).toBe('north');
+    expect(compassWord(1, 0)).toBe('east');
+    expect(compassWord(-1, 1)).toBe('south-west');
+  });
+});

@@ -69,12 +69,18 @@ export class Hud {
   readonly touchRoot: HTMLElement;
   minimap: Minimap | null = null;
   onHotbarSelect?: (i: number) => void;
+  /** The ☰ button (pause menu: settings, save & exit). */
+  onMenu?: () => void;
+  private lookEl!: HTMLElement;
+  private lookText = '';
 
   constructor(root: HTMLElement, touchRoot: HTMLElement) {
     this.root = root;
     this.touchRoot = touchRoot;
     root.innerHTML = `
       <div class="crosshair"></div>
+      <div class="look-name" hidden></div>
+      <button class="hud-menu" type="button" title="Menu (Esc)" aria-label="Open menu">☰</button>
       <div class="mode-badge"></div>
       <div class="clock"></div>
       <div class="toasts"></div>
@@ -95,6 +101,13 @@ export class Hud {
     this.debugEl = root.querySelector('.debug')!;
     this.modeEl = root.querySelector('.mode-badge')!;
     this.clockEl = root.querySelector('.clock')!;
+    this.lookEl = root.querySelector('.look-name')!;
+    const menu = root.querySelector('.hud-menu') as HTMLElement;
+    menu.addEventListener('pointerdown', (e) => e.stopPropagation());
+    menu.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.onMenu?.();
+    });
     for (let i = 0; i < HOTBAR_SIZE; i++) {
       const s = document.createElement('div');
       s.className = 'slot';
@@ -155,6 +168,14 @@ export class Hud {
       this.lastSelKey = selKey;
       this.showItemName(s ? itemName(s.id) : '');
     }
+  }
+
+  /** Name of the block or creature under the crosshair ('' hides it). */
+  setLookName(name: string): void {
+    if (name === this.lookText) return;
+    this.lookText = name;
+    this.lookEl.textContent = name;
+    this.lookEl.hidden = !name;
   }
 
   showItemName(name: string): void {

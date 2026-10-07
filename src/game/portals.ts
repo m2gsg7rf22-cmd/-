@@ -181,3 +181,37 @@ function build(w: PortalWorld, x: number, y: number, z: number): { x: number; y:
   ignite(w, fx, fy, fz);
   return { x: fx, y: fy, z: fz };
 }
+
+/** The 12 ring cells (offsets from the ring's center) of a Void Portal frame around its 3x3 hole. */
+export const VOID_RING: readonly [number, number][] = (() => {
+  const out: [number, number][] = [];
+  for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) {
+    const edge = Math.abs(dx) === 2 || Math.abs(dz) === 2;
+    const corner = Math.abs(dx) === 2 && Math.abs(dz) === 2;
+    if (edge && !corner) out.push([dx, dz]);
+  }
+  return out;
+})();
+
+/**
+ * Put a Void Eye into the frame at (x,y,z). If that completes a ring of 12 eyed frames around a
+ * 3x3 hole, the hole fills with Void Portal. Returns 'none' (not a frame / already filled),
+ * 'filled' or 'opened'.
+ */
+export function insertVoidEye(w: PortalWorld, x: number, y: number, z: number): 'none' | 'filled' | 'opened' {
+  if (w.getBlock(x, y, z) !== B.VOID_FRAME) return 'none';
+  w.setBlock(x, y, z, B.VOID_FRAME_EYE);
+  for (let cx = x - 2; cx <= x + 2; cx++) for (let cz = z - 2; cz <= z + 2; cz++) {
+    if (!VOID_RING.some(([dx, dz]) => cx + dx === x && cz + dz === z)) continue;
+    if (!VOID_RING.every(([dx, dz]) => w.getBlock(cx + dx, y, cz + dz) === B.VOID_FRAME_EYE)) continue;
+    let free = true;
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+      const id = w.getBlock(cx + dx, y, cz + dz);
+      if (id !== B.AIR && id !== B.VOID_PORTAL) free = false;
+    }
+    if (!free) continue;
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) w.setBlock(cx + dx, y, cz + dz, B.VOID_PORTAL);
+    return 'opened';
+  }
+  return 'filled';
+}

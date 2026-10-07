@@ -15,7 +15,7 @@ import { gamepad, glyph, glyphClass, PB, type PadType } from './input/gamepad';
 import { PadNav } from './ui/padNav';
 import { DIM_NAMES, type Dim } from './world/dimension';
 import {
-  actions, confirmDialog, deathScreen, el, errorScreen, loadingScreen, mainMenu, MenuBackground, newWorldScreen,
+  actions, confirmDialog, deathScreen, goodbyeScreen, el, errorScreen, loadingScreen, mainMenu, MenuBackground, newWorldScreen,
   pauseScreen, promptDialog, rotateOverlay, settingsScreen, toggleFullscreen, worldsScreen,
 } from './ui/screens';
 
@@ -302,7 +302,33 @@ export class App {
       worlds: () => void this.showWorlds(),
       new: () => this.showNewWorld(),
       settings: () => this.showSettings(() => void this.showMenu()),
+      exit: () => this.exitGame(),
     });
+  }
+
+  /** Leave the game: drop fullscreen/pointer lock and close the window if the browser allows it. */
+  private exitGame(): void {
+    this.input.exitPointerLock();
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined);
+    audio.suspend();
+    try {
+      window.close();
+    } catch {
+      /* not allowed */
+    }
+    // Still here (tabs opened by the user, embedded pages): say goodbye instead.
+    setTimeout(() => {
+      if (this.state !== 'menu') return;
+      this.bg?.stop();
+      const g = goodbyeScreen();
+      this.showScreen(g);
+      actions(g, {
+        back: () => {
+          audio.resume();
+          void this.showMenu();
+        },
+      });
+    }, 250);
   }
 
   private async showWorlds(): Promise<void> {

@@ -828,7 +828,7 @@ export class MobManager {
       case 'perch': {
         tx = a.x + 0.5; tz = a.z - 2.5; ty = a.y + 1;
         speed = 9;
-        if (Math.hypot(tx - m.body.x, ty - m.body.y, tz - m.body.z) < 1.2) {
+        if (Math.hypot(tx - m.body.x, ty - m.body.y, tz - m.body.z) < 1.6) {
           perched = true;
           facePlayer = true;
           m.body.x = tx; m.body.y = ty; m.body.z = tz;
@@ -846,7 +846,9 @@ export class MobManager {
       const ex = tx - m.body.x, ey = ty - m.body.y, ez = tz - m.body.z;
       const el = Math.hypot(ex, ey, ez);
       const k = Math.min(1, 1.8 * dt);
-      const wx = el > 0.3 ? (ex / el) * speed : 0, wy = el > 0.3 ? (ey / el) * speed : 0, wz = el > 0.3 ? (ez / el) * speed : 0;
+      // Ease in near the target (landing on the plaza) instead of overshooting and circling it.
+      const sp = b.phase === 'perch' ? speed * Math.min(1, el / 6) : speed;
+      const wx = el > 0.3 ? (ex / el) * sp : 0, wy = el > 0.3 ? (ey / el) * sp : 0, wz = el > 0.3 ? (ez / el) * sp : 0;
       m.vx += (wx - m.vx) * k; m.vy += (wy - m.vy) * k; m.vz += (wz - m.vz) * k;
       // Flies freely: it's far too big to path through spires and towers.
       m.body.x += m.vx * dt; m.body.y += m.vy * dt; m.body.z += m.vz * dt;

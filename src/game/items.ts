@@ -49,9 +49,30 @@ const simple: [number, string, string, number?][] = [
   [I.MAGMA_GEL, 'Magma Gel', '#ff8a2a'],
   [I.BONE, 'Bone', '#e2dcc8'],
   [I.FEATHER, 'Feather', '#f4f0e6'],
+  [I.FLINT, 'Flint', '#4a4a50'],
+  [I.VOID_EYE, 'Void Eye', '#3fb58f'],
 ];
 for (const [id, name, color, food] of simple) items.set(id, { id, name, maxStack: 64, color, food });
-items.set(I.EMBER_STRIKER, { id: I.EMBER_STRIKER, name: 'Ember Striker', maxStack: 1, color: '#c8c4be' });
+items.set(I.EMBER_STRIKER, { id: I.EMBER_STRIKER, name: 'Flint and Steel', maxStack: 1, color: '#c8c4be' });
+items.set(I.RIFT_KIT, { id: I.RIFT_KIT, name: 'Rift Portal Kit', maxStack: 16, color: '#9a5cff' });
+
+/** Items for travelling between worlds: listed first in the Block Library and given to new creative worlds. */
+export const TRAVEL_ITEMS: readonly number[] = [B.DUSKSTONE, I.EMBER_STRIKER, I.RIFT_KIT, I.VOID_EYE, B.VOID_FRAME, B.VOID_GATE];
+
+/** One-line description of what an item is for (shown with its name). */
+export function itemHint(id: number): string {
+  switch (id) {
+    case I.RIFT_KIT: return 'Place on the ground: builds a lit portal to Emberdeep';
+    case B.VOID_GATE: return 'Shortcut: place and use to travel to Voidreach (and back home)';
+    case I.EMBER_STRIKER: return 'Use inside an Obsidian frame to open a portal to Emberdeep';
+    case B.DUSKSTONE: return 'Portal frame block (needs an Iron Pickaxe to mine)';
+    case I.FLINT: return 'Sometimes drops from Gravel; makes Flint and Steel';
+    case I.VOID_EYE: return 'Use in the air to find a Void Sanctum; put one in each Void Portal Frame';
+    case B.VOID_FRAME: return '12 frames around a 3x3 hole, each with a Void Eye, open the way to Voidreach';
+    case B.VOID_EGG: return 'Trophy of the Void Dragon';
+    default: return '';
+  }
+}
 
 export const TIER_SPEED = [2, 3.5, 5, 7, 10];
 export const TIER_DURABILITY = [60, 130, 220, 400, 1000];

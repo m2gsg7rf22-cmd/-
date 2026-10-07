@@ -21,6 +21,8 @@ export interface Settings {
   ambient: number;
   music: number;
   showMap: boolean;
+  /** Name of the block/creature under the crosshair. */
+  showNames: boolean;
   deviceMode: DeviceMode;
   uiScale: number;
   showDebug: boolean;
@@ -56,6 +58,7 @@ export function defaultSettings(): Settings {
     ambient: 0.6,
     music: 0.5,
     showMap: true,
+    showNames: true,
     deviceMode: 'auto',
     uiScale: 1,
     showDebug: false,
@@ -96,6 +99,7 @@ export function sanitizeSettings(raw: unknown): Settings {
     ambient: clamp(r.ambient, 0, 1, d.ambient),
     music: clamp(r.music, 0, 1, d.music),
     showMap: bool(r.showMap, d.showMap),
+    showNames: bool(r.showNames, d.showNames),
     deviceMode: pick(r.deviceMode, ['auto', 'desktop', 'mobile'] as const, d.deviceMode),
     uiScale: clamp(r.uiScale, 0.75, 1.5, d.uiScale),
     showDebug: bool(r.showDebug, d.showDebug),

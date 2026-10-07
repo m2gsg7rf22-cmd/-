@@ -35,6 +35,9 @@ r('lumen_lamp', [B.LUMEN_LAMP, 1], [[B.GLASS, 1], [I.LUMEN_SHARD, 1]], 'bench');
 r('slate_bricks', [B.SLATE_BRICKS, 4], [[B.RUBBLE, 4]], 'bench');
 // Travel between dimensions.
 r('ember_striker', [I.EMBER_STRIKER, 1], [[I.IRON_INGOT, 1], [I.EMBER, 1]]);
+r('rift_kit', [I.RIFT_KIT, 1], [[B.DUSKSTONE, 10], [I.EMBER, 2]], 'bench');
+r('flint_and_steel', [I.EMBER_STRIKER, 1], [[I.IRON_INGOT, 1], [I.FLINT, 1]]);
+r('void_eye', [I.VOID_EYE, 1], [[I.VOID_PEARL, 1], [I.GLOW_DUST, 1]]);
 r('void_gate', [B.VOID_GATE, 1], [[I.VOID_PEARL, 4], [B.DUSKSTONE, 4], [I.LUMEN_SHARD, 1]], 'bench');
 // Emberdeep and Voidreach materials.
 r('glowcap', [B.GLOWCAP, 1], [[I.GLOW_DUST, 4]]);

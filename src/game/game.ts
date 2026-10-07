@@ -3,7 +3,7 @@ import { audio } from '../audio/audio';
 import { gamepad } from '../input/gamepad';
 import { CHUNK_SIZE, DAY_LENGTH, WORLD_HEIGHT } from '../core/constants';
 import { toChunk } from '../core/coords';
-import { B, isRiftId } from '../core/ids';
+import { B, I, isRiftId } from '../core/ids';
 import type { InputManager } from '../input/input';
 import type { TouchControls } from '../input/touch';
 import { MAX_AIR, Player } from '../player/player';
@@ -23,7 +23,7 @@ import { AdaptiveQuality, type QualityStep } from './adaptive';
 import type { Station } from './crafting';
 import { Interaction } from './interaction';
 import { HOTBAR_SIZE, Inventory, type ItemStack } from './inventory';
-import { itemName } from './items';
+import { itemName, TRAVEL_ITEMS } from './items';
 import { MOB_SPECS, MobManager, type MobKind } from './mobs';
 import { DropManager } from './drops';
 import { FluidSim } from '../world/fluids';
@@ -213,6 +213,7 @@ export class Game {
       else if (e === 'drop') this.dropSelected();
     });
     hud.onHotbarSelect = (i) => this.select(i);
+    hud.onMenu = () => this.host.onRequestPause();
     hud.setMode(this.creative);
     this.applySettings(settings);
   }
@@ -246,6 +247,7 @@ export class Game {
       z = s.z;
       fresh = true;
       if (!this.creative) this.starterKit();
+      else this.creativeKit();
     }
     const arrival = this.meta.arrival;
     if (arrival === 'gate' && this.dim === 'voidreach') ({ x, y, z } = this.world.gen.findSpawn());
@@ -398,6 +400,12 @@ export class Game {
         ...(via === 'respawn' ? { health: 20, hunger: 20, saturation: 5 } : {}),
       },
     };
+  }
+
+  /** New creative worlds start with the travel items (portals) and some building blocks on the hotbar. */
+  private creativeKit(): void {
+    const ids = [...TRAVEL_ITEMS, B.TORCH, B.PLANKS, B.GLASS, B.SLATE_BRICKS, B.LUMEN_LAMP];
+    ids.slice(0, HOTBAR_SIZE).forEach((id, i) => (this.inventory.slots[i] = { id, count: id === I.EMBER_STRIKER ? 1 : 16 }));
   }
 
   private starterKit(): void {
@@ -701,6 +709,7 @@ export class Game {
     if (!this.creative) this.hud.updateStats(p.health, p.hunger, p.air, MAX_AIR, p.headInWater);
     this.hud.setClock(this.time, this.day);
     this.updateBossBar();
+    this.hud.setLookName(this.settings.showNames && active ? this.lookName() : '');
     if (this.eggPending) this.placeEgg(); // cheap: fails fast until the plaza chunk is loaded
     this.undergroundTimer -= dt;
     if (this.undergroundTimer <= 0) {
@@ -742,6 +751,13 @@ export class Game {
   private updateRift(dt: number): void {
     const p = this.player;
     const b = p.body;
+    // Falling into an open Void Portal goes straight to Voidreach.
+    if (!this.travelling && !p.dead && this.world.getBlock(b.x, b.y + 0.2, b.z) === B.VOID_PORTAL && !this.portalLock) {
+      this.travelling = true;
+      audio.blink();
+      this.host.onTravel('voidreach', 'gate');
+      return;
+    }
     const inRift = isRiftId(this.world.getBlock(b.x, b.y + 0.2, b.z)) || isRiftId(this.world.getBlock(b.x, b.y + 1.2, b.z));
     if (!inRift) this.portalLock = false;
     if (inRift && !this.portalLock && !this.travelling && !p.dead) {
@@ -770,6 +786,16 @@ export class Game {
     if (this.meta.dragonDefeated || this.mobs.boss) return;
     this.mobs.spawn('dragon', 0, top + 28, -36);
     this.hud.toast('Something vast stirs above the island…', true, 5000);
+  }
+
+  /** What the crosshair is on: a creature's or a block's name. */
+  private lookName(): string {
+    const it = this.interaction;
+    if (it.targetMob) return MOB_SPECS[it.targetMob.kind].name;
+    const t = it.target;
+    if (!t) return '';
+    const id = this.world.getBlock(t.x, t.y, t.z);
+    return id === 0 || id === 255 ? '' : blockDef(id).name;
   }
 
   private bossShown = false;
@@ -889,6 +915,8 @@ export class Game {
     this.highlight.dispose();
     this.hand.dispose();
     this.hud.onHotbarSelect = undefined;
+    this.hud.onMenu = undefined;
+    this.hud.setLookName('');
     document.getElementById('overlay-water')?.classList.remove('on');
     document.getElementById('overlay-magma')?.classList.remove('on');
     const rift = document.getElementById('overlay-rift');

@@ -83,6 +83,7 @@ export class PadNav {
     if (el) {
       el.classList.add('pad-focus');
       this.focusKey = keyOf(el);
+      el.dispatchEvent(new Event('padfocus', { bubbles: true }));
       el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
   }

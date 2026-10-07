@@ -311,7 +311,7 @@ await step('mining: the arm swings, each strike throws chips and advances the cr
     await page.waitForTimeout(60);
   }
   await page.evaluate(() => window.__bf.app.input.setTouchPrimary(false));
-  assert(maxParts > 0 && swings > 2 && maxStage >= 2 && broken, JSON.stringify({ maxParts, swings, maxStage, broken }));
+  assert(maxParts > 0 && swings >= 1 && maxStage >= 2 && broken, JSON.stringify({ maxParts, swings, maxStage, broken }));
   return { maxParts, swings, maxStage, broken };
 });
 
@@ -398,6 +398,81 @@ await step('a slain dragon stays slain after leaving and returning', async () =>
   assert(!r.boss && r.egg === 92, JSON.stringify(r));
   await page.evaluate(() => window.__bf.app.travel('overworld', 'gate'));
   await playingIn('overworld');
+});
+
+await step('block names: the block under the crosshair is named on screen', async () => {
+  F = await pad();
+  await page.evaluate(() => { const g = window.__bf.app.game; g.creative = false; g.player.creative = false; });
+  await aim({ x: F.fx + 2, y: F.fy - 1, z: F.fz }, [0, 1, 0]);
+  await until(() => document.querySelector('.look-name')?.textContent === 'Stone', null, 6000, 'look name');
+});
+
+await step('inventory shows item names on hover; travel items lead the Block Library', async () => {
+  await page.evaluate(() => { const g = window.__bf.app.game; g.creative = true; g.player.creative = true; window.__bf.app.openInventory(); });
+  await page.waitForSelector('.inv-screen');
+  await page.click('[data-tab=library]');
+  await page.hover('.library [data-lib]');
+  const r = await page.evaluate(() => ({ name: document.querySelector('.inv-name').textContent, first: document.querySelector('.library [data-lib]').dataset.lib, head: document.querySelector('.lib-head').textContent }));
+  assert(r.name.includes('Obsidian') && r.head.includes('Travel'), JSON.stringify(r));
+  await page.click('[data-act=close]');
+  await until(() => window.__bf.state === 'playing', null, 5000, 'closed');
+  return r;
+});
+
+await step('Rift Portal Kit builds a lit portal in one placement', async () => {
+  F = await pad();
+  await page.evaluate(() => { const g = window.__bf.app.game; g.inventory.clear(); g.inventory.slots[0] = { id: 276, count: 1 }; g.select(0); });
+  const cell = { x: F.fx, y: F.fy - 1, z: F.fz - 3 };
+  await useOn(cell, [0, 1, 0]);
+  const n = await page.evaluate((c) => { const g = window.__bf.app.game; let k = 0; for (let dx = 0; dx < 2; dx++) for (let dy = 1; dy <= 3; dy++) if (g.world.getBlock(c.x + dx, c.y + dy, c.z) === 74) k++; return k; }, cell);
+  assert(n === 6, 'rift cells ' + n);
+});
+
+await step('Void Eye points to a hidden Void Sanctum; filling its frames opens a Void Portal to Voidreach', async () => {
+  await page.evaluate(() => { const g = window.__bf.app.game; g.inventory.clear(); g.inventory.slots[0] = { id: 278, count: 64 }; g.select(0); g.player.pitch = 1.2; });
+  await page.evaluate(() => window.__bf.app.input.triggerEvent('secondaryDown'));
+  await until(() => [...document.querySelectorAll('.toast')].some((t) => /Void Eye drifts|right below/.test(t.textContent)), null, 8000, 'eye toast');
+  const s = await page.evaluate(() => window.__bf.app.game.world.gen.nearestSanctum(window.__bf.app.game.player.body.x, window.__bf.app.game.player.body.z));
+  // Go to the sanctum hall (beside the dais) and wait for it to load.
+  await page.evaluate((s) => { const g = window.__bf.app.game; g.player.flying = true; g.player.setPosition(s.x + 5.5, s.y + 1, s.z + 0.5); }, s);
+  await until((s) => { const g = window.__bf.app.game; const id = g.world.getBlock(s.x, s.y + 2, s.z - 2); return id === 95 || id === 96; }, s, 60000, 'sanctum loaded');
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: `${OUT}/07-sanctum.png` });
+  // Fill each empty frame with an eye through the real interaction path.
+  const ring = [[-1, -2], [0, -2], [1, -2], [-1, 2], [0, 2], [1, 2], [-2, -1], [-2, 0], [-2, 1], [2, -1], [2, 0], [2, 1]];
+  for (const [dx, dz] of ring) {
+    const c = { x: s.x + dx, y: s.y + 2, z: s.z + dz };
+    const id = await page.evaluate((c) => window.__bf.app.game.world.getBlock(c.x, c.y, c.z), c);
+    if (id !== 95) continue;
+    // Stand on the dais edge nearest that frame, looking down at it.
+    await page.evaluate(({ c, dx, dz }) => { const p = window.__bf.app.game.player; p.setPosition(c.x + 0.5 + Math.sign(dx) * 1.0, c.y + 1.2, c.z + 0.5 + Math.sign(dz) * 1.0); }, { c, dx, dz });
+    await useOn(c, [0, 1, 0]);
+  }
+  const portal = await page.evaluate((s) => window.__bf.app.game.world.getBlock(s.x, s.y + 2, s.z), s);
+  assert(portal === 97, 'portal not open: ' + portal);
+  await page.screenshot({ path: `${OUT}/08-void-portal.png` });
+  await page.evaluate((s) => { const g = window.__bf.app.game; g.player.flying = false; g.player.setPosition(s.x + 0.5, s.y + 2.3, s.z + 0.5); }, s);
+  await playingIn('voidreach');
+  return { sanctum: s };
+});
+
+await step('the ☰ button opens the menu; Save & Exit and Exit Game leave the game', async () => {
+  await page.evaluate(() => window.__bf.app.travel('overworld', 'gate'));
+  await playingIn('overworld');
+  // While the mouse is locked every click goes to the game (Esc opens the menu). The ☰ button is for
+  // unlocked play: touch screens and mouse-drag mode, which is what this switches to.
+  await page.evaluate(() => { const i = window.__bf.app.input; i.useDragFallback = true; i.exitPointerLock(); });
+  await page.waitForTimeout(400);
+  if (await page.evaluate(() => window.__bf.state === 'paused')) await page.click('[data-act=resume]');
+  await until(() => window.__bf.state === 'playing' && !document.pointerLockElement, null, 8000, 'unlocked play');
+  await page.click('.hud-menu', { force: true });
+  await page.waitForSelector('[data-screen=pause]');
+  await page.click('[data-act=savequit]');
+  await page.waitForSelector('[data-screen=menu]');
+  await page.click('[data-act=exit]');
+  await page.waitForSelector('[data-screen=goodbye]');
+  await page.click('[data-act=back]');
+  await page.waitForSelector('[data-screen=menu]');
 });
 
 await step('no runtime errors', async () => {

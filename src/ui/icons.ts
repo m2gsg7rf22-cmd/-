@@ -240,6 +240,23 @@ function itemIcon(id: number): string {
           for (let k = 1; k <= w; k++) { px(i - k, 15 - i - k + 1, col); px(i + k - 1, 15 - i + k, hi); }
         }
       });
+    case I.FLINT:
+      return sprite((px) => {
+        for (let y = 3; y < 14; y++) for (let x = 3; x < 13; x++) {
+          const edge = Math.abs(x - 8) * 0.9 + Math.abs(y - 8.5) * 0.7;
+          if (edge > 5.2 - ((x * 3 + y) % 3) * 0.3) continue;
+          px(x, y, x + y < 13 ? '#7a7a82' : edge > 4 ? '#2a2a30' : col);
+        }
+        px(6, 6, '#a8a8b0');
+      });
+    case I.VOID_EYE:
+      return sprite((px) => {
+        for (let y = 3; y < 14; y++) for (let x = 3; x < 14; x++) {
+          const d = Math.hypot(x - 8.5, y - 8.5);
+          if (d < 5) px(x, y, d < 1.6 ? '#0c1a14' : d < 3.2 ? col : '#1f6e56');
+        }
+        px(6, 6, '#e0fff2'); px(7, 6, '#a8f0d0');
+      });
     case I.EMBER_STRIKER:
       return sprite((px) => {
         // Steel ring (C shape) and a chunk of ember stone.
@@ -249,8 +266,9 @@ function itemIcon(id: number): string {
           const y = Math.round(6 + Math.sin(t) * 4);
           px(x, y, a % 3 === 0 ? '#f2f2f6' : '#a8a8b0');
         }
-        for (let y = 9; y < 14; y++) for (let x = 9; x < 14; x++) if (Math.hypot(x - 11, y - 11.5) < 2.6) px(x, y, y < 11 ? '#5a4038' : '#3a2a28');
-        px(10, 10, '#ff7a2a'); px(12, 12, '#ffb04a');
+        // A chip of flint and a spark.
+        for (let y = 9; y < 14; y++) for (let x = 9; x < 14; x++) if (Math.hypot(x - 11, y - 11.5) < 2.6) px(x, y, y < 11 ? '#6a6a72' : '#34343a');
+        px(9, 8, '#ffd070'); px(8, 9, '#ff9a30');
       });
     default:
       return sprite((px) => { for (let y = 4; y < 12; y++) for (let x = 4; x < 12; x++) px(x, y, col); });
