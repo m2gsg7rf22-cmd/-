@@ -350,6 +350,27 @@ function overhang(t: Tile, top: RGB[], depthMin: number, edge: RGB): void {
   }
 }
 
+/**
+ * Tileable cellular (Voronoi) pattern: `fn(cellIndex, edgeDistance, x, y)` colors each pixel;
+ * edgeDistance is the gap between the nearest and second-nearest seeds (small = seam).
+ */
+function cells(t: Tile, n: number, fn: (i: number, edge: number, x: number, y: number) => RGB): void {
+  const pts: [number, number][] = [];
+  for (let i = 0; i < n; i++) pts.push([t.rand() * 16, t.rand() * 16]);
+  t.fill((x, y) => {
+    let d1 = Infinity, d2 = Infinity, best = 0;
+    for (let i = 0; i < n; i++) {
+      let dx = Math.abs(x + 0.5 - pts[i][0]);
+      let dy = Math.abs(y + 0.5 - pts[i][1]);
+      dx = Math.min(dx, 16 - dx);
+      dy = Math.min(dy, 16 - dy);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < d1) { d2 = d1; d1 = d; best = i; } else if (d < d2) d2 = d;
+    }
+    return fn(best, d2 - d1, x, y);
+  });
+}
+
 const painters: Record<string, (t: Tile) => void> = {
   none: (t) => t.clear(),
   dirt: (t) => {
@@ -556,28 +577,41 @@ const painters: Record<string, (t: Tile) => void> = {
 
   // ---- Emberdeep ----
   cinderrock: (t) => {
-    natural(t, PAL.cinder, 1.5, 0, 0.22);
-    for (let k = 0; k < 6; k++) t.set(Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [174, 86, 64]);
-    for (let k = 0; k < 5; k++) t.set(Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [56, 18, 20]);
+    // Fleshy red rock: lots of small irregular lumps with dark seams and pits.
+    cells(t, 26, (i, edge, x, y) => {
+      const tone = [[94, 30, 30], [112, 36, 36], [126, 44, 42], [104, 34, 38], [140, 54, 50]][i % 5];
+      return scale(tone, (edge < 0.9 ? 0.7 : 1) + dither(x, y, 0.1));
+    });
+    for (let k = 0; k < 7; k++) t.set(Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [60, 16, 18]);
+    for (let k = 0; k < 5; k++) t.set(Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [168, 78, 70]);
   },
   ashen_sand: (t) => {
-    natural(t, PAL.ash, 1.4, 0, 0.22);
-    // Faint hollow-eyed swirls give it an eerie texture.
+    // Dark brown grains with pale hollow "faces" pressed into the sand.
+    natural(t, [[58, 42, 32], [72, 54, 40], [86, 64, 48], [98, 74, 56]], 1.4, 0, 0.3);
     for (let k = 0; k < 3; k++) {
-      const x = 2 + Math.floor(t.rand() * 11);
-      const y = 2 + Math.floor(t.rand() * 11);
-      t.set(x, y, [48, 38, 36]); t.set(x + 2, y, [48, 38, 36]); t.set(x + 1, y + 2, [52, 42, 40]);
+      const x = 1 + Math.floor(t.rand() * 11);
+      const y = 2 + Math.floor(t.rand() * 10);
+      const dark: RGB = [40, 28, 22];
+      for (let i = 0; i < 4; i++) t.wset(x + i, y - 1, [104, 80, 62]);
+      t.wset(x, y, dark); t.wset(x + 3, y, dark);
+      t.wset(x + 1, y + 2, dark); t.wset(x + 2, y + 2, dark);
     }
   },
   glowcap: (t) => {
-    natural(t, [[150, 96, 40], [200, 140, 56], [236, 188, 86], [252, 222, 130], [255, 244, 190]], 1.6, 0, 0.25);
-    for (let k = 0; k < 6; k++) gem(t, 2 + Math.floor(t.rand() * 12), 2 + Math.floor(t.rand() * 12), [[230, 160, 60], [255, 220, 120], [255, 250, 210], [255, 255, 255]], 1);
+    // Glowing crystal lumps: bright cells with warm dark seams.
+    cells(t, 9, (i, edge, x, y) => {
+      if (edge < 0.8) return [150, 88, 30];
+      const c = [[252, 196, 84], [255, 222, 128], [236, 160, 58], [255, 238, 170]][i % 4];
+      return scale(c, 0.95 + dither(x, y, 0.1));
+    });
+    for (let k = 0; k < 6; k++) t.set(Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [255, 255, 236]);
   },
   magma: (t) => {
     t.fill((x, y) => {
       const n = t.fbm(x, y, 3);
-      const vein = Math.abs(vnoise(x, y, 4, t.seed + 50) - 0.5) < 0.07;
-      return ramp(vein ? 0.95 : n * 0.9 + dither(x, y, 0.15), PAL.magma);
+      const crust = vnoise(x, y, 4, t.seed + 50);
+      if (crust < 0.22) return scale([180, 60, 12], 0.9 + dither(x, y, 0.1));
+      return ramp(n * 0.9 + 0.1 + dither(x, y, 0.12), [[214, 86, 14], [238, 120, 22], [250, 158, 40], [255, 196, 70], [255, 230, 120]]);
     });
   },
   basalt_top: (t) => {
@@ -596,9 +630,12 @@ const painters: Record<string, (t: Tile) => void> = {
     });
   },
   duskstone: (t) => {
-    natural(t, PAL.dusk, 1.6, 0, 0.2);
-    // Faint violet glints.
-    for (let k = 0; k < 7; k++) t.set(Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [120, 90, 170]);
+    // Volcanic glass: near-black with violet sheen streaks.
+    t.fill((x, y) => {
+      const n = vnoise(x, y, 4, t.seed);
+      const streak = Math.abs(Math.sin((x * 0.7 - y * 1.1) + n * 4));
+      return ramp(n * 0.55 + (streak > 0.93 ? 0.45 : 0) + dither(x, y, 0.15), [[12, 8, 20], [20, 14, 32], [30, 20, 48], [52, 34, 80], [86, 60, 130]]);
+    });
   },
   rift: (t) => {
     t.fill((x, y) => {
@@ -608,7 +645,14 @@ const painters: Record<string, (t: Tile) => void> = {
     });
     t.specks([255, 220, 255], 0.03, 0);
   },
-  quartz_ore: (t) => drawOre(t, [[180, 168, 160], [226, 218, 208], [250, 246, 240], [255, 255, 255]], 5, PAL.cinder),
+  quartz_ore: (t) => {
+    painters.cinderrock(t);
+    for (let k = 0; k < 7; k++) {
+      const x = 1 + Math.floor(t.rand() * 13), y = 1 + Math.floor(t.rand() * 13);
+      t.set(x, y, [236, 230, 222]); t.set(x + 1, y, [250, 248, 244]); t.set(x, y + 1, [200, 190, 182]);
+      if (t.rand() < 0.5) t.set(x + 1, y + 1, [226, 218, 210]);
+    }
+  },
   ember_stalk: (t) => logSide(t, [120, 40, 52], [78, 22, 34]),
   ember_stalk_top: (t) => logTop(t, [104, 34, 46], [196, 90, 70]),
   ember_cap: (t) => {
@@ -619,30 +663,87 @@ const painters: Record<string, (t: Tile) => void> = {
     plantBlades(t, [170, 50, 46], 6, 6);
     for (let k = 0; k < 4; k++) t.set(3 + Math.floor(t.rand() * 10), 4 + Math.floor(t.rand() * 5), [255, 170, 70]);
   },
-  cinder_bricks: (t) => bricks(t, [120, 42, 40], [44, 18, 18], 8, 4),
+  // Small dark-red bricks with black mortar (the fortress stone).
+  cinder_bricks: (t) => bricks(t, [74, 26, 30], [22, 10, 12], 6, 3),
+  ember_wart: (t) => {
+    // Knobbly red wart blocks.
+    cells(t, 14, (i, edge, x, y) => scale([[150, 22, 24], [170, 30, 30], [128, 16, 20], [186, 40, 36]][i % 4], (edge < 0.9 ? 0.75 : 1.05) + dither(x, y, 0.1)));
+  },
+  crimson_top: (t) => {
+    natural(t, [[118, 18, 22], [140, 26, 28], [160, 36, 32], [184, 52, 40]], 1.3, 0, 0.22);
+    for (let k = 0; k < 10; k++) t.set(Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [214, 70, 54]);
+  },
+  crimson_side: (t) => {
+    painters.cinderrock(t);
+    overhang(t, [[118, 18, 22], [140, 26, 28], [160, 36, 32], [184, 52, 40]], 3, [96, 12, 18]);
+  },
 
   // ---- Voidreach ----
   voidstone: (t) => {
-    natural(t, PAL.voidstone, 1.3, 0, 0.2);
-    for (let k = 0; k < 6; k++) gem(t, Math.floor(t.rand() * 16), Math.floor(t.rand() * 16), [[170, 166, 120], [190, 188, 140], [214, 212, 166], [236, 234, 190]], 0);
+    // Pale yellow stone pocked with small dark pits.
+    natural(t, [[214, 214, 160], [224, 224, 170], [232, 232, 180], [240, 240, 190]], 1.2, 0, 0.25);
+    for (let k = 0; k < 9; k++) {
+      const x = Math.floor(t.rand() * 15), y = Math.floor(t.rand() * 15);
+      t.set(x, y, [176, 174, 128]); t.set(x + 1, y, [196, 196, 146]); t.set(x, y + 1, [244, 244, 200]);
+    }
   },
-  void_bricks: (t) => bricks(t, [222, 218, 172], [150, 144, 110], 8, 4),
+  void_bricks: (t) => bricks(t, [226, 226, 172], [176, 172, 128], 8, 4),
   void_stalk: (t) => {
     t.fill((x, y) => {
       if (x < 3 || x > 12) return null;
       const lit = x < 6 ? 1.15 : x > 9 ? 0.8 : 1;
-      return scale(mix([120, 80, 140], [170, 120, 180], vnoise(x, y, 4, t.seed)), lit + dither(x, y, 0.08));
+      return scale(mix([104, 68, 104], [146, 98, 146], vnoise(x, y, 4, t.seed)), lit + dither(x, y, 0.08));
     });
+    for (let k = 0; k < 5; k++) t.set(4 + Math.floor(t.rand() * 8), Math.floor(t.rand() * 16), [74, 46, 76]);
   },
   void_stalk_top: (t) => {
-    t.fill((x, y) => (x < 3 || x > 12 || y < 3 || y > 12 ? null : mix([140, 96, 160], [196, 150, 210], vnoise(x, y, 4, t.seed))));
+    t.fill((x, y) => (x < 3 || x > 12 || y < 3 || y > 12 ? null : mix([120, 82, 124], [168, 124, 170], vnoise(x, y, 4, t.seed))));
   },
   void_bloom: (t) => {
+    // Petalled flower head: pale lilac petals, darker creases.
     t.fill((x, y) => {
-      const d = Math.abs(x - 7.5) + Math.abs(y - 7.5);
-      if (d > 8.5) return null;
-      return d < 3 ? [250, 220, 255] : mix([170, 90, 210], [220, 160, 250], vnoise(x, y, 4, t.seed));
+      const edge = x === 0 || y === 0 || x === 15 || y === 15;
+      const crease = x % 5 === 2 || y % 5 === 2;
+      const c = mix([186, 150, 196], [236, 214, 240], vnoise(x, y, 4, t.seed));
+      return scale(c, edge ? 0.75 : crease ? 0.86 : 1);
     });
+  },
+  purpur: (t) => {
+    // Purple tiles: a 2x2 grid of lit squares.
+    t.fill((x, y) => {
+      const lx = x % 8, ly = y % 8;
+      const base = mix([164, 106, 170], [190, 132, 194], vnoise(x, y, 8, t.seed));
+      const k = lx === 7 || ly === 7 ? 0.7 : lx === 0 || ly === 0 ? 1.12 : 1;
+      return scale(base, k + dither(x, y, 0.05));
+    });
+  },
+  purpur_pillar: (t) => {
+    t.fill((x, y) => {
+      const base = mix([164, 106, 170], [188, 130, 192], vnoise(x, y * 2, 4, t.seed));
+      const k = x === 0 || x === 15 ? 0.72 : x % 4 === 3 ? 0.84 : x % 4 === 0 ? 1.1 : 1;
+      return scale(base, k);
+    });
+  },
+  purpur_pillar_top: (t) => {
+    t.fill((x, y) => {
+      const r = Math.max(Math.abs(x - 7.5), Math.abs(y - 7.5));
+      const base = mix([164, 106, 170], [190, 134, 194], vnoise(x, y, 4, t.seed));
+      return scale(base, r > 6.5 ? 0.72 : r > 4.5 && r < 5.5 ? 0.84 : 1.04);
+    });
+  },
+  end_rod: (t) => {
+    t.clear();
+    for (let y = 0; y < 16; y++) for (let x = 7; x < 9; x++) t.set(x, y, x === 7 ? [255, 252, 240] : [226, 220, 210]);
+    for (let y = 13; y < 16; y++) for (let x = 5; x < 11; x++) t.set(x, y, [96, 74, 104]);
+    // Fill the rest so box faces sampling outside the column still show the rod colors.
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) if (x < 7 || x > 8) t.set(x, y, y >= 13 ? [96, 74, 104] : [244, 240, 230]);
+  },
+  void_egg: (t) => {
+    t.fill((x, y) => {
+      const n = vnoise(x, y, 4, t.seed);
+      return n > 0.72 ? [74, 30, 110] : scale([16, 10, 26], 0.9 + dither(x, y, 0.2));
+    });
+    t.specks([150, 80, 210], 0.05, 0);
   },
   void_gate_side: (t) => {
     t.fill((x, y) => {

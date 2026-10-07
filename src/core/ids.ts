@@ -69,6 +69,13 @@ export const B = {
   CINDER_BRICKS: 86,
   BONE_BLOCK: 87,
   MAGMA_DEEP: 88,
+  PURPUR: 89,
+  PURPUR_PILLAR: 90,
+  END_ROD: 91,
+  /** Trophy left behind by the defeated Void Dragon. */
+  VOID_EGG: 92,
+  CRIMSON_TURF: 93,
+  EMBER_WART: 94,
 } as const;
 
 export type BlockId = number;

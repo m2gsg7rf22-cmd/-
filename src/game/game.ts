@@ -178,6 +178,7 @@ export class Game {
       onKilled: (mob, drops) => {
         this.particles.burst(mob.body.x, mob.body.y + 0.5, mob.body.z, new THREE.Color(0.9, 0.9, 0.85), 14, 3, 3);
         if (!this.creative) for (const [id, n] of drops) this.drops.spawn(id, n, mob.body.x, mob.body.y + 0.4, mob.body.z);
+        if (mob.kind === 'dragon') this.onDragonDefeated(mob.body.x, mob.body.y, mob.body.z);
       },
       sound: (kind, mob) => {
         const d = Math.hypot(mob.body.x - this.player.body.x, mob.body.z - this.player.body.z);
@@ -303,6 +304,7 @@ export class Game {
       const mob = this.mobs.spawn(m.kind as MobKind, m.x, m.y, m.z);
       mob.health = m.health;
     }
+    if (this.dim === 'voidreach') this.wakeDragon();
     progress('Entering world…', 1);
     this.updateCamera(0);
     this.sky.update(this.time, this.camera.position, 0, this.world.renderDistance * CHUNK_SIZE);
@@ -698,6 +700,8 @@ export class Game {
     this.hud.updateHotbar(this.inventory, this.selected);
     if (!this.creative) this.hud.updateStats(p.health, p.hunger, p.air, MAX_AIR, p.headInWater);
     this.hud.setClock(this.time, this.day);
+    this.updateBossBar();
+    if (this.eggPending) this.placeEgg(); // cheap: fails fast until the plaza chunk is loaded
     this.undergroundTimer -= dt;
     if (this.undergroundTimer <= 0) {
       this.undergroundTimer = 1;
@@ -756,6 +760,55 @@ export class Game {
     this.hud.toast(msg);
   }
 
+  /** In Voidreach the Void Dragon guards the central island until it is slain. */
+  private wakeDragon(): void {
+    const gen = this.world.gen as { mainTop?: (x: number, z: number) => number; crystalCells?: () => Vec3[] };
+    if (!gen.mainTop || !gen.crystalCells) return;
+    const top = gen.mainTop(0, 0);
+    this.mobs.arena = { x: 0, y: top, z: 0, crystals: gen.crystalCells() };
+    if (this.meta.dragonDefeated && !this.meta.eggPlaced) this.placeEgg();
+    if (this.meta.dragonDefeated || this.mobs.boss) return;
+    this.mobs.spawn('dragon', 0, top + 28, -36);
+    this.hud.toast('Something vast stirs above the island…', true, 5000);
+  }
+
+  private bossShown = false;
+  private eggPending = false;
+
+  /** Put the egg trophy on the plaza (later, if the plaza chunk isn't loaded right now). */
+  private placeEgg(): void {
+    const a = this.mobs.arena;
+    if (!a) return;
+    if (this.world.setBlock(a.x, a.y + 1, a.z - 3, B.VOID_EGG)) {
+      this.eggPending = false;
+      this.meta = { ...this.meta, eggPlaced: true };
+    } else this.eggPending = true;
+  }
+
+  private updateBossBar(): void {
+    const boss = this.mobs.boss;
+    const near = !!boss && Math.hypot(boss.body.x - this.player.body.x, boss.body.z - this.player.body.z) < 160;
+    const bar = document.getElementById('bossbar');
+    if (!bar) return;
+    if (near !== this.bossShown) {
+      this.bossShown = near;
+      bar.hidden = !near;
+      if (near) (bar.querySelector('.boss-name') as HTMLElement).textContent = MOB_SPECS.dragon.name;
+    }
+    if (near && boss) (bar.querySelector('i') as HTMLElement).style.width = `${Math.max(0, (boss.health / MOB_SPECS.dragon.health) * 100).toFixed(1)}%`;
+  }
+
+  /** Victory: a burst of void light, the egg trophy on the plaza, and the world remembers. */
+  private onDragonDefeated(x: number, y: number, z: number): void {
+    this.meta = { ...this.meta, dragonDefeated: true };
+    for (let i = 0; i < 6; i++) this.particles.burst(x + (Math.random() - 0.5) * 4, y + 1 + Math.random() * 2, z + (Math.random() - 0.5) * 4, new THREE.Color(0.8, 0.45, 1), 20, 6, 5);
+    this.placeEgg();
+    audio.blink();
+    gamepad.rumble(1, 1, 700);
+    this.hud.toast('The Void Dragon is defeated! Its egg rests on the plaza.', false, 7000);
+    void this.save().catch(() => undefined);
+  }
+
   /** Use a Void Gate: to Voidreach, or home to the overworld from there. */
   useVoidGate(): void {
     if (this.travelling) return;
@@ -792,7 +845,7 @@ export class Game {
       version: SAVE_VERSION,
       mobsDim: this.dim,
       mobs: this.mobs.mobs
-        .filter((m) => Math.hypot(m.body.x - p.body.x, m.body.z - p.body.z) < 64)
+        .filter((m) => !m.brain && Math.hypot(m.body.x - p.body.x, m.body.z - p.body.z) < 64)
         .map((m) => ({ kind: m.kind, x: m.body.x, y: m.body.y, z: m.body.z, health: m.health })),
       player: {
         x: p.body.x, y: p.body.y, z: p.body.z, yaw: p.yaw, pitch: p.pitch,
@@ -840,6 +893,8 @@ export class Game {
     document.getElementById('overlay-magma')?.classList.remove('on');
     const rift = document.getElementById('overlay-rift');
     if (rift) rift.style.opacity = '0';
+    const boss = document.getElementById('bossbar');
+    if (boss) boss.hidden = true;
     const hurt = document.getElementById('overlay-hurt');
     if (hurt) hurt.style.opacity = '0';
   }

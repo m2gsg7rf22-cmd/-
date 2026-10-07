@@ -59,6 +59,10 @@ export interface WorldMeta {
   arrival?: Arrival;
   /** Dimension the saved creatures belong to. */
   mobsDim?: Dim;
+  /** The Void Dragon has been slain in this world. */
+  dragonDefeated?: boolean;
+  /** The egg trophy has been placed on the plaza. */
+  eggPlaced?: boolean;
 }
 
 export const SAVE_VERSION = 1;
@@ -138,6 +142,8 @@ export function validateMeta(raw: unknown): WorldMeta | null {
     emberLink: validVec(r.emberLink) ?? undefined,
     arrival: r.arrival === 'rift' || r.arrival === 'gate' || r.arrival === 'return' || r.arrival === 'spawn' ? r.arrival : undefined,
     mobsDim: isDim(r.mobsDim) ? r.mobsDim : 'overworld',
+    dragonDefeated: r.dragonDefeated === true,
+    eggPlaced: r.eggPlaced === true,
   };
 }
 

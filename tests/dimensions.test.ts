@@ -4,6 +4,7 @@ import { blockIndex } from '../src/core/coords';
 import { B, isRiftId } from '../src/core/ids';
 import { buildRift, checkRiftAround, findRift, igniteRift, type PortalWorld } from '../src/game/portals';
 import { MOB_KINDS, MOB_SPECS } from '../src/game/mobs';
+import { nextPhase } from '../src/game/dragon';
 import { RECIPES } from '../src/game/crafting';
 import { swingCurve } from '../src/render/handView';
 import { validateMeta } from '../src/save/serialize';
@@ -194,7 +195,8 @@ describe('dimension saves', () => {
 
 describe('content', () => {
   it('every creature has sane stats, and every dimension has creatures', () => {
-    expect(MOB_KINDS.length).toBe(10);
+    expect(MOB_KINDS.length).toBe(11);
+    expect(MOB_SPECS.dragon.boss).toBe(true);
     for (const k of MOB_KINDS) {
       const s = MOB_SPECS[k];
       expect(s.health).toBeGreaterThan(0);
@@ -234,5 +236,45 @@ describe('content', () => {
     expect(swingCurve(0.15)).toBeLessThan(0);
     expect(swingCurve(0.45)).toBeGreaterThan(1);
     expect(Math.abs(swingCurve(0.999))).toBeLessThan(0.01);
+  });
+});
+
+describe('Void Dragon and new structures', () => {
+  it('picks swoops, breath attacks and perches', () => {
+    expect(nextPhase(0.1)).toBe('swoop');
+    expect(nextPhase(0.5)).toBe('breath');
+    expect(nextPhase(0.9)).toBe('perch');
+  });
+
+  it('crystal cells sit exactly on the generated spire tops', () => {
+    const g = new VoidreachGenerator(99);
+    for (const c of g.crystalCells()) {
+      const cx = Math.floor(c.x / CHUNK_SIZE), cz = Math.floor(c.z / CHUNK_SIZE);
+      const d = g.generate(cx, cz);
+      expect(d[blockIndex(c.x - cx * CHUNK_SIZE, c.y, c.z - cz * CHUNK_SIZE)]).toBe(B.VOID_CRYSTAL);
+    }
+  });
+
+  it('Voidreach has purpur towers with void rods somewhere in the outer isles', () => {
+    const g = new VoidreachGenerator(4242);
+    let purpur = 0, rods = 0;
+    for (let cx = -24; cx <= 24; cx += 1) for (let cz = -4; cz <= 4; cz += 1) {
+      const d = g.generate(cx, cz);
+      for (const v of d) { if (v === B.PURPUR || v === B.PURPUR_PILLAR) purpur++; else if (v === B.END_ROD) rods++; }
+    }
+    expect(purpur).toBeGreaterThan(50);
+    expect(rods % 4).toBe(0);
+    expect(rods).toBeGreaterThan(0);
+  });
+
+  it('Emberdeep has crimson forests and brick bridges', () => {
+    const g = new EmberdeepGenerator(4242);
+    let crimson = 0, bricks = 0;
+    for (let cx = -12; cx <= 12; cx += 2) for (let cz = -12; cz <= 12; cz += 2) {
+      const d = g.generate(cx, cz);
+      for (const v of d) { if (v === B.CRIMSON_TURF) crimson++; else if (v === B.CINDER_BRICKS) bricks++; }
+    }
+    expect(crimson).toBeGreaterThan(0);
+    expect(bricks).toBeGreaterThan(0);
   });
 });

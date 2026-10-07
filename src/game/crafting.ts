@@ -41,6 +41,9 @@ r('glowcap', [B.GLOWCAP, 1], [[I.GLOW_DUST, 4]]);
 r('glow_torch', [B.TORCH, 4], [[I.STICK, 1], [I.GLOW_DUST, 1]]);
 r('void_bricks', [B.VOID_BRICKS, 4], [[B.VOIDSTONE, 4]], 'bench');
 r('bone_block', [B.BONE_BLOCK, 1], [[I.BONE, 4]]);
+r('purpur', [B.PURPUR, 4], [[B.VOID_BLOOM, 2]], 'bench');
+r('purpur_pillar', [B.PURPUR_PILLAR, 2], [[B.PURPUR, 2]], 'bench');
+r('void_rod', [B.END_ROD, 4], [[I.CINDER_QUARTZ, 1], [B.VOID_BLOOM, 1]], 'bench');
 r('lumen_lamp_quartz', [B.LUMEN_LAMP, 2], [[B.GLASS, 2], [I.CINDER_QUARTZ, 1], [I.GLOW_DUST, 2]], 'bench');
 r('planks_ember', [B.PLANKS, 4], [[B.EMBER_STALK, 1]]);
 

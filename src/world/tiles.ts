@@ -11,6 +11,7 @@ export const TILE_NAMES = [
   'cinderrock', 'ashen_sand', 'glowcap', 'magma', 'basalt_top', 'basalt_side', 'duskstone', 'rift', 'quartz_ore',
   'ember_stalk', 'ember_stalk_top', 'ember_cap', 'ember_sprout', 'cinder_bricks', 'voidstone', 'void_bricks',
   'void_stalk', 'void_stalk_top', 'void_bloom', 'void_gate_top', 'void_gate_side', 'void_crystal', 'bone_top', 'bone_side',
+  'ember_wart', 'crimson_top', 'crimson_side', 'purpur', 'purpur_pillar', 'purpur_pillar_top', 'end_rod', 'void_egg',
 ] as const;
 
 export type TileName = (typeof TILE_NAMES)[number];
@@ -43,7 +44,7 @@ for (const d of BLOCKS) {
  * 2 = animated (magma, rifts, void gates): uv drift + glow pulse.
  */
 export const TILE_FLAGS = new Uint8Array(TILE_NAMES.length);
-for (const n of ['grass_top', 'dirt', 'stone', 'sand', 'gravel', 'snow', 'sandstone_top', 'cinderrock', 'ashen_sand', 'voidstone', 'rubble', 'coreite', 'duskstone']) {
+for (const n of ['grass_top', 'dirt', 'stone', 'sand', 'gravel', 'snow', 'sandstone_top', 'cinderrock', 'ashen_sand', 'voidstone', 'rubble', 'coreite', 'duskstone', 'crimson_top', 'ember_wart']) {
   TILE_FLAGS[tileIndex(n)] |= 1;
 }
 for (const n of ['magma', 'rift', 'void_gate_top', 'void_gate_side']) TILE_FLAGS[tileIndex(n)] |= 2;

@@ -91,6 +91,25 @@ export class VoidreachGenerator implements ChunkGenerator {
     };
   }
 
+  /** Void Crystal cells on top of the spires (the Void Dragon heals from them). */
+  crystalCells(): { x: number; y: number; z: number }[] {
+    const out: { x: number; y: number; z: number }[] = [];
+    for (let p = 0; p < PILLARS; p++) {
+      const pl = this.pillar(p);
+      out.push({ x: pl.x, y: Math.min(WORLD_HEIGHT - 3, this.mainTop(pl.x, pl.z) + pl.h) + 1, z: pl.z });
+    }
+    return out;
+  }
+
+  /** Purpur tower on a larger outer island, or null. */
+  towerOf(is: Island): { x: number; z: number; base: number; h: number } | null {
+    if (is.r < 13 || (is.seed % 100) / 100 > 0.5) return null;
+    const x = Math.round(is.x), z = Math.round(is.z);
+    const col = this.islandColumn(is, x, z);
+    if (!col) return null;
+    return { x, z, base: col[0] + 1, h: 15 + (is.seed % 9) };
+  }
+
   /** Return-gate cell on the central plaza. */
   gateCell(): { x: number; y: number; z: number } {
     return { x: 4, y: this.mainTop(4, 0) + 1, z: 0 };
@@ -150,6 +169,7 @@ export class VoidreachGenerator implements ChunkGenerator {
     if (g.x >= bx && g.x < bx + CHUNK_SIZE && g.z >= bz && g.z < bz + CHUNK_SIZE) data[blockIndex(g.x - bx, g.y, g.z - bz)] = B.VOID_GATE;
     // Voidbloom stalks on the outer islands.
     for (const is of isles) this.stalks(data, is, bx, bz);
+    for (const is of isles) this.tower(data, is, bx, bz);
     return data;
   }
 
@@ -185,6 +205,42 @@ export class VoidreachGenerator implements ChunkGenerator {
         for (let k = 1; k <= up; k++) put(x + ox, by + k, z + oz, B.VOID_STALK);
         put(x + ox, by + up + 1, z + oz, B.VOID_BLOOM);
       }
+    }
+  }
+
+  /** Hollow 7x7 purpur tower: pillar corners, a floor every 5 blocks, windows, a doorway and Void Rods on the roof. */
+  private tower(data: Uint8Array, is: Island, bx: number, bz: number): void {
+    const t = this.towerOf(is);
+    if (!t) return;
+    const R = 3;
+    if (t.x + R + 1 < bx || t.x - R - 1 >= bx + CHUNK_SIZE || t.z + R + 1 < bz || t.z - R - 1 >= bz + CHUNK_SIZE) return;
+    const top = Math.min(WORLD_HEIGHT - 3, t.base + t.h);
+    for (let dx = -R; dx <= R; dx++) for (let dz = -R; dz <= R; dz++) {
+      const lx = t.x + dx - bx, lz = t.z + dz - bz;
+      if (lx < 0 || lz < 0 || lx >= CHUNK_SIZE || lz >= CHUNK_SIZE) continue;
+      const base = blockIndex(lx, 0, lz);
+      const wall = Math.abs(dx) === R || Math.abs(dz) === R;
+      const corner = Math.abs(dx) === R && Math.abs(dz) === R;
+      // Foundation down into the island.
+      for (let y = t.base - 4; y < t.base; y++) data[base + y] = B.PURPUR;
+      for (let y = t.base; y <= top; y++) {
+        const level = y - t.base;
+        let id: number = B.AIR;
+        if (corner) id = B.PURPUR_PILLAR;
+        else if (wall) {
+          const mid = dx === 0 || dz === 0;
+          const window = mid && level % 5 === 2;
+          const door = dz === -R && dx === 0 && level < 2;
+          id = window || door ? B.AIR : B.PURPUR;
+        } else if (level > 0 && level % 5 === 0) {
+          // Floors with a ladder-like gap (a staircase hole) on alternating sides.
+          const hole = (level / 5) % 2 === 0 ? dx === -2 && dz === -2 : dx === 2 && dz === 2;
+          id = hole ? B.AIR : B.PURPUR;
+        }
+        if (y === top) id = B.PURPUR;
+        data[base + y] = id;
+      }
+      if (corner && top + 1 < WORLD_HEIGHT - 1) data[base + top + 1] = B.END_ROD;
     }
   }
 }

@@ -4,11 +4,12 @@ import { collides, moveBody, type Body } from '../player/physics';
 import { SOLID } from '../world/blocks';
 import type { Dim } from '../world/dimension';
 import { UNLOADED, type World } from '../world/world';
+import { animateDragon, buildDragon, nextPhase, type DragonArena, type DragonBrain } from './dragon';
 
 export type MobKind =
   | 'grazer' | 'boar' | 'crawler' | 'featherback' | 'bonewalker'
   | 'hopper' | 'wraith' | 'emberhog'
-  | 'voidwalker' | 'shardling';
+  | 'voidwalker' | 'shardling' | 'dragon';
 
 type State = 'idle' | 'wander' | 'notice' | 'chase' | 'attack' | 'flee';
 /** 'always' attacks on sight, 'neutral' only after being hit, false never. */
@@ -39,6 +40,8 @@ interface MobSpec {
   fireproof?: boolean;
   /** Grunt pitch for the generic voice. */
   voice: number;
+  /** Boss: its own AI, never despawns, shown on the boss bar. */
+  boss?: boolean;
 }
 
 export const MOB_SPECS: Record<MobKind, MobSpec> = {
@@ -51,6 +54,7 @@ export const MOB_SPECS: Record<MobKind, MobSpec> = {
   wraith: { name: 'Cinder Wraith', hw: 0.45, h: 1.4, health: 14, speed: 2.6, temper: 'always', damage: 3, drops: [[I.VOID_PEARL, 1, 1, 0.4], [I.EMBER, 1, 2]], fly: true, shoot: 'ember', fireproof: true, voice: 0.4 },
   emberhog: { name: 'Ember Hog', hw: 0.45, h: 1.0, health: 16, speed: 2.4, temper: 'neutral', damage: 4, drops: [[I.ROAST_MEAT, 1, 2], [I.MAGMA_GEL, 0, 1]], fireproof: true, voice: 0.7 },
   voidwalker: { name: 'Voidwalker', hw: 0.3, h: 2.7, health: 24, speed: 3.0, temper: 'neutral', damage: 5, drops: [[I.VOID_PEARL, 1, 2]], blink: true, voice: 0.35 },
+  dragon: { name: 'Void Dragon', hw: 2.0, h: 2.3, health: 200, speed: 11, temper: 'always', damage: 7, drops: [[I.VOID_PEARL, 6, 10], [I.LUMEN_SHARD, 3, 6]], fly: true, shoot: 'void', boss: true, voice: 0.22 },
   shardling: { name: 'Shardling', hw: 0.35, h: 0.8, health: 10, speed: 2.8, temper: 'always', damage: 2, drops: [[I.LUMEN_SHARD, 0, 1], [I.VOID_PEARL, 0, 1, 0.25]], fly: true, shoot: 'void', voice: 2.6 },
 };
 
@@ -83,6 +87,8 @@ export interface Mob {
   body3d: THREE.Object3D | null;
   mats: THREE.MeshLambertMaterial[];
   fade: number;
+  /** Boss AI state (Void Dragon). */
+  brain?: DragonBrain;
 }
 
 interface Projectile {
@@ -91,6 +97,8 @@ interface Projectile {
   vx: number; vy: number; vz: number;
   life: number;
   damage: number;
+  /** Who fired it (for death messages). */
+  source: MobKind;
   mesh: THREE.Mesh;
 }
 
@@ -119,7 +127,7 @@ interface Model {
 }
 
 /** Build a blocky creature model. Models face -Z. */
-function buildModel(kind: MobKind, geos: THREE.BufferGeometry[]): Model {
+function buildModel(kind: MobKind, geos: THREE.BufferGeometry[]): Model & { brainParts?: { tail: THREE.Object3D[]; jaw: THREE.Object3D } } {
   const group = new THREE.Group();
   const legs: THREE.Object3D[] = [];
   const arms: THREE.Object3D[] = [];
@@ -277,6 +285,10 @@ function buildModel(kind: MobKind, geos: THREE.BufferGeometry[]): Model {
       limb(legs, 0.12, 1.36, 0, 1.36, 0.12, skin);
       break;
     }
+    case 'dragon': {
+      const d = buildDragon(geos, mat);
+      return { group: d.group, legs: [], arms: [], wings: d.wings, body3d: d.head, mats, brainParts: { tail: d.tail, jaw: d.jaw } };
+    }
     case 'shardling': {
       const shard = mat(0xb070f0, 0x6020a0), core = mat(0xffe0ff, 0xe0a0ff), dark = mat(0x301040);
       const b = new THREE.Group();
@@ -306,6 +318,9 @@ function buildModel(kind: MobKind, geos: THREE.BufferGeometry[]): Model {
   return { group, legs, arms, wings, body3d, mats };
 }
 
+/** Melee damage of a creature. */
+const meleeDamage = (m: Mob): number => MOB_SPECS[m.kind].damage;
+
 const SHOT_COLORS: Record<Shot, [number, number]> = {
   bone: [0xe8e2d0, 0x403830],
   ember: [0xffa040, 0xff6010],
@@ -327,6 +342,8 @@ export class MobManager {
   private hemi: THREE.HemisphereLight;
   private sun: THREE.DirectionalLight;
   private time = 0;
+  /** Set in Voidreach while the dragon lives. */
+  arena: DragonArena | null = null;
 
   constructor(private world: World, private cb: MobCallbacks, readonly dim: Dim = 'overworld') {
     this.hemi = new THREE.HemisphereLight(0xdfe8ff, 0x4a4030, 0.9);
@@ -358,6 +375,14 @@ export class MobManager {
       health: s.health, state: 'idle', timer: 1 + Math.random() * 3, target: null, onGround: false, hurtTime: 0,
       attackCd: 0, walk: Math.random() * 6, angry: false, hoverY: y, fade: 1, ...model,
     };
+    if (model.brainParts) {
+      const beam = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineBasicMaterial({ color: 0xe0a0ff }));
+      beam.visible = false;
+      beam.frustumCulled = false;
+      this.group.add(beam);
+      mob.brain = { phase: 'circle', t: 6, angle: Math.random() * Math.PI * 2, shots: 0, shotCd: 0, scan: 0, crystals: [], beam, ...model.brainParts };
+      model.group.rotation.order = 'YXZ';
+    }
     this.geos.set(mob.id, geos);
     this.group.add(model.group);
     this.mobs.push(mob);
@@ -366,6 +391,11 @@ export class MobManager {
 
   private remove(m: Mob): void {
     this.group.remove(m.group);
+    if (m.brain) {
+      this.group.remove(m.brain.beam);
+      m.brain.beam.geometry.dispose();
+      (m.brain.beam.material as THREE.Material).dispose();
+    }
     for (const g of this.geos.get(m.id) ?? []) g.dispose();
     for (const mt of m.mats) mt.dispose();
     this.geos.delete(m.id);
@@ -418,6 +448,16 @@ export class MobManager {
     const s = MOB_SPECS[m.kind];
     m.health -= amount;
     m.hurtTime = 0.3;
+    if (m.brain) {
+      // Bosses don't get knocked around; a hit on the ground makes the dragon take off soon.
+      this.cb.sound('hiss', m);
+      if (m.brain.phase === 'perch') m.brain.t = Math.min(m.brain.t, 1.2);
+      if (m.health <= 0) {
+        this.cb.onKilled(m, this.rollDrops(s));
+        this.remove(m);
+      }
+      return;
+    }
     const dx = m.body.x - fromX;
     const dz = m.body.z - fromZ;
     const l = Math.hypot(dx, dz) || 1;
@@ -427,13 +467,7 @@ export class MobManager {
     m.vy = s.fly ? 2 : 4.5;
     this.cb.sound(s.temper ? 'hiss' : 'grunt', m);
     if (m.health <= 0) {
-      const drops: [number, number][] = [];
-      for (const [id, lo, hi, chance] of s.drops) {
-        if (chance !== undefined && Math.random() > chance) continue;
-        const n = lo + Math.floor(Math.random() * (hi - lo + 1));
-        if (n > 0) drops.push([id, n]);
-      }
-      this.cb.onKilled(m, drops);
+      this.cb.onKilled(m, this.rollDrops(s));
       this.remove(m);
       return;
     }
@@ -445,6 +479,21 @@ export class MobManager {
       m.angry = true;
       m.state = 'chase';
     }
+  }
+
+  private rollDrops(s: MobSpec): [number, number][] {
+    const drops: [number, number][] = [];
+    for (const [id, lo, hi, chance] of s.drops) {
+      if (chance !== undefined && Math.random() > chance) continue;
+      const n = lo + Math.floor(Math.random() * (hi - lo + 1));
+      if (n > 0) drops.push([id, n]);
+    }
+    return drops;
+  }
+
+  /** The living boss, if any. */
+  get boss(): Mob | null {
+    return this.mobs.find((m) => m.brain) ?? null;
   }
 
   /** Teleport a creature to a random standing spot nearby (Voidwalker). */
@@ -479,12 +528,12 @@ export class MobManager {
   }
 
   private count(pred: (s: MobSpec) => boolean): number {
-    return this.mobs.filter((m) => pred(MOB_SPECS[m.kind])).length;
+    return this.mobs.filter((m) => !m.brain && pred(MOB_SPECS[m.kind])).length;
   }
 
   private trySpawn(day: number, p: { x: number; y: number; z: number }, mobileScale: number): void {
     const hostile = this.count((s) => s.temper === 'always');
-    const calm = this.mobs.length - hostile;
+    const calm = this.count((s) => s.temper !== 'always');
     const maxH = Math.ceil(this.maxHostile * mobileScale);
     const maxP = Math.ceil(this.maxPassive * mobileScale);
     const a = Math.random() * Math.PI * 2;
@@ -558,7 +607,7 @@ export class MobManager {
     return true;
   }
 
-  private fire(m: Mob, kind: Shot, tx: number, ty: number, tz: number): void {
+  private fire(m: Mob, kind: Shot, tx: number, ty: number, tz: number, damage = MOB_SPECS[m.kind].damage, size = 1): void {
     let mat = this.shotMats.get(kind);
     if (!mat) {
       const [c, e] = SHOT_COLORS[kind];
@@ -566,11 +615,18 @@ export class MobManager {
       this.shotMats.set(kind, mat);
     }
     const mesh = new THREE.Mesh(this.shotGeo, mat);
-    const sx = m.body.x, sy = m.body.y + m.body.h * 0.75, sz = m.body.z;
+    mesh.scale.setScalar(size);
+    let sx = m.body.x, sy = m.body.y + m.body.h * 0.75, sz = m.body.z;
+    if (m.brain) {
+      // Breathed from the dragon's mouth.
+      const head = new THREE.Vector3();
+      m.body3d!.getWorldPosition(head);
+      sx = head.x; sy = head.y; sz = head.z;
+    }
     const dx = tx - sx, dy = ty - sy, dz = tz - sz;
     const l = Math.hypot(dx, dy, dz) || 1;
     const speed = kind === 'bone' ? 13 : 9;
-    const p: Projectile = { kind, x: sx, y: sy, z: sz, vx: (dx / l) * speed, vy: (dy / l) * speed + (kind === 'bone' ? 1.5 : 0), vz: (dz / l) * speed, life: 4, damage: MOB_SPECS[m.kind].damage, mesh };
+    const p: Projectile = { kind, x: sx, y: sy, z: sz, vx: (dx / l) * speed, vy: (dy / l) * speed + (kind === 'bone' ? 1.5 : 0), vz: (dz / l) * speed, life: 4, damage, source: m.kind, mesh };
     mesh.position.set(sx, sy, sz);
     this.group.add(mesh);
     this.shots.push(p);
@@ -586,8 +642,9 @@ export class MobManager {
       s.mesh.position.set(s.x, s.y, s.z);
       s.mesh.rotation.x += dt * 9;
       s.mesh.rotation.y += dt * 7;
-      const hitPlayer = !playerDead && Math.abs(s.x - p.x) < 0.45 && Math.abs(s.z - p.z) < 0.45 && s.y > p.y && s.y < p.y + 1.85;
-      if (hitPlayer) this.cb.hurtPlayer(s.damage, s.x - s.vx, s.z - s.vz, s.kind === 'bone' ? 'bonewalker' : s.kind === 'ember' ? 'wraith' : 'shardling');
+      const r = 0.45 * s.mesh.scale.x;
+      const hitPlayer = !playerDead && Math.abs(s.x - p.x) < r && Math.abs(s.z - p.z) < r && s.y > p.y - r + 0.45 && s.y < p.y + 1.85 + r - 0.45;
+      if (hitPlayer) this.cb.hurtPlayer(s.damage, s.x - s.vx, s.z - s.vz, s.source);
       const id = this.world.getBlock(s.x, s.y, s.z);
       if (hitPlayer || s.life <= 0 || id === UNLOADED || SOLID[id]) {
         this.group.remove(s.mesh);
@@ -613,6 +670,10 @@ export class MobManager {
     this.updateShots(dt, p, playerDead);
     for (const m of [...this.mobs]) {
       const s = MOB_SPECS[m.kind];
+      if (m.brain) {
+        this.updateDragon(m, m.brain, dt, p, playerDead);
+        continue;
+      }
       const dx = p.x - m.body.x;
       const dz = p.z - m.body.z;
       const dy = p.y - m.body.y;
@@ -705,6 +766,123 @@ export class MobManager {
     }
   }
 
+  /**
+   * Void Dragon: circles the island, then swoops at the player, breathes void bolts from a hover,
+   * or perches on the plaza (its vulnerable moment). Intact crystals on the spires heal it.
+   */
+  private updateDragon(m: Mob, b: DragonBrain, dt: number, p: { x: number; y: number; z: number }, playerDead: boolean): void {
+    const a = this.arena ?? { x: 0, y: 60, z: 0, crystals: [] };
+    b.t -= dt;
+    m.hurtTime = Math.max(0, m.hurtTime - dt);
+    m.attackCd = Math.max(0, m.attackCd - dt);
+    const dx = p.x - m.body.x, dy = p.y + 1 - m.body.y, dz = p.z - m.body.z;
+    const dist = Math.hypot(dx, dy, dz);
+    let tx = m.body.x, ty = m.body.y, tz = m.body.z;
+    let speed = 11;
+    let facePlayer = false;
+    let perched = false;
+    switch (b.phase) {
+      case 'circle':
+        b.angle += dt * 0.3;
+        tx = a.x + Math.cos(b.angle) * 40;
+        tz = a.z + Math.sin(b.angle) * 40;
+        ty = a.y + 22 + Math.sin(b.angle * 2) * 5;
+        if (b.t <= 0) {
+          if (playerDead || dist > 140) b.t = 3;
+          else {
+            b.phase = nextPhase(Math.random());
+            b.t = b.phase === 'swoop' ? 6 : b.phase === 'breath' ? 6 : 14;
+            b.shots = 3;
+            b.shotCd = 1.2;
+            this.cb.sound('hiss', m);
+          }
+        }
+        break;
+      case 'swoop':
+        tx = p.x; ty = p.y + 1.2; tz = p.z;
+        speed = 17;
+        if (dist < 3.6 && m.attackCd <= 0 && !playerDead) {
+          m.attackCd = 2;
+          this.cb.hurtPlayer(meleeDamage(m), m.body.x, m.body.z, 'dragon');
+          b.phase = 'circle';
+          b.t = 7;
+        }
+        if (b.t <= 0) { b.phase = 'circle'; b.t = 6; }
+        break;
+      case 'breath': {
+        const away = Math.hypot(m.body.x - p.x, m.body.z - p.z) || 1;
+        tx = p.x + ((m.body.x - p.x) / away) * 18;
+        tz = p.z + ((m.body.z - p.z) / away) * 18;
+        ty = p.y + 10;
+        speed = 9;
+        facePlayer = true;
+        b.shotCd -= dt;
+        if (b.shotCd <= 0 && b.shots > 0 && !playerDead) {
+          b.shotCd = 0.75;
+          b.shots--;
+          this.fire(m, 'void', p.x, p.y + 1, p.z, 4, 2.2);
+        }
+        if (b.shots <= 0 && b.shotCd <= 0) { b.phase = 'circle'; b.t = 6; }
+        break;
+      }
+      case 'perch': {
+        tx = a.x + 0.5; tz = a.z - 2.5; ty = a.y + 1;
+        speed = 9;
+        if (Math.hypot(tx - m.body.x, ty - m.body.y, tz - m.body.z) < 1.2) {
+          perched = true;
+          facePlayer = true;
+          m.body.x = tx; m.body.y = ty; m.body.z = tz;
+          m.vx = m.vy = m.vz = 0;
+          if (dist < 5 && m.attackCd <= 0 && !playerDead) {
+            m.attackCd = 1.6;
+            this.cb.hurtPlayer(5, m.body.x, m.body.z, 'dragon');
+          }
+        }
+        if (b.t <= 0) { b.phase = 'circle'; b.t = 7; }
+        break;
+      }
+    }
+    if (!perched) {
+      const ex = tx - m.body.x, ey = ty - m.body.y, ez = tz - m.body.z;
+      const el = Math.hypot(ex, ey, ez);
+      const k = Math.min(1, 1.8 * dt);
+      const wx = el > 0.3 ? (ex / el) * speed : 0, wy = el > 0.3 ? (ey / el) * speed : 0, wz = el > 0.3 ? (ez / el) * speed : 0;
+      m.vx += (wx - m.vx) * k; m.vy += (wy - m.vy) * k; m.vz += (wz - m.vz) * k;
+      // Flies freely: it's far too big to path through spires and towers.
+      m.body.x += m.vx * dt; m.body.y += m.vy * dt; m.body.z += m.vz * dt;
+      m.body.y = Math.max(m.body.y, 4);
+    }
+    if (facePlayer) m.yaw = Math.atan2(-dx, -dz);
+    else if (Math.hypot(m.vx, m.vz) > 0.5) m.yaw = Math.atan2(-m.vx, -m.vz);
+
+    // Crystals heal it, shown as a beam from the nearest intact one.
+    b.scan -= dt;
+    if (b.scan <= 0) {
+      b.scan = 1;
+      b.crystals = a.crystals.filter((c) => this.world.getBlock(c.x, c.y, c.z) === B.VOID_CRYSTAL);
+    }
+    let near: { x: number; y: number; z: number } | null = null;
+    let nd = Infinity;
+    for (const c of b.crystals) {
+      const d = Math.hypot(c.x - m.body.x, c.y - m.body.y, c.z - m.body.z);
+      if (d < nd) { nd = d; near = c; }
+    }
+    const maxHp = MOB_SPECS.dragon.health;
+    b.beam.visible = !!near && nd < 64 && m.health < maxHp;
+    if (b.beam.visible && near) {
+      m.health = Math.min(maxHp, m.health + 2 * dt);
+      const pos = b.beam.geometry.getAttribute('position') as THREE.BufferAttribute;
+      pos.setXYZ(0, near.x + 0.5, near.y + 0.5, near.z + 0.5);
+      pos.setXYZ(1, m.body.x, m.body.y + 1.3, m.body.z);
+      pos.needsUpdate = true;
+    }
+
+    animateDragon(this.time, b, m.wings, perched, b.phase === 'breath' || b.phase === 'swoop');
+    m.group.position.set(m.body.x, m.body.y, m.body.z);
+    m.group.rotation.set(perched ? 0 : Math.max(-0.5, Math.min(0.5, m.vy * 0.04)), m.yaw, 0);
+    this.tint(m);
+  }
+
   private move(m: Mob, s: MobSpec, wantX: number, wantZ: number, speed: number, dt: number): void {
     const wl = Math.hypot(wantX, wantZ);
     let tx = 0;
@@ -793,6 +971,11 @@ export class MobManager {
     }
     m.group.position.set(m.body.x, m.body.y, m.body.z);
     m.group.rotation.y = m.yaw;
+    this.tint(m);
+  }
+
+  /** Red flash while hurt, and fading (night creatures at dawn). */
+  private tint(m: Mob): void {
     const flash = m.hurtTime > 0;
     for (const mt of m.mats) {
       if (flash) mt.emissive.setRGB(0.6, 0.05, 0.05);

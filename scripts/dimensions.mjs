@@ -315,6 +315,91 @@ await step('mining: the arm swings, each strike throws chips and advances the cr
   return { maxParts, swings, maxStage, broken };
 });
 
+await step('Void Dragon: spawns over the island with a boss bar', async () => {
+  await page.evaluate(() => window.__bf.app.travel('voidreach', 'gate'));
+  await playingIn('voidreach');
+  await until(() => !!window.__bf.app.game.mobs.boss, null, 10000, 'dragon');
+  await until(() => !document.getElementById('bossbar').hidden, null, 10000, 'boss bar');
+  const r = await page.evaluate(() => { const b = window.__bf.app.game.mobs.boss; return { hp: b.health, y: +b.body.y.toFixed(1), name: document.querySelector('#bossbar .boss-name').textContent }; });
+  assert(r.hp === 200 && r.y > 70, JSON.stringify(r));
+  return r;
+});
+
+await step('Void Dragon: swoops and hurts the player', async () => {
+  await page.evaluate(() => { const g = window.__bf.app.game; g.creative = false; g.player.creative = false; g.player.health = 20; const b = g.mobs.boss; b.brain.phase = 'swoop'; b.brain.t = 8; });
+  await until(() => window.__bf.app.game.player.health < 20, null, 20000, 'dragon hit');
+  await page.evaluate(() => { window.__bf.app.game.player.health = 20; });
+});
+
+await step('Void Dragon: intact crystals heal it; breaking them stops the healing', async () => {
+  const healed = await page.evaluate(async () => {
+    const g = window.__bf.app.game;
+    const b = g.mobs.boss;
+    b.health = 150;
+    await new Promise((r) => setTimeout(r, 2500));
+    return b.health;
+  });
+  assert(healed > 150, 'no healing: ' + healed);
+  const after = await page.evaluate(async () => {
+    const g = window.__bf.app.game;
+    for (const c of g.mobs.arena.crystals) g.world.setBlock(c.x, c.y, c.z, 0);
+    const b = g.mobs.boss;
+    await new Promise((r) => setTimeout(r, 1600));
+    b.health = 100;
+    await new Promise((r) => setTimeout(r, 2000));
+    return { hp: b.health, beam: b.brain.beam.visible };
+  });
+  assert(after.hp === 100 && !after.beam, JSON.stringify(after));
+  return { healed: +healed.toFixed(1), after };
+});
+
+await step('Void Dragon: perches, can be fought in melee, and leaves the egg trophy', async () => {
+  await page.evaluate(() => {
+    const g = window.__bf.app.game;
+    g.inventory.clear();
+    g.inventory.slots[0] = { id: 300 + 4 * 4 + 3, count: 1 }; // Lumen Blade
+    g.select(0);
+    const b = g.mobs.boss;
+    b.health = 40;
+    b.brain.phase = 'perch'; b.brain.t = 60;
+  });
+  await until(() => { const b = window.__bf.app.game.mobs.boss; const a = window.__bf.app.game.mobs.arena; return b && Math.abs(b.body.y - (a.y + 1)) < 0.1; }, null, 30000, 'perched');
+  await page.evaluate(() => { const g = window.__bf.app.game; const a = g.mobs.arena; g.player.setPosition(a.x + 0.5, a.y + 1, a.z + 1.5); g.player.health = 20; g.creative = true; g.player.creative = true; });
+  for (let i = 0; i < 20; i++) {
+    const done = await page.evaluate(() => {
+      const g = window.__bf.app.game;
+      const b = g.mobs.boss;
+      if (!b) return true;
+      const p = g.player;
+      const dx = b.body.x - p.body.x, dy = b.body.y + 1.2 - p.eyeY, dz = b.body.z - p.body.z;
+      p.yaw = Math.atan2(-dx, -dz); p.pitch = Math.atan2(dy, Math.hypot(dx, dz));
+      b.brain.t = 60;
+      window.__bf.app.input.triggerEvent('primaryDown');
+      return false;
+    });
+    if (done) break;
+    await page.waitForTimeout(600);
+  }
+  await until(() => !window.__bf.app.game.mobs.boss, null, 15000, 'dragon slain');
+  await until(() => { const g = window.__bf.app.game; const a = g.mobs.arena; return g.world.getBlock(a.x, a.y + 1, a.z - 3) === 92; }, null, 8000, 'egg');
+  const r = await page.evaluate(() => ({ defeated: window.__bf.app.game.meta.dragonDefeated, bar: document.getElementById('bossbar').hidden }));
+  assert(r.defeated && r.bar, JSON.stringify(r));
+  await page.screenshot({ path: `${OUT}/06-dragon-egg.png` });
+  return r;
+});
+
+await step('a slain dragon stays slain after leaving and returning', async () => {
+  await page.evaluate(() => window.__bf.app.travel('overworld', 'gate'));
+  await playingIn('overworld');
+  await page.evaluate(() => window.__bf.app.travel('voidreach', 'gate'));
+  await playingIn('voidreach');
+  await page.waitForTimeout(2000);
+  const r = await page.evaluate(() => ({ boss: !!window.__bf.app.game.mobs.boss, egg: (() => { const g = window.__bf.app.game; const a = g.mobs.arena; return g.world.getBlock(a.x, a.y + 1, a.z - 3); })() }));
+  assert(!r.boss && r.egg === 92, JSON.stringify(r));
+  await page.evaluate(() => window.__bf.app.travel('overworld', 'gate'));
+  await playingIn('overworld');
+});
+
 await step('no runtime errors', async () => {
   assert(errors.length === 0, errors.slice(0, 5).join(' | '));
 });

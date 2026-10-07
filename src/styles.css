@@ -54,6 +54,10 @@ html, body {
 #overlay-hurt { background: radial-gradient(ellipse at center, transparent 45%, rgba(200, 20, 20, 0.55)); }
 #overlay-magma { background: radial-gradient(ellipse at center, rgba(255, 120, 20, 0.55), rgba(160, 30, 0, 0.85)); }
 #overlay-magma.on { opacity: 1; }
+#bossbar { position: absolute; top: calc(118px + var(--sat, 0px)); left: 50%; transform: translateX(-50%); width: min(440px, 72vw); pointer-events: none; text-align: center; z-index: 6; }
+#bossbar .boss-name { color: #f0dcff; font-weight: 800; letter-spacing: 0.08em; font-size: 13px; text-shadow: 0 2px 0 #000; margin-bottom: 4px; text-transform: uppercase; }
+#bossbar .boss-track { height: 10px; border-radius: 5px; background: rgba(20, 8, 30, 0.75); border: 1px solid rgba(220, 160, 255, 0.5); overflow: hidden; }
+#bossbar .boss-track > i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #8a2be2, #e080ff); transition: width 0.2s; }
 #overlay-rift { background: radial-gradient(ellipse at center, rgba(150, 60, 255, 0.2), rgba(70, 10, 140, 0.75)); transition: none; }
 
 /* ---------- buttons ---------- */

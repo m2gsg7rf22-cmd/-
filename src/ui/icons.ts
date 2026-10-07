@@ -24,7 +24,7 @@ function blockIcon(id: number): string {
   const top = tileCanvas(atlas!, BLOCK_TILES[id * 3]);
   const side = tileCanvas(atlas!, BLOCK_TILES[id * 3 + 2]);
   const r = RENDER[id];
-  if (r === 3 || id === B.TORCH) {
+  if (r === 3 || id === B.TORCH || id === B.END_ROD) {
     ctx.drawImage(side, 4, 4, S - 8, S - 8);
     return c.toDataURL();
   }

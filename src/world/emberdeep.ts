@@ -23,6 +23,7 @@ export class EmberdeepGenerator implements ChunkGenerator {
   private small: Simplex;
   private region: Simplex;
   private sand: Simplex;
+  private crimson: Simplex;
 
   constructor(seed: number) {
     this.seed = (seed ^ 0x5eed_e3b) >>> 0;
@@ -32,6 +33,8 @@ export class EmberdeepGenerator implements ChunkGenerator {
     this.small = new Simplex(s());
     this.region = new Simplex(s());
     this.sand = new Simplex(s());
+    // Created last so the existing layout of older worlds doesn't shift.
+    this.crimson = new Simplex(s());
   }
 
   /** Solid density at any point (> 0 = rock). */
@@ -53,7 +56,30 @@ export class EmberdeepGenerator implements ChunkGenerator {
   }
 
   describe(x: number, z: number): string {
-    return `Emberdeep  ${this.region.noise2(x / 140, z / 140) > 0.42 ? 'Basalt Fields' : 'Cinder Caverns'}`;
+    const area = this.region.noise2(x / 140, z / 140) > 0.42 ? 'Basalt Fields' : this.isCrimson(x, z) ? 'Crimson Forest' : 'Cinder Caverns';
+    return `Emberdeep  ${area}`;
+  }
+
+  isCrimson(x: number, z: number): boolean {
+    return this.crimson.noise2(x / 90, z / 90) > 0.3;
+  }
+
+  /** Fortress bridge crossing this column, if any: deck y, offset across the bridge, and position along it. */
+  bridgeAt(x: number, z: number): { y: number; across: number; along: number } | null {
+    const CELL = 96;
+    for (const axis of [0, 1]) {
+      const a = axis === 0 ? x : z; // along
+      const c = axis === 0 ? z : x; // across
+      const ci = Math.floor(a / CELL);
+      const cj = Math.floor(c / CELL);
+      if (hash2(this.seed, ci * 2 + axis, cj, 61) > 0.42) continue;
+      const line = cj * CELL + 20 + Math.floor(hash2(this.seed, ci * 2 + axis, cj, 62) * (CELL - 40));
+      const across = c - line;
+      if (Math.abs(across) > 2) continue;
+      const y = 54 + Math.floor(hash2(this.seed, ci * 2 + axis, cj, 63) * 14);
+      return { y, across, along: a };
+    }
+    return null;
   }
 
   /** Solid test straight from the noise (no ores/decoration) — used to find arrival spots before data exists. */
@@ -126,6 +152,7 @@ export class EmberdeepGenerator implements ChunkGenerator {
           if (id === B.MAGMA_DEEP && data[base + y + 1] !== B.MAGMA_DEEP) data[base + y] = B.MAGMA;
           else if ((id === B.CINDERROCK || id === B.BASALT) && data[base + y + 1] === B.AIR) {
             if (y >= EMBER_MAGMA_LEVEL - 1 && y <= EMBER_MAGMA_LEVEL + 2 && hash3(seed, wx, y, wz, 5) < 0.22) data[base + y] = B.DUSKSTONE;
+            else if (!basalt && this.isCrimson(wx, wz)) data[base + y] = B.CRIMSON_TURF;
             else if (sandy && !basalt && y < 70) {
               data[base + y] = B.ASHEN_SAND;
               if (data[base + y - 1] === B.CINDERROCK) data[base + y - 1] = B.ASHEN_SAND;
@@ -135,6 +162,7 @@ export class EmberdeepGenerator implements ChunkGenerator {
       }
     }
     this.decorate(data, bx, bz, cx, cz);
+    this.bridges(data, bx, bz);
     return data;
   }
 
@@ -172,19 +200,20 @@ export class EmberdeepGenerator implements ChunkGenerator {
           // Sprouts on floors.
           if (id === B.AIR) {
             const below = at(lx, y - 1, lz);
-            if ((below === B.CINDERROCK || below === B.ASHEN_SAND) && hash3(seed, wx, y, wz, 33) < 0.05) put(lx, y, lz, B.EMBER_SPROUT);
+            if ((below === B.CINDERROCK || below === B.ASHEN_SAND || below === B.CRIMSON_TURF) && hash3(seed, wx, y, wz, 33) < (below === B.CRIMSON_TURF ? 0.14 : 0.05)) put(lx, y, lz, B.EMBER_SPROUT);
           }
         }
       }
     }
     // Emberwood fungi: kept inside the chunk so neighbors never need to agree.
-    for (let tries = 0; tries < 3; tries++) {
-      if (rand() > 0.55) continue;
+    const crimson = this.isCrimson(bx + 8, bz + 8);
+    for (let tries = 0; tries < (crimson ? 6 : 3); tries++) {
+      if (rand() > (crimson ? 0.8 : 0.55)) continue;
       const lx = 2 + Math.floor(rand() * 12);
       const lz = 2 + Math.floor(rand() * 12);
       for (let y = EMBER_MAGMA_LEVEL + 2; y < 90; y++) {
         const g = at(lx, y - 1, lz);
-        if ((g !== B.CINDERROCK && g !== B.ASHEN_SAND) || at(lx, y, lz) !== B.AIR && at(lx, y, lz) !== B.EMBER_SPROUT) continue;
+        if ((g !== B.CINDERROCK && g !== B.ASHEN_SAND && g !== B.CRIMSON_TURF) || at(lx, y, lz) !== B.AIR && at(lx, y, lz) !== B.EMBER_SPROUT) continue;
         const h = 4 + Math.floor(rand() * 4);
         let clear = true;
         for (let k = 0; k < h + 2; k++) if (at(lx, y + k, lz) !== B.AIR && at(lx, y + k, lz) !== B.EMBER_SPROUT) clear = false;
@@ -196,10 +225,38 @@ export class EmberdeepGenerator implements ChunkGenerator {
           for (let dx = -r; dx <= r; dx++) for (let dz = -r; dz <= r; dz++) {
             if (Math.abs(dx) === r && Math.abs(dz) === r && dy !== 0) continue;
             if (dy === -1 && Math.abs(dx) < 2 && Math.abs(dz) < 2) continue; // hollow under the cap
-            if (at(lx + dx, top + dy, lz + dz) === B.AIR) put(lx + dx, top + dy, lz + dz, B.EMBER_CAP);
+            if (at(lx + dx, top + dy, lz + dz) === B.AIR) put(lx + dx, top + dy, lz + dz, crimson ? B.EMBER_WART : B.EMBER_CAP);
           }
         }
         break;
+      }
+    }
+  }
+
+  /** Fortress bridges: brick decks with railings and pillars, tunnelling straight through rock. */
+  private bridges(data: Uint8Array, bx: number, bz: number): void {
+    for (let lx = 0; lx < CHUNK_SIZE; lx++) {
+      for (let lz = 0; lz < CHUNK_SIZE; lz++) {
+        const b = this.bridgeAt(bx + lx, bz + lz);
+        if (!b) continue;
+        const base = blockIndex(lx, 0, lz);
+        const edge = Math.abs(b.across) === 2;
+        data[base + b.y - 1] = B.CINDER_BRICKS;
+        for (let k = 0; k < 4; k++) data[base + b.y + k] = B.AIR;
+        if (edge) {
+          // Railing, with a glowcap lantern every 8 blocks.
+          data[base + b.y] = ((b.along % 8) + 8) % 8 === 0 ? B.GLOWCAP : B.CINDER_BRICKS;
+        }
+        const m = ((b.along % 16) + 16) % 16;
+        if (m < 3 && !edge) {
+          // Pillar down to the rock or into the magma sea.
+          for (let y = b.y - 2; y > 2; y--) {
+            const id = data[base + y];
+            if (id === B.CINDERROCK || id === B.BASALT || id === B.DUSKSTONE || id === B.QUARTZ_ORE) break;
+            data[base + y] = B.CINDER_BRICKS;
+            if (y < EMBER_MAGMA_LEVEL - 3) break;
+          }
+        }
       }
     }
   }

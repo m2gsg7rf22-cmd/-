@@ -153,6 +153,14 @@ def({ id: B.VOID_STALK, name: 'Voidbloom Stalk', render: 'cutout', opaque: false
 def({ id: B.VOID_BLOOM, name: 'Voidbloom', render: 'cutout', opaque: false, hardness: 0.4, tiles: t3('void_bloom'), surface: 'plant', light: 9 });
 def({ id: B.VOID_GATE, name: 'Void Gate', hardness: 5, tool: 'pickaxe', minTier: 0, tiles: ['void_gate_top', 'void_gate_top', 'void_gate_side'], surface: 'glass', light: 10 });
 def({ id: B.VOID_CRYSTAL, name: 'Void Crystal', render: 'glass', opaque: false, hardness: 0.6, tiles: t3('void_crystal'), surface: 'glass', light: 15, drop: [{ id: I.VOID_PEARL, count: 1 }] });
+def({ id: B.PURPUR, name: 'Purpur Block', hardness: 1.8, tool: 'pickaxe', minTier: 0, tiles: t3('purpur') });
+def({ id: B.PURPUR_PILLAR, name: 'Purpur Pillar', hardness: 1.8, tool: 'pickaxe', minTier: 0, tiles: ['purpur_pillar_top', 'purpur_pillar_top', 'purpur_pillar'] });
+def({ id: B.END_ROD, name: 'Void Rod', render: 'shape', solid: false, opaque: false, hardness: 0.05, tiles: ['end_rod', 'end_rod', 'end_rod'], surface: 'glass', light: 14,
+  boxes: [[7 * P, 0, 7 * P, 9 * P, 1, 9 * P], [5 * P, 0, 5 * P, 11 * P, 2 * P, 11 * P]] });
+def({ id: B.VOID_EGG, name: 'Void Dragon Egg', render: 'shape', opaque: false, hardness: 3, tiles: t3('void_egg'), light: 3,
+  boxes: [[3 * P, 0, 3 * P, 13 * P, 9 * P, 13 * P], [4 * P, 9 * P, 4 * P, 12 * P, 13 * P, 12 * P], [6 * P, 13 * P, 6 * P, 10 * P, 15 * P, 10 * P]] });
+def({ id: B.CRIMSON_TURF, name: 'Crimson Turf', hardness: 0.9, tool: 'pickaxe', minTier: 0, tiles: ['crimson_top', 'cinderrock', 'crimson_side'], drop: [{ id: B.CINDERROCK, count: 1 }] });
+def({ id: B.EMBER_WART, name: 'Ember Wart Block', hardness: 0.9, tool: 'axe', tiles: t3('ember_wart'), surface: 'plant' });
 def({ id: B.BONE_BLOCK, name: 'Bone Block', hardness: 2, tool: 'pickaxe', minTier: 0, tiles: ['bone_top', 'bone_top', 'bone_side'] });
 
 export const BLOCKS: readonly BlockDef[] = defs;
