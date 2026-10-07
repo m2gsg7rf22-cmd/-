@@ -173,3 +173,17 @@ Known limits:
   - it stays slain after leaving and coming back
 
 Bug found while testing: when the dragon died far from the plaza, its chunk wasn't loaded, so the egg placement failed silently. The egg now waits until the plaza chunk loads, and the placement is saved (`eggPlaced`).
+
+## Round 6 (exit, names, classic-style travel)
+
+- Unit tests: **113 / 113**. New tests cover: a 12-eye frame ring opens a 3×3 Void Portal (11 eyes don't), Void Sanctum generation (frame ring over a magma pool, brick hall), flint drops and the Flint and Steel / Void Eye recipes, and compass directions.
+- Dimension QA: **26 / 26**. New steps:
+  - the block name under the crosshair
+  - the inventory name bar and the Travel group in the Block Library
+  - the Rift Portal Kit
+  - a Void Eye pointing to the sanctum, filling the frames through the real interaction path, the portal opening, and jumping in to Voidreach
+  - ☰ → pause → Save & Exit → Exit Game → goodbye screen → back
+
+Fixed while testing:
+- The dragon sometimes overshot its perch and circled it forever, so it now slows down as it lands.
+- The ☰ button can't be clicked while the mouse is locked, because the browser routes every click to the game. That's expected: Esc opens the menu then. The button is meant for touch and unlocked play, and the test covers it in that mode.

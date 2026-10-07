@@ -128,23 +128,35 @@ All controls are multitouch: you can move, look and jump at the same time.
 
 A sealed cavern world between a coreite floor and roof. It has a molten magma sea, basalt fields, glowcap clusters hanging from the ceiling, cinder quartz veins, emberwood fungi and a thick red haze. One Emberdeep block equals 8 overworld blocks, so it works as a shortcut.
 
-How to get there:
-1. Mine **Duskstone**. It is rare and deep underground (y 3–18) and needs an **Iron Pickaxe**.
-2. Build a vertical **frame** from Duskstone. The frame is at least 4 wide × 5 tall, and the corners are optional. The opening must be at least 2×3 and at most 21×21.
-3. Craft an **Ember Striker** (Iron Ingot + Ember) and use it inside the frame. A violet **rift** opens.
-4. Stand in the rift for about 2 seconds.
+How to get there, like the classic way:
+1. Mine **Obsidian**. It is rare and deep underground (y 3–18) and needs an **Iron Pickaxe**.
+2. Build a vertical **frame** from Obsidian. The frame is at least 4 wide × 5 tall, and the corners are optional. The opening must be at least 2×3 and at most 21×21.
+3. Get **Flint**, which sometimes drops from Gravel. Craft **Flint and Steel** (Iron Ingot + Flint), or use Iron Ingot + Ember instead, and use it inside the frame. A violet portal opens.
+4. Stand in the portal for about 2 seconds.
 
-The first trip builds a matching rift in Emberdeep, on a safe Duskstone landing. Later trips reuse it. Step back into it to return to the overworld portal you came from. Breaking the frame collapses the rift.
+Shortcut: craft a **Rift Portal Kit** at a Forge Bench (10 Obsidian + 2 Ember) and place it on the ground. It builds a complete, lit portal.
+
+The first trip builds a matching rift in Emberdeep, on a safe Obsidian landing. Later trips reuse it. Step back into it to return to the overworld portal you came from. Breaking the frame collapses the rift.
 
 Hazards: magma burns (3 damage roughly every half second in survival) and slows you, though you can still wade out. Magma can be bridged by placing blocks into it.
 
-Materials: Cinderrock, Ashen Sand, Scorched Basalt, Glowcap (drops Glow Dust), Cinder Quartz, Emberwood, Ember Cap and Duskstone. Crafts include Cinder Bricks (kiln), Glowcap blocks, Glow Dust torches and Quartz lamps.
+Materials: Cinderrock, Ashen Sand, Scorched Basalt, Glowcap (drops Glow Dust), Cinder Quartz, Emberwood, Ember Cap and Obsidian. Crafts include Cinder Bricks (kiln), Glowcap blocks, Glow Dust torches and Quartz lamps.
 
 ### Voidreach (islands over the void)
 
-Floating islands of pale voidstone under a violet, starry sky with drifting nebula bands. The large central island has a brick plaza, a ring of Duskstone spires crowned by Void Crystals, and the **return gate**. The outer islands are overgrown with glowing voidbloom stalks. Falling off an island means falling into the void.
+Floating islands of pale voidstone under a violet, starry sky with drifting nebula bands. The large central island has a brick plaza, a ring of obsidian spires crowned by Void Crystals, and the **return gate**. The outer islands are overgrown with glowing voidbloom stalks. Falling off an island means falling into the void.
 
-How to get there: collect **Void Pearls** from Cinder Wraiths in Emberdeep. Then craft a **Void Gate** at a Forge Bench (4 Void Pearls + 4 Duskstone + 1 Lumen Shard), place it, and use it. Using the Void Gate on the plaza takes you home.
+How to get there, like the classic way:
+1. Collect **Void Pearls** from Cinder Wraiths in Emberdeep, or from Voidwalkers.
+2. Collect **Glow Dust** from glowcaps.
+3. Craft **Void Eyes** (1 Void Pearl + 1 Glow Dust).
+4. Use a Void Eye in the open (overworld). It drifts toward the nearest hidden **Void Sanctum** and tells you the direction and distance. Close up, it tells you how far down to dig. Eyes sometimes shatter.
+5. Dig down into the Sanctum: a brick hall with lamps and a corridor. On a raised dais over a magma pool is a ring of **12 Void Portal Frames**, and a few of them already hold an eye.
+6. Put a Void Eye into every empty frame. The 3×3 starry **Void Portal** opens. Jump in.
+
+Shortcut: craft a **Void Gate** at a Forge Bench (4 Void Pearls + 4 Obsidian + 1 Lumen Shard), place it and use it.
+
+Using the Void Gate on the Voidreach plaza takes you home.
 
 ### The Void Dragon
 
@@ -168,13 +180,21 @@ When the dragon dies, the **Void Dragon Egg** appears on the plaza and the victo
 - **Voidreach:** **purpur towers** on the larger outer islands. They are hollow 7×7 towers with pillar corners, floors, windows, a doorway and Void Rods on the roof.
 - **New building blocks:** Purpur Block and Purpur Pillar (from voidbloom), Void Rods (light, from quartz + voidbloom), Crimson Turf and Ember Wart Block.
 
+### Names, menus and exiting
+
+- **Names:** the name of the block or creature under the crosshair appears just below it. You can toggle this in Settings → Interface → Block names.
+- **Inventory:** hovering an item (or focusing it with a controller) shows its name and what it's for. In Creative, the Block Library starts with a "Travel between worlds" group, and new Creative worlds start with those items on the hotbar.
+- **Leaving the game:**
+  - Esc, or the ☰ button (top-left, for touch or unlocked mouse play), opens the menu. **Save & Exit to Menu** saves and returns to the title screen.
+  - **Exit Game** on the title screen leaves fullscreen and closes the window if the browser allows it. Otherwise it shows a "you can close this tab" screen, because browsers don't let a page close tabs the user opened themselves.
+
 ### Rules shared by every dimension
 
 - Your inventory, health and hunger travel with you.
 - Each dimension saves its own terrain, edits and creatures, and remembers where you left it.
 - Saving and quitting anywhere resumes in that dimension.
 - Dying in Emberdeep or Voidreach respawns you at your overworld spawn point.
-- In creative mode everything above is in the Block Library (Duskstone, Void Gate, Ember Striker and all the new blocks), so you can build a portal right away.
+- In creative mode everything above is in the Block Library (Obsidian, Flint and Steel, Rift Portal Kit, Void Eyes, Void Portal Frames, Void Gate and all the new blocks), so you can build a portal right away.
 
 ## Look & feel
 
