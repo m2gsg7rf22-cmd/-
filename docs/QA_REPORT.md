@@ -161,3 +161,15 @@ Known limits:
 - There is no boss in Voidreach.
 - Only one Emberdeep portal is linked at a time; a new one is created when you light a rift far from the previous one.
 - Tested under SwiftShader (software GL) in headless Chromium, not on physical GPUs or phones.
+
+## Round 5 (Void Dragon, classic-style blocks, structures)
+
+- Unit tests: **109 / 109**. New tests cover the dragon's attack choice, crystal cells matching the generated spire tops, purpur towers with Void Rods in Voidreach, and crimson turf and brick bridges in Emberdeep.
+- Dimension QA: **21 / 21**. New steps:
+  - the dragon spawns with a boss bar
+  - its swoop damages the player
+  - crystals heal it, and breaking them stops the healing
+  - it perches, is killed in melee and leaves the egg
+  - it stays slain after leaving and coming back
+
+Bug found while testing: when the dragon died far from the plaza, its chunk wasn't loaded, so the egg placement failed silently. The egg now waits until the plaza chunk loads, and the placement is saved (`eggPlaced`).

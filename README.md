@@ -117,6 +117,7 @@ All controls are multitouch: you can move, look and jump at the same time.
   | Emberdeep | Ember Hog | Neutral until hit, then charges | Roast Meat, Magma Gel |
   | Voidreach | Voidwalker | Tall and neutral; teleports away when hit, then hunts you | Void Pearl |
   | Voidreach | Shardling | Hostile floating crystal with orbiting shards; shoots void bolts | Lumen Shard, Void Pearl |
+  | Voidreach (boss) | **Void Dragon** | See "The Void Dragon" below | Void Pearls, Lumen Shards, the egg trophy |
 - **World:** a 20-minute day/night cycle with sun, moon, stars and drifting clouds; animated translucent water; and fog that blends into the sky.
 - **Music:** calm, procedurally generated phrases now and then (Settings → Audio → Music).
 - **Saving:** autosave every 30 s, plus saving on pause, tab hide and Save & Quit. Saves cover world edits, player position, inventory, health, hunger, time of day, nearby creatures and settings.
@@ -145,6 +146,28 @@ Floating islands of pale voidstone under a violet, starry sky with drifting nebu
 
 How to get there: collect **Void Pearls** from Cinder Wraiths in Emberdeep. Then craft a **Void Gate** at a Forge Bench (4 Void Pearls + 4 Duskstone + 1 Lumen Shard), place it, and use it. Using the Void Gate on the plaza takes you home.
 
+### The Void Dragon
+
+A giant winged boss guards the central island of Voidreach. A boss bar shows its health while you're nearby.
+
+How it fights:
+- It **circles** the island.
+- It **swoops** at you (7 damage).
+- It hovers and **breathes** large void bolts.
+- It **perches** on the plaza for a while and bites anyone close by. This is your best moment to hit it.
+
+The **Void Crystals** on top of the duskstone spires heal it, shown as a violet beam to the nearest crystal. Pillar up and break the crystals first.
+
+When the dragon dies, the **Void Dragon Egg** appears on the plaza and the victory is saved with the world. The dragon doesn't return when you come back.
+
+### More from Emberdeep and Voidreach
+
+- **Emberdeep:**
+  - **Crimson forests:** red crimson-turf floors, dense emberwood fungi with ember wart caps, and thick ember sprouts.
+  - **Fortress bridges:** decks of dark cinder bricks with railings and glowcap lanterns. They tunnel straight through the rock and stand on brick pillars over the magma sea.
+- **Voidreach:** **purpur towers** on the larger outer islands. They are hollow 7×7 towers with pillar corners, floors, windows, a doorway and Void Rods on the roof.
+- **New building blocks:** Purpur Block and Purpur Pillar (from voidbloom), Void Rods (light, from quartz + voidbloom), Crimson Turf and Ember Wart Block.
+
 ### Rules shared by every dimension
 
 - Your inventory, health and hunger travel with you.
@@ -155,6 +178,7 @@ How to get there: collect **Void Pearls** from Cinder Wraiths in Emberdeep. Then
 
 ## Look & feel
 
+- **Classic-style textures:** the Emberdeep and Voidreach blocks are drawn in the style players know: lumpy red rock, dark sand with faces, glowing crystal clusters, black-violet volcanic glass, molten rock with crust, pitted pale stone and bricks, purple tiles and pillars, glowing rods. They are all original pixel art painted in code; no game assets are copied.
 - **Textures:** every texture is painted procedurally at load time. They use tileable coherent noise mapped through stepped colour palettes, with light dithering. Ores are shaded gems set in sockets. Logs have grooves and knots, planks have grain and nails, and bricks are individually lit.
 - **Shader detail:** natural blocks (grass, dirt, stone, sand, snow, cinderrock, voidstone…) get a random per-block rotation and a slight brightness variation, so large areas don't show a repeating grid. Magma, rifts and Void Gates are animated and glow.
 - **Mining:** you see a first-person arm. The tool winds up, strikes and recovers. Each strike lands on the block: chips fly off the struck face along its normal, the hit sound plays, and the crack overlay jolts. The cracks radiate from the centre over 10 stages and crumble near the end. Breaking a block bursts it into fragments with a dust puff.
