@@ -32,9 +32,18 @@ export class Atmosphere {
 
     if (this.opts.stars) this._makeStars();
     this.pmrem = renderer ? new THREE.PMREMGenerator(renderer) : null;
+    // IBL source: a controlled gradient dome (zenith/horizon/ground + soft sun glow) instead
+    // of the raw sky shader, whose HDR sun disk floods every rough surface with white.
     this.envScene = new THREE.Scene();
-    this.envSky = new Sky(); this.envSky.scale.setScalar(1000);
-    this.envScene.add(this.envSky);
+    this.envDome = new THREE.Mesh(new THREE.SphereGeometry(100, 32, 16), new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false,
+      uniforms: { uZenith: { value: new THREE.Color() }, uHorizon: { value: new THREE.Color() }, uGround: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3() }, uSunCol: { value: new THREE.Color() } },
+      vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform vec3 uZenith, uHorizon, uGround, uSunDir, uSunCol; varying vec3 vDir;
+        void main(){ float h = vDir.y; vec3 c = h > 0.0 ? mix(uHorizon, uZenith, pow(h, 0.6)) : mix(uHorizon, uGround, pow(-h, 0.4));
+          float s = max(dot(normalize(vDir), uSunDir), 0.0); c += uSunCol * (pow(s, 8.0) * 0.6 + pow(s, 64.0) * 1.5);
+          gl_FragColor = vec4(c, 1.0); }` }));
+    this.envScene.add(this.envDome);
     this.envRT = null;
     this._lastEnvTime = -99;
     this.sunDir = new THREE.Vector3();
@@ -58,7 +67,7 @@ export class Atmosphere {
     const t = this.timeOfDay;
     const ang = ((t - 6) / 12) * Math.PI; // 6h sunrise, 18h sunset
     const elev = Math.sin(ang) * 72; // degrees
-    const azim = 180 + (t - 12) * 15;
+    const azim = 180 + (t - 12) * 15 + (this.opts.sunAzimuth ?? 0);
     const phi = THREE.MathUtils.degToRad(90 - Math.max(elev, -10));
     const theta = THREE.MathUtils.degToRad(azim);
     this.sunDir.setFromSphericalCoords(1, phi, theta);
@@ -89,9 +98,11 @@ export class Atmosphere {
   }
   _updateEnv() {
     this._lastEnvTime = this.timeOfDay;
-    const u = this.envSky.material.uniforms, su = this.sky.material.uniforms;
-    for (const k of ['turbidity', 'rayleigh', 'mieCoefficient', 'mieDirectionalG']) u[k].value = su[k].value;
-    u.sunPosition.value.copy(this.sunDir);
+    const u = this.envDome.material.uniforms, d = this.daylight, warm = 1 - THREE.MathUtils.smoothstep(this.sunDir.y * 72, 4, 30);
+    u.uZenith.value.setRGB(0.18 + 0.12 * d, 0.32 + 0.2 * d, 0.62 + 0.25 * d).multiplyScalar(0.15 + 0.85 * d);
+    u.uHorizon.value.setRGB(0.62 + 0.3 * warm, 0.66 + 0.1 * warm, 0.72 - 0.2 * warm).multiplyScalar(0.12 + 0.88 * d);
+    u.uGround.value.setRGB(0.22, 0.2, 0.17).multiplyScalar(0.15 + 0.85 * d);
+    u.uSunDir.value.copy(this.sunDir); u.uSunCol.value.copy(this.sun.color).multiplyScalar(d);
     if (this.envRT) this.envRT.dispose();
     this.envRT = this.pmrem.fromScene(this.envScene, 0, 0.1, 2000);
     this.scene.environment = this.envRT.texture;

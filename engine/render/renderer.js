@@ -78,7 +78,8 @@ export function createRenderer({ canvas, container, quality = 'auto', clearColor
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
     if (tier.bloom) {
-      state.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.35, 0.6, 0.85);
+      const bq = (globalThis.location?.search.match(/bloom=([\d.]+),([\d.]+),([\d.]+)/) || []).slice(1).map(Number);
+      state.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), bq[0] ?? 0.3, bq[1] ?? 0.4, bq[2] ?? 3.5); // HDR threshold: only emissives/speculars bloom, not the sky
       composer.addPass(state.bloom);
     }
     composer.addPass(new OutputPass());

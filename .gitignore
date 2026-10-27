@@ -4,3 +4,4 @@ dist/
 *.log
 /tmp/
 artifacts/tmp/
+capabilities.json
