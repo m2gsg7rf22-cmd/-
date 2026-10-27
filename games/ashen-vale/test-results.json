@@ -1,12 +1,12 @@
 {
   "game": "Ashen Vale",
   "quality": "low",
-  "startedAt": "2026-10-27T17:50:26.988Z",
+  "startedAt": "2026-10-27T18:28:25.882Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3866 ms"
+      "detail": "4248 ms"
     },
     {
       "label": "title menu is shown on boot",
@@ -27,8 +27,8 @@
       "label": "gameplay frame is rendered (not blank)",
       "ok": true,
       "detail": {
-        "mean": 83.4,
-        "std": 51.4,
+        "mean": 78.3,
+        "std": 53.2,
         "colors": 146
       }
     },
@@ -65,7 +65,7 @@
     {
       "label": "melee combo damages enemies",
       "ok": true,
-      "detail": 191.2
+      "detail": 204
     },
     {
       "label": "enemies can be killed",
@@ -80,7 +80,7 @@
     {
       "label": "shockwave ability works",
       "ok": true,
-      "detail": 255.59999999999997
+      "detail": 268.4
     },
     {
       "label": "clearing a wave starts the next",
@@ -125,8 +125,8 @@
     "screenshots/04-victory.png"
   ],
   "metrics": {
-    "fps": 5.8060770272885955,
-    "frameMs": 2.1000000000931323,
+    "fps": 4,
+    "frameMs": 5.400000000372529,
     "calls": 58,
     "triangles": 368211,
     "geometries": 138,
@@ -139,7 +139,8 @@
   },
   "errors": [],
   "passed": true,
-  "loadMs": 3866,
-  "durationMs": 46144,
+  "url": "index.html",
+  "loadMs": 4248,
+  "durationMs": 49198,
   "summary": "22/22 checks passed"
 }

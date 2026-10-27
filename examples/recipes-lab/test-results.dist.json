@@ -1,0 +1,104 @@
+{
+  "game": "Recipes Lab",
+  "quality": "low",
+  "startedAt": "2026-10-27T18:35:12.718Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "2745 ms"
+    },
+    {
+      "label": "lab boots with all recipe modules installed",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "recipe: boss spawned",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: boss enters phase 2 below 50% hp",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: boss slam emits debris",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: next wave spawns after clearing",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: custom 'knight' archetype used by the wave spawner",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: custom pose-function clip plays",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: projectile weapon fires",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: lofted hero landmark placed",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: rain particles present",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "recipe: runtime dialogue opens",
+      "ok": true,
+      "detail": "dialogue"
+    },
+    {
+      "label": "recipe: dialogue starts runtime quest",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "label": "recipe: custom objective completes quest",
+      "ok": true,
+      "detail": "complete"
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "../../../../../tmp/gf-dist-shots/recipes-lab/lab.png"
+  ],
+  "metrics": {
+    "fps": 4,
+    "frameMs": 7.800000000745058,
+    "calls": 44,
+    "triangles": 118816,
+    "geometries": 46,
+    "textures": 30,
+    "tier": "low",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 10,
+    "particles": 185
+  },
+  "errors": [],
+  "passed": true,
+  "url": "file://recipes-lab.html",
+  "loadMs": 2745,
+  "durationMs": 19174,
+  "summary": "15/15 checks passed"
+}

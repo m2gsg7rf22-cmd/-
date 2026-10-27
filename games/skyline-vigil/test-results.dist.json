@@ -1,0 +1,164 @@
+{
+  "game": "Skyline Vigil",
+  "quality": "low",
+  "startedAt": "2026-10-27T18:33:45.153Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "3565 ms"
+    },
+    {
+      "label": "title menu on boot",
+      "ok": true,
+      "detail": "menu"
+    },
+    {
+      "label": "game starts",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "city frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 37.2,
+        "std": 44.1,
+        "colors": 123
+      }
+    },
+    {
+      "label": "hero spawns grounded",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "three gangs spawned (>= 9 members)",
+      "ok": true,
+      "detail": 10
+    },
+    {
+      "label": "gangs hold their corners until the hero approaches",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "Dispatcher Rae can be approached",
+      "ok": true,
+      "detail": "npc:rae"
+    },
+    {
+      "label": "talking to Rae opens the briefing",
+      "ok": true,
+      "detail": "dialogue"
+    },
+    {
+      "label": "briefing starts 'Take Back the Streets'",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "label": "briefing starts 'Rooftop Relays'",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "label": "R attaches a swing line to a building",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "swing counted",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "holding Space while falling glides",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "glide limits the sink rate",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "air dash",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "hero survives a long fall",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "rooftops are walkable",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "a rooftop relay can be activated",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "all four relays complete the quest",
+      "ok": true,
+      "detail": "complete"
+    },
+    {
+      "label": "approaching a gang triggers combat",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "gang members can be defeated in melee",
+      "ok": true,
+      "detail": 3
+    },
+    {
+      "label": "defeating the gangs completes the streets quest",
+      "ok": true,
+      "detail": "complete"
+    },
+    {
+      "label": "both quests secure downtown (victory)",
+      "ok": true,
+      "detail": "gameover"
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "../../../../../tmp/gf-dist-shots/skyline-vigil/01-title.png",
+    "../../../../../tmp/gf-dist-shots/skyline-vigil/02-street.png",
+    "../../../../../tmp/gf-dist-shots/skyline-vigil/03-briefing.png",
+    "../../../../../tmp/gf-dist-shots/skyline-vigil/04-swing.png",
+    "../../../../../tmp/gf-dist-shots/skyline-vigil/05-rooftop.png",
+    "../../../../../tmp/gf-dist-shots/skyline-vigil/06-fight.png",
+    "../../../../../tmp/gf-dist-shots/skyline-vigil/07-victory.png"
+  ],
+  "metrics": {
+    "fps": 4,
+    "frameMs": 9.799999999813735,
+    "calls": 303,
+    "triangles": 196970,
+    "geometries": 579,
+    "textures": 245,
+    "tier": "low",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 61,
+    "particles": 568
+  },
+  "errors": [],
+  "passed": true,
+  "url": "file://skyline-vigil.html",
+  "loadMs": 3565,
+  "durationMs": 67492,
+  "summary": "25/25 checks passed"
+}

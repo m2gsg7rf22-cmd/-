@@ -1,12 +1,12 @@
 {
   "game": "Neon Circuit",
   "quality": "low",
-  "startedAt": "2026-10-27T17:55:43.438Z",
+  "startedAt": "2026-10-27T18:31:29.443Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "2041 ms"
+      "detail": "4608 ms"
     },
     {
       "label": "title menu on boot",
@@ -37,8 +37,8 @@
       "label": "driving frame renders",
       "ok": true,
       "detail": {
-        "mean": 56.7,
-        "std": 49.3,
+        "mean": 55.8,
+        "std": 48.7,
         "colors": 173
       }
     },
@@ -105,7 +105,7 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 4.399999999906868,
+    "frameMs": 6.8999999994412065,
     "calls": 201,
     "triangles": 122878,
     "geometries": 595,
@@ -113,12 +113,13 @@
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
-    "audioEvents": 25,
-    "particles": 1172
+    "audioEvents": 23,
+    "particles": 1154
   },
   "errors": [],
   "passed": true,
-  "loadMs": 2041,
-  "durationMs": 27892,
+  "url": "index.html",
+  "loadMs": 4608,
+  "durationMs": 35458,
   "summary": "18/18 checks passed"
 }
