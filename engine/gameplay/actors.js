@@ -112,7 +112,7 @@ export class Enemy extends Actor {
         bt.act((c, dt) => {
           const d = dist();
           self.faceTowards(self.target.position, dt, 8);
-          if (d > self.stats.range + 2.5 || self.tokens.holders.size < self.tokens.max) { self.state = 'chase'; self.move = Steering.arrive(self.position, self.target.position, self.stats.moveSpeed, 1.5); }
+          if (d > self.stats.range + 2.5 || self.tokens.holders.size < self.tokens.max) { self.state = 'chase'; const stop = self.target.position.clone().add(self.position.clone().sub(self.target.position).setY(0).normalize().multiplyScalar(self.stats.range * 0.75)); self.move = Steering.arrive(self.position, stop, self.stats.moveSpeed, 1.5); }
           else { self.state = 'circle'; self.move = Steering.orbit(self.position, self.target.position, self.stats.range + 2.2, self.stats.moveSpeed * 0.5, self.orbitDir); }
           const others = self.app.__enemies?.filter((e) => e !== self && e.alive).map((e) => e.position) || [];
           self.move.add(Steering.separation(self.position, others, 1.6).multiplyScalar(2.5));
@@ -148,10 +148,10 @@ export class Enemy extends Actor {
 }
 
 export const ENEMY_TYPES = {
-  grunt: { hp: 60, weapon: 'axe', look: { outfit: 'casual', top: 0x5a3a2a, bottom: 0x2a2a2a, hairStyle: 'buzz', beard: true }, stats: { damage: 10, moveSpeed: 3.8, attacks: ['attack1', 'attack2'] } },
+  grunt: { hp: 60, weapon: 'axe', look: { outfit: 'armor', armor: true, top: 0x4a3a28, bottom: 0x2a2a2a, accent: 0x6a5a4a, hairStyle: 'buzz', beard: true }, stats: { damage: 10, moveSpeed: 3.8, attacks: ['attack1', 'attack2'] } },
   brute: { hp: 160, scale: 1.25, weapon: 'axe', look: { build: 0.95, outfit: 'armor', armor: true, top: 0x3a2a2a, accent: 0x7a2a1a, helmet: true }, stats: { damage: 22, moveSpeed: 2.8, range: 2.3, attackCooldown: 2.4, attacks: ['heavy', 'attack3'], attackSpeed: 0.9 } },
   duelist: { hp: 80, weapon: 'sword', look: { outfit: 'robe', top: 0x2a2a3a, accent: 0xb02a2a, hairStyle: 'ponytail' }, stats: { damage: 12, moveSpeed: 4.6, attackCooldown: 1.1, attacks: ['attack1', 'attack2', 'attack3'], attackSpeed: 1.15 } },
-  thug: { hp: 50, look: { outfit: 'casual', top: 0x2a2a2a, bottom: 0x1a2a4a, hairStyle: 'mohawk' }, stats: { damage: 8, moveSpeed: 4.2, range: 1.5, attacks: ['punch', 'kick'], flee: true } },
+  thug: { hp: 50, look: { outfit: 'casual', coat: true, top: 0x2a3a4a, bottom: 0x1a2a4a, hairStyle: 'mohawk' }, stats: { damage: 8, moveSpeed: 4.2, range: 1.5, attacks: ['punch', 'kick'], flee: true } },
 };
 
 export class NPC extends Actor {
@@ -184,5 +184,17 @@ export class NPC extends Actor {
     if (player && !this.talking && player.position.distanceTo(this.position) < 3.5 && speed === 0) this.faceTowards(player.position, dt, 3);
     if (this.marker) this.marker.position.y = this.model.userData.height + 0.45 + Math.sin(this.app.loop.time * 3) * 0.06;
     super.update(dt, dir, speed);
+  }
+}
+
+// Push overlapping actors apart (circle vs circle on the ground plane).
+export function separateActors(actors, padding = 0.05) {
+  for (let i = 0; i < actors.length; i++) for (let j = i + 1; j < actors.length; j++) {
+    const a = actors[i], b = actors[j]; if (!a.alive || !b.alive) continue;
+    const dx = b.position.x - a.position.x, dz = b.position.z - a.position.z, d = Math.hypot(dx, dz), min = a.radius + b.radius + padding;
+    if (d >= min || d < 1e-5) continue;
+    const push = (min - d) / 2, nx = dx / d, nz = dz / d;
+    const wa = a.tags.has('player') ? 0.3 : 1, wb = b.tags.has('player') ? 0.3 : 1;
+    a.position.x -= nx * push * wa; a.position.z -= nz * push * wa; b.position.x += nx * push * wb; b.position.z += nz * push * wb;
   }
 }

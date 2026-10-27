@@ -120,7 +120,7 @@ export class UI {
     document.documentElement.style.setProperty('--gf-scale', s.textScale);
     this.root.classList.toggle('gf-hc', !!s.highContrast);
     const m = COLOR_FILTERS[s.colorFilter];
-    const canvas = document.querySelector('canvas');
+    const canvas = this.canvas;
     if (m) { this.root.querySelector('#gf-cf feColorMatrix').setAttribute('values', m.replace(/,/g, ' ')); if (canvas) canvas.style.filter = 'url(#gf-cf)'; } else if (canvas) canvas.style.filter = '';
   }
   // ---------- HUD widgets ----------

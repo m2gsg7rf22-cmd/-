@@ -74,7 +74,7 @@ export function createRenderer({ canvas, container, quality = 'auto', clearColor
   const state = { renderer, tier, detected, composer: null, bloom: null, grade: null, fxaa: null, scene: null, camera: null };
   state.setup = (scene, camera) => {
     state.scene = scene; state.camera = camera;
-    if (!tier.post) return;
+    if (!tier.post) { state.resize(); return; }
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
     if (tier.bloom) {

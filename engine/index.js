@@ -34,4 +34,5 @@ export { Health, Stamina, meleeSweep, ComboSystem, ProjectileSystem, Inventory, 
 export { Flags, QuestSystem, DialogueSystem, parseDialogue, Mission } from './gameplay/narrative.js';
 export { AudioEngine, MusicSequencer, MOODS, SFX_NAMES } from './audio/audio.js';
 export { UI, DEFAULT_SETTINGS } from './ui/ui.js';
-export { Actor, NPC, Enemy } from './gameplay/actors.js';
+export { Actor, NPC, Enemy, ENEMY_TYPES, AttackTokens, separateActors } from './gameplay/actors.js';
+export { Player } from './gameplay/player.js';

@@ -24,6 +24,7 @@ export class GameApp {
     const settings = this.ui.settings;
     this.gfx = createRenderer({ container, quality: quality ?? settings.quality ?? 'auto' });
     this.renderer = this.gfx.renderer;
+    this.ui.canvas = this.renderer.domElement; this.ui.applySettings();
     MaterialLibrary.anisotropy = this.gfx.tier.maxAniso;
     if (this.gfx.tier.name === 'low') MaterialLibrary.textureSize = 128;
     this.scene = new THREE.Scene();
@@ -40,6 +41,7 @@ export class GameApp {
     this.save = new SaveSystem(id);
     this.loop = new GameLoop();
     this.state = 'boot';
+    this.timers = [];
     this.stats = { startTime: 0 };
     this.debugState = () => ({});
     this.errors = [];
@@ -61,7 +63,10 @@ export class GameApp {
   // Register per-step logic; runs only in states listed (default: playing).
   add(fn, { order = 0, states = ['playing'] } = {}) { return this.loop.add((dt, t) => { if (states === 'all' || states.includes(this.state)) fn(dt, t); }, order); }
   setState(s) { const prev = this.state; this.state = s; this.events.emit('state', { from: prev, to: s }); }
+  // Run fn after `seconds` of simulated time (deterministic under test stepping).
+  after(seconds, fn) { this.timers.push({ t: seconds, fn }); }
   _preUpdate(dt) {
+    for (let i = this.timers.length - 1; i >= 0; i--) { this.timers[i].t -= dt; if (this.timers[i].t <= 0) { const f = this.timers[i].fn; this.timers.splice(i, 1); f(); } }
     this.input.pollGamepad();
     SHARED_UNIFORMS.uTime.value += dt;
     if (this.state !== 'paused') {
