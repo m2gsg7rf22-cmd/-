@@ -1,12 +1,12 @@
 {
   "game": "Neon Circuit",
   "quality": "low",
-  "startedAt": "2026-10-27T19:53:06.075Z",
+  "startedAt": "2026-10-27T20:19:46.525Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "2261 ms"
+      "detail": "2426 ms"
     },
     {
       "label": "title menu on boot",
@@ -38,8 +38,8 @@
       "ok": true,
       "detail": {
         "mean": 48,
-        "std": 48.1,
-        "colors": 172
+        "std": 48,
+        "colors": 177
       }
     },
     {
@@ -50,7 +50,7 @@
     {
       "label": "steering left turns the car (yaw increases)",
       "ok": true,
-      "detail": 1.357
+      "detail": 1.356
     },
     {
       "label": "handbrake drift sequence completes",
@@ -105,11 +105,11 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 6,
-    "calls": 201,
-    "triangles": 122878,
-    "geometries": 595,
-    "textures": 213,
+    "frameMs": 4.199999999254942,
+    "calls": 243,
+    "triangles": 164582,
+    "geometries": 657,
+    "textures": 210,
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
@@ -119,7 +119,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 2261,
-  "durationMs": 31139,
+  "loadMs": 2426,
+  "durationMs": 32681,
   "summary": "18/18 checks passed"
 }

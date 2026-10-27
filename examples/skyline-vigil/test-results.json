@@ -1,12 +1,12 @@
 {
   "game": "Skyline Vigil",
   "quality": "low",
-  "startedAt": "2026-10-27T19:54:09.094Z",
+  "startedAt": "2026-10-27T20:20:19.667Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "5256 ms"
+      "detail": "3453 ms"
     },
     {
       "label": "title menu on boot",
@@ -143,22 +143,22 @@
     "screenshots/07-victory.png"
   ],
   "metrics": {
-    "fps": 4.390458071125449,
-    "frameMs": 8.699999999254942,
-    "calls": 302,
-    "triangles": 196958,
-    "geometries": 579,
-    "textures": 245,
+    "fps": 4,
+    "frameMs": 9.599999999627471,
+    "calls": 344,
+    "triangles": 229654,
+    "geometries": 648,
+    "textures": 242,
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
-    "audioEvents": 62,
-    "particles": 536
+    "audioEvents": 63,
+    "particles": 568
   },
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 5256,
-  "durationMs": 62931,
+  "loadMs": 3453,
+  "durationMs": 63740,
   "summary": "25/25 checks passed"
 }

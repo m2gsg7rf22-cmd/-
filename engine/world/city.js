@@ -126,7 +126,7 @@ export class TrafficSystem {
     this.city = city; this.rng = new RNG(seed); this.cars = []; this.speed = speed;
     const nodes = city.graph.nodes;
     for (let i = 0; i < count; i++) {
-      const rig = car({ type: this.rng.pick(['sedan', 'sedan', 'suv', 'van', 'truck', 'sports']), seed: seed * 13 + i, taxi: this.rng.chance(0.12) });
+      const rig = car({ type: this.rng.pick(['sedan', 'sedan', 'suv', 'van', 'truck', 'sports']), seed: seed * 13 + i, taxi: this.rng.chance(0.12), detail: 'low' });
       scene.add(rig);
       const a = this.rng.pick(nodes), b = nodes[this.rng.pick(a.edges)];
       const c = { rig, from: a, to: b, t: this.rng.next(), speed: speed * this.rng.range(0.8, 1.15), cur: 0, position: new THREE.Vector3(), yaw: 0, radius: 1.1, stopped: 0, hit: 0 };

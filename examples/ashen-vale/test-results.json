@@ -1,12 +1,12 @@
 {
   "game": "Ashen Vale",
   "quality": "low",
-  "startedAt": "2026-10-27T20:00:10.640Z",
+  "startedAt": "2026-10-27T20:09:30.415Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3744 ms"
+      "detail": "3783 ms"
     },
     {
       "label": "title menu is shown on boot",
@@ -27,9 +27,9 @@
       "label": "gameplay frame is rendered (not blank)",
       "ok": true,
       "detail": {
-        "mean": 76.1,
+        "mean": 76.2,
         "std": 53.7,
-        "colors": 127
+        "colors": 126
       }
     },
     {
@@ -125,8 +125,8 @@
     "screenshots/04-victory.png"
   ],
   "metrics": {
-    "fps": 4,
-    "frameMs": 5.599999999627471,
+    "fps": 5.807200929152164,
+    "frameMs": 3.299999998882413,
     "calls": 73,
     "triangles": 407391,
     "geometries": 368,
@@ -140,7 +140,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 3744,
-  "durationMs": 60547,
+  "loadMs": 3783,
+  "durationMs": 61116,
   "summary": "22/22 checks passed"
 }
