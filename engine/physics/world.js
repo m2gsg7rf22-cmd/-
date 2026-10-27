@@ -254,7 +254,7 @@ function rayShape(o, d, s) {
     if (a < 1e-9) { if (c > 0) return null; const t = d.y < 0 ? (o.y - s.maxY) / -d.y : (s.minY - o.y) / d.y; return t >= 0 ? { t, n: new THREE.Vector3(0, -Math.sign(d.y), 0) } : null; }
     const disc = b * b - a * c; if (disc < 0) return null;
     let t = (-b - Math.sqrt(disc)) / a;
-    if (t < 0) t = 0;
+    if (t < 0) { if ((-b + Math.sqrt(disc)) / a < 0) return null; t = 0; } // behind the ray / origin inside
     const y = o.y + d.y * t;
     if (y >= s.minY && y <= s.maxY) return { t, n: new THREE.Vector3(ox + d.x * t, 0, oz + d.z * t).normalize() };
     // top cap

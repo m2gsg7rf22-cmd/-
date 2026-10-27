@@ -18,6 +18,7 @@ import { Flags, QuestSystem, DialogueSystem } from '../gameplay/narrative.js';
 import { Inventory, Progression } from '../gameplay/systems.js';
 import { Vehicle } from '../physics/vehicle.js';
 import { ChaseCamera } from '../camera/cameras.js';
+import { LightPool } from '../render/lightpool.js';
 
 export const BIOMES = {
   temperate: { grass: 0x4f7a2c, grass2: 0x7d9a3a, rock: 0x6e6a64, sand: 0xd8c49a, dirt: 0x6b5038, leaves: [0x4c7a2c, 0x5a8a30, 0x3f6e2a], species: ['oak', 'pine'], time: 14, fog: 0.0015, water: 0x1e5a6e },
@@ -60,6 +61,7 @@ export function composeGame(rawSpec, { container = document.getElementById('game
     app.scene.add(city.group); for (const c of city.colliders) app.physics.addStatic(c, c.userData);
     for (const p of city.dynamicProps) { app.scene.add(p); const r = 0.3; app.physics.addBody({ object: p, position: p.position.clone().setY(p.position.y + r), radius: r, mass: 8, userData: { centerOffset: r } }); }
     game.city = city;
+    app.lightPools.push(new LightPool(app.scene, city.lampAnchors, { count: app.gfx.tier.name === 'low' ? 4 : 8 }));
     if (W.traffic !== false) { game.traffic = new TrafficSystem(app.scene, city, { count: W.traffic ?? 10, seed: spec.seed + 3 }); }
     const c = city.roadCenters; anchors.center.set(c[Math.floor(c.length / 2)] + city.roadWidth / 4, 0.2, c[Math.floor(c.length / 2)] + 20);
   } else {
@@ -235,7 +237,7 @@ export function composeGame(rawSpec, { container = document.getElementById('game
     hp?.set(player.health.ratio); st?.set(player.stamina.ratio);
     const gp = goalProgress(); const q = quests.tracked ? quests.defs[quests.tracked] : null;
     obj.set(q ? q.title : spec.title, q ? quests.objectiveText(q.id) : [{ text: gp.text, done: gp.done }], q ? 'Quest' : 'Objective');
-    if (game.boss) app.ui.boss(game.boss.alive ? game.boss.name : null, game.boss.health.ratio);
+    if (game.boss) app.ui.boss(game.boss.alive && game.boss.position.distanceTo(player.position) < 45 ? game.boss.name : null, game.boss.health.ratio);
     const center = game.vehicle ? game.vehicle.position : player.position;
     mini.draw({ center, yaw: game.vehicle ? game.vehicle.yaw + Math.PI : player.cam.yaw, markers: [...game.enemies.filter((e) => e.alive).map((e) => ({ x: e.position.x, z: e.position.z, color: '#ff5d5d', clamp: true })), ...Object.values(game.npcs).map((n) => ({ x: n.position.x, z: n.position.z, color: '#9ad0ff' })), ...game.collectibles.filter((c) => !c.taken).map((c) => ({ x: c.obj.position.x, z: c.obj.position.z, color: '#ffd36a', shape: 'diamond', size: 6 }))] });
     game.onUpdate?.(dt);

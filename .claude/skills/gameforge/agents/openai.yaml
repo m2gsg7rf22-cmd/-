@@ -1,0 +1,5 @@
+# Codex skill metadata (experimental; see docs/PORTABILITY.md)
+interface:
+  display_name: "GameForge"
+  short_description: "Autonomous game studio: build playable 3D browser games"
+  default_prompt: "Use $gameforge to build a playable game: "

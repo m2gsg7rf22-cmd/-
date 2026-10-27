@@ -43,7 +43,7 @@ export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth =
   roadMB.add(outer, pbr('grass', { repeat: 80 }), mat4([0, -0.02, 0]));
   group.add(roadMB.build({ name: 'roads', castShadow: false }));
 
-  const colliders = [], dynamicProps = [], buildings = [], parks = [];
+  const colliders = [], dynamicProps = [], buildings = [], parks = [], lampAnchors = [];
   const deco = new THREE.Group();
   for (let bi = 0; bi < blocks; bi++) for (let bj = 0; bj < blocks; bj++) {
     const cx = (roadCenters[bi] + roadCenters[bi + 1]) / 2, cz = (roadCenters[bj] + roadCenters[bj + 1]) / 2;
@@ -91,8 +91,8 @@ export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth =
   if (props) for (let bi = 0; bi < blocks; bi++) for (let bj = 0; bj < blocks; bj++) {
     const cx = (roadCenters[bi] + roadCenters[bi + 1]) / 2, cz = (roadCenters[bj] + roadCenters[bj + 1]) / 2, e = blockSize / 2 - 1.2;
     for (let s = -1; s <= 1; s += 2) {
-      const lp = PROPS.lampPost({ height: 6 }); lp.position.set(cx + s * blockSize * 0.25, 0.18, cz + e); lp.rotation.y = Math.PI / 2; deco.add(lp); colliders.push({ type: 'cylinder', x: lp.position.x, y: 0, z: lp.position.z, r: 0.25, h: 6, userData: { kind: 'pole' } });
-      const lp2 = PROPS.lampPost({ height: 6 }); lp2.position.set(cx + e, 0.18, cz + s * blockSize * 0.25); deco.add(lp2); colliders.push({ type: 'cylinder', x: lp2.position.x, y: 0, z: lp2.position.z, r: 0.25, h: 6, userData: { kind: 'pole' } });
+      const lp = PROPS.lampPost({ height: 6 }); lp.position.set(cx + s * blockSize * 0.25, 0.18, cz + e); lp.rotation.y = Math.PI / 2; deco.add(lp); lampAnchors.push(new THREE.Vector3(lp.position.x, 5.8, lp.position.z + 1.1)); colliders.push({ type: 'cylinder', x: lp.position.x, y: 0, z: lp.position.z, r: 0.25, h: 6, userData: { kind: 'pole' } });
+      const lp2 = PROPS.lampPost({ height: 6 }); lp2.position.set(cx + e, 0.18, cz + s * blockSize * 0.25); deco.add(lp2); lampAnchors.push(new THREE.Vector3(lp2.position.x + 1.1, 5.8, lp2.position.z)); colliders.push({ type: 'cylinder', x: lp2.position.x, y: 0, z: lp2.position.z, r: 0.25, h: 6, userData: { kind: 'pole' } });
     }
     if (rng.chance(0.6)) { const h = PROPS.hydrant(); h.position.set(cx - e, 0.18, cz + rng.range(-10, 10)); deco.add(h); colliders.push({ type: 'cylinder', x: h.position.x, y: 0, z: h.position.z, r: 0.2, h: 0.8, userData: { kind: 'hydrant' } }); }
     for (let k = 0; k < 3; k++) { const kind = rng.pick(['trashBin', 'trafficCone', 'trafficCone', 'barrel']); const p = PROPS[kind]({}); const px = cx + rng.range(-e, e), pz = cz + (rng.chance(0.5) ? e : -e); p.position.set(px, 0.18, pz); dynamicProps.push(p); }
@@ -115,7 +115,7 @@ export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth =
     if (i < blocks) { nodes[idx(i, j)].edges.push(idx(i + 1, j)); nodes[idx(i + 1, j)].edges.push(idx(i, j)); }
     if (j < blocks) { nodes[idx(i, j)].edges.push(idx(i, j + 1)); nodes[idx(i, j + 1)].edges.push(idx(i, j)); }
   }
-  return { group, colliders, dynamicProps, buildings, parks, graph: { nodes, laneOffset: roadWidth / 4 }, half, extent, roadCenters, roadWidth, blockSize, pitch,
+  return { group, colliders, dynamicProps, buildings, parks, lampAnchors, graph: { nodes, laneOffset: roadWidth / 4 }, half, extent, roadCenters, roadWidth, blockSize, pitch,
     spawn: { x: roadCenters[Math.floor(blocks / 2)] + roadWidth / 4, z: roadCenters[1] - 10, yaw: 0 },
     isRoad: (x, z) => roadCenters.some((c) => Math.abs(x - c) < roadWidth / 2) || roadCenters.some((c) => Math.abs(z - c) < roadWidth / 2) };
 }

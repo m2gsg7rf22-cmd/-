@@ -31,6 +31,9 @@ export class GameApp {
     this.camera = new THREE.PerspectiveCamera(fov, innerWidth / innerHeight, 0.1, far);
     this.gfx.setup(this.scene, this.camera);
     this.atmosphere = new Atmosphere(this.scene, this.renderer, { timeOfDay, dayLength, shadowSize: this.gfx.tier.shadowSize, ...atmosphere });
+    // camera-relative fill light: keeps characters readable at night (fades out in daylight)
+    this.fill = new THREE.DirectionalLight(0x9fb4ff, 0); this.scene.add(this.fill, this.fill.target);
+    this.lightPools = [];
     this.physics = new PhysicsWorld();
     this.physics.events = this.events;
     this.input = new Input(window);
@@ -73,6 +76,10 @@ export class GameApp {
     if (this.state !== 'paused') {
       this.atmosphere.update(dt);
       updateNightLights(this.atmosphere.daylight);
+      const night = 1 - this.atmosphere.daylight;
+      this.fill.intensity = 0.9 * night;
+      this.fill.position.copy(this.camera.position).add(new THREE.Vector3(0, 6, 0)); this.fill.target.position.copy(this.camera.position).add(this.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(10));
+      for (const p of this.lightPools) p.update(dt, this.atmosphere.follow, this.atmosphere.daylight);
       this.physics.step(dt);
       this.vfx.update(dt);
     }

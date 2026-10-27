@@ -6,7 +6,7 @@
   "license": "MIT",
   "bin": { "gameforge": "tools/gameforge.mjs" },
   "scripts": {
-    "test": "node --test tests/unit/",
+    "test": "node --test tests/unit/*.test.mjs",
     "test:e2e": "node tools/gameforge.mjs playtest --all",
     "build": "node tools/gameforge.mjs build --all",
     "serve": "node tools/serve.mjs ."

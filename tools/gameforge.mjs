@@ -64,12 +64,21 @@ async function cmdNew() {
   spec.id ||= spec.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   copyDir(path.join(ROOT, 'templates/project'), dir);
   fs.writeFileSync(path.join(dir, 'index.html'), fs.readFileSync(path.join(dir, 'index.html'), 'utf8').replace('{{TITLE}}', spec.title));
-  copyDir(path.join(ROOT, 'engine'), path.join(dir, 'engine'));
-  copyDir(path.join(ROOT, 'tools'), path.join(dir, 'tools'));
+  const shared = flag('shared'); // reference the toolkit's engine instead of copying it (for games inside this repo)
+  if (shared) {
+    const rel = path.relative(dir, ROOT).split(path.sep).join('/');
+    for (const f of ['main.js', ...fs.readdirSync(path.join(dir, 'src')).map((x) => 'src/' + x)]) {
+      const p = path.join(dir, f); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/'\.\/engine\//g, `'${rel}/engine/`).replace(/'\.\.\/engine\//g, `'../${rel}/engine/`));
+    }
+  } else {
+    copyDir(path.join(ROOT, 'engine'), path.join(dir, 'engine'));
+    copyDir(path.join(ROOT, 'tools'), path.join(dir, 'tools'));
+  }
   writeSpec(dir, spec);
   fs.writeFileSync(path.join(dir, 'GDD.md'), generateGDD(spec));
   const tasks = generateTasks(spec); fs.writeFileSync(path.join(dir, 'tasks.json'), JSON.stringify(tasks, null, 2));
-  fs.writeFileSync(path.join(dir, 'playtest.json'), JSON.stringify(generatePlaytest(spec), null, 2));
+  const pt = generatePlaytest(spec); if (shared) pt.serveRoot = path.relative(dir, ROOT).split(path.sep).join('/');
+  fs.writeFileSync(path.join(dir, 'playtest.json'), JSON.stringify(pt, null, 2));
   fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: spec.id, private: true, type: 'module', scripts: { start: 'node tools/serve.mjs .', test: 'node tools/playtest.mjs .', build: 'node tools/gameforge.mjs build .' } }, null, 2));
   fs.writeFileSync(path.join(dir, 'README.md'), `# ${spec.title}\n\nGenerated with GameForge AAA.\n\n- Play (dev): \`node tools/serve.mjs .\` then open http://127.0.0.1:5173/\n- Test: \`node tools/playtest.mjs .\`\n- Build single-file game: \`node tools/gameforge.mjs build .\` → \`dist/${spec.id}.html\` (open directly in a browser)\n\nDesign: [GDD.md](GDD.md) · Tasks: [tasks.json](tasks.json) · Spec: [game.spec.js](game.spec.js)\n`);
   console.log(`Created ${dir}\n  spec: game.spec.js  gdd: GDD.md  tasks: ${tasks.tasks.length} in ${tasks.waves} waves  playtest: ${generatePlaytest(spec).steps.length} steps`);

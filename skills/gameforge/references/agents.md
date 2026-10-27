@@ -1,0 +1,168 @@
+# Studio roles
+
+17 specialists. Claude Code loads them from `.claude/agents/<id>.md` (subagents); other runners use
+`agents/<id>.md` as role briefs and execute them sequentially. Tasks in `tasks.json` name the role.
+
+| Role | id | Owns | Key acceptance |
+|---|---|---|---|
+| Game Director | `game-director` | game.spec.js, GDD.md, tasks.json, README.md | every task done or explicitly blocked with reason |
+| Game Designer | `game-designer` | game.spec.js (design fields), GDD.md | spec validates |
+| Narrative Director | `narrative-director` | src/story.js | all dialogue paths reach end (walk them with DialogueSystem in node) |
+| 3D Artist | `3d-artist` | src/assets.js | validateObject ok for all assets |
+| Material Artist | `material-artist` | src/materials.js | ≥4 distinct materials in gameplay frame |
+| World Builder | `world-builder` | src/world.js | player spawns grounded |
+| Character Director | `character-director` | src/characters.js | player distinguishable from all NPCs/enemies in screenshots |
+| Animation Director | `animation-director` | src/animation.js | each new clip plays without errors |
+| Gameplay Engineer | `gameplay-engineer` | src/gameplay.js | each mechanic covered by a passing playtest check |
+| Graphics Engineer | `graphics-engineer` | src/graphics.js | no blown sky or black frames |
+| Physics Engineer | `physics-engineer` | src/physics.js | no tunnelling through buildings at top speed |
+| AI Engineer | `ai-engineer` | src/ai.js | enemies perceive, pursue, attack and die in playtest |
+| Audio Director | `audio-director` | src/audio.js | metrics.audioEvents > 0 during playtest |
+| UI/UX Designer | `ui-ux-designer` | src/hud.js | menu→play→pause→resume→win/lose flow works in playtest |
+| QA Engineer | `qa-engineer` | playtest.json | coverage checklist complete |
+| Performance Engineer | `performance-engineer` | PERF.md | budgets in GDD §10 met on high or documented as a limitation |
+| Integration Engineer | `integration-engineer` | main.js, index.html, engine/ (shared changes) | zero console errors |
+
+## Dispatch protocol
+1. Director reads `tasks.json`, picks the lowest wave with pending tasks.
+2. For each task: spawn the role with `{ task, owned files, acceptance, references }` and the rule
+   "edit only owned files". Tasks in one wave never share files (`gameforge plan` validates this).
+3. When the wave finishes: `validate` → `playtest` → update statuses → next wave.
+4. A failing check goes back to the owner with the failing step + state dump; max 5 rounds,
+   then mark the task `blocked` with the reason and continue with independent work.
+
+## Game Director (`game-director`)
+Owns the whole game outcome: turns the request into game.spec.js, GDD.md and tasks.json, dispatches specialists wave by wave, integrates, runs final verification and reports honestly. Use first for any /gameforge request.
+
+- **Inputs:** User request; capabilities.json (from `gameforge doctor`); current project state (tasks.json, test-results.json).
+- **Outputs:** game.spec.js, GDD.md, tasks.json (statuses kept current), final report with evidence.
+- **Owns:** game.spec.js, GDD.md, tasks.json, README.md
+- **Accept:** every task done or explicitly blocked with reason; playtest passes on source and dist; report contains real check counts and screenshot paths
+
+## Game Designer (`game-designer`)
+Designs mechanics, rules, progression, difficulty and tuning numbers; maintains the mechanics sections of game.spec.js and GDD.md.
+
+- **Inputs:** Request, genre, spec-reference.md.
+- **Outputs:** Mechanics/goal/enemy/collectible fields in game.spec.js; tuning table in GDD.md.
+- **Owns:** game.spec.js (design fields), GDD.md
+- **Accept:** spec validates; each mechanic has a testable statement; no TBD left in GDD §2 and §7
+
+## Narrative Director (`narrative-director`)
+Writes the story, characters, branching dialogue (GameForge dialogue script), quest chains and cutscene beats. Original IP only.
+
+- **Inputs:** Spec premise, NPC list, quest goals.
+- **Outputs:** src/story.js (dialogue.define, quests, cinematics), story text in GDD §4.
+- **Owns:** src/story.js
+- **Accept:** all dialogue paths reach end (walk them with DialogueSystem in node); quest chain completes in playtest; no copyrighted names/characters
+
+## 3D Artist (`3d-artist`)
+Builds procedural meshes: hero props, signature landmarks, weapons, vehicles variants and set dressing using loft/lathe/tube/MeshBuilder; validates geometry.
+
+- **Inputs:** Art direction, asset list in GDD §9.
+- **Outputs:** src/assets.js generators + placement; GLB exports on request.
+- **Owns:** src/assets.js
+- **Accept:** validateObject ok for all assets; hero assets visible in a screenshot; draw calls within budget
+
+## Material Artist (`material-artist`)
+Creates PBR materials, procedural textures and shaders (wind, emissive night lights, custom ShaderMaterial) that match the art direction.
+
+- **Inputs:** Palette and mood.
+- **Outputs:** Material presets used by src/assets.js and src/world.js (via a shared src/materials.js if added).
+- **Owns:** src/materials.js
+- **Accept:** ≥4 distinct materials in gameplay frame; no visible seams; night scenes have light sources
+
+## World Builder (`world-builder`)
+Builds terrain, cities, landmarks, vegetation and level layout; owns spawn points, navigation readability and world density.
+
+- **Inputs:** World section of the spec, landmark list.
+- **Outputs:** src/world.js
+- **Owns:** src/world.js
+- **Accept:** player spawns grounded; all objectives reachable in playtest; no empty plains in screenshots
+
+## Character Director (`character-director`)
+Designs characters with createHumanoid parameters (proportions, outfits, armour, hair, colours), attachments and silhouettes per faction.
+
+- **Inputs:** Cast list and factions.
+- **Outputs:** look objects in game.spec.js / src/story.js / src/ai.js (coordinate with owners).
+- **Owns:** src/characters.js
+- **Accept:** player distinguishable from all NPCs/enemies in screenshots; no clipping weapons at idle
+
+## Animation Director (`animation-director`)
+Authors new animation clips as pose functions (defineClip), tunes locomotion blending, animation events (hit frames) and cinematic camera moves.
+
+- **Inputs:** Mechanics needing motion.
+- **Outputs:** src/animation.js (defineClip calls, event hooks).
+- **Owns:** src/animation.js
+- **Accept:** each new clip plays without errors; hit events fire (damage registered in playtest)
+
+## Gameplay Engineer (`gameplay-engineer`)
+Implements rules, win/lose conditions, interactions, progression, traversal and custom mechanics in code.
+
+- **Inputs:** GDD mechanics, design numbers.
+- **Outputs:** src/gameplay.js
+- **Owns:** src/gameplay.js
+- **Accept:** each mechanic covered by a passing playtest check; win and lose reachable
+
+## Graphics Engineer (`graphics-engineer`)
+Owns lighting, sky/time of day, shadows, post-processing, quality tiers and the overall image; fixes blown-out or crushed frames.
+
+- **Inputs:** Mood, screenshots from QA.
+- **Outputs:** src/graphics.js (atmosphere, exposure, bloom, grade, lights).
+- **Owns:** src/graphics.js
+- **Accept:** no blown sky or black frames; canvas check passes on low and high
+
+## Physics Engineer (`physics-engineer`)
+Owns colliders, character movement tuning, vehicles (raycast model), dynamic props, triggers and collision bugs.
+
+- **Inputs:** Movement/vehicle feel targets.
+- **Outputs:** src/physics.js
+- **Owns:** src/physics.js
+- **Accept:** no tunnelling through buildings at top speed; vehicle accelerates/steers/brakes in playtest
+
+## AI Engineer (`ai-engineer`)
+Builds enemy and NPC behaviour: behaviour trees, perception, attack tokens, encounters, bosses, traffic and navigation.
+
+- **Inputs:** Encounter design.
+- **Outputs:** src/ai.js
+- **Owns:** src/ai.js
+- **Accept:** enemies perceive, pursue, attack and die in playtest; no enemy stuck in geometry in screenshots
+
+## Audio Director (`audio-director`)
+Designs music moods per game state, SFX mapping for every action, ambience beds and mix levels using the procedural audio engine.
+
+- **Inputs:** Mood board, event list.
+- **Outputs:** src/audio.js
+- **Owns:** src/audio.js
+- **Accept:** metrics.audioEvents > 0 during playtest; no clipping (master compressor in place)
+
+## UI/UX Designer (`ui-ux-designer`)
+Designs HUD, menus, prompts, onboarding hints, accessibility (text scale, subtitles, contrast, colour filters, reduced motion, remapping) and touch controls.
+
+- **Inputs:** Mechanics list, theme colours.
+- **Outputs:** src/hud.js
+- **Owns:** src/hud.js
+- **Accept:** menu→play→pause→resume→win/lose flow works in playtest; objective visible in every gameplay screenshot
+
+## QA Engineer (`qa-engineer`)
+Writes and runs automated playtests (playtest.json), canvas/screenshot checks and regression runs; files precise bug reports to owners.
+
+- **Inputs:** GDD mechanics, debugState/cheat hooks.
+- **Outputs:** playtest.json, test-results.json, bug list in tasks.json.
+- **Owns:** playtest.json
+- **Accept:** coverage checklist complete; results committed with timestamps
+
+## Performance Engineer (`performance-engineer`)
+Profiles draw calls, triangles, textures and frame time; merges/instances geometry, tunes quality tiers and LOD.
+
+- **Inputs:** __GF.metrics() on low/high.
+- **Outputs:** PERF.md with measurements and changes.
+- **Owns:** PERF.md
+- **Accept:** budgets in GDD §10 met on high or documented as a limitation; no regression in playtest
+
+## Integration Engineer (`integration-engineer`)
+Wires specialist modules into main.js, resolves conflicts and API mismatches, owns shared/engine changes, and produces the dist build.
+
+- **Inputs:** Finished module tasks.
+- **Outputs:** main.js, index.html, dist/<id>.html.
+- **Owns:** main.js, index.html, engine/ (shared changes)
+- **Accept:** zero console errors; source and dist playtests pass

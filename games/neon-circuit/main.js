@@ -12,6 +12,7 @@ const rng = new GF.RNG(21);
 // ---------- City ----------
 const city = GF.generateCity({ seed: 21, blocks: 5, blockSize: 56, roadWidth: 14, style: 'neon', maxFloors: 26 });
 app.scene.add(city.group);
+app.lightPools.push(new GF.LightPool(app.scene, city.lampAnchors, { count: app.gfx.tier.name === 'low' ? 4 : 8 }));
 for (const c of city.colliders) app.physics.addStatic(c, c.userData);
 // knock-able street props as dynamic bodies
 const bodies = [];
@@ -69,7 +70,7 @@ const scoreC = app.ui.counter('score', { icon: '◆', label: 'Style', corner: 't
 const dmgBar = app.ui.bar('damage', { label: 'Car integrity', color: 'linear-gradient(90deg,#3ae0ff,#7affd0)', corner: 'tl' });
 const minimap = app.ui.minimap({ corner: 'bl', range: 120 });
 const compass = app.ui.compass();
-const CONTROLS = [['Throttle', 'W / ↑ / RT'], ['Brake / reverse', 'S / ↓ / LT'], ['Steer', 'A D / ← →'], ['Handbrake (drift)', 'Space'], ['Nitro boost', 'Shift'], ['Horn', 'H'], ['Look back', 'B (hold)'], ['Reset car', 'R'], ['Pause', 'Esc / P']];
+const CONTROLS = [['Throttle', 'W / ↑ / RT'], ['Brake / reverse', 'S / ↓ / LT'], ['Steer', 'A D / ← →'], ['Handbrake (drift)', 'Space'], ['Nitro boost', 'Shift'], ['Horn', 'H'], ['Look back', 'B (hold)'], ['Reset car', 'T'], ['Pause', 'Esc / P']];
 app.input.bind('lookBack', ['KeyB']);
 
 // ---------- Game state ----------

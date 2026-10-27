@@ -58,7 +58,7 @@ export class Actor {
     this.ctrl.move(dt, desired, speed, opts);
     const hs = this.ctrl.horizontalSpeed();
     this.anim.setLocomotion(this.alive ? hs : 0, this.ctrl.grounded);
-    if (this.alive) this.anim.setOverride(!this.ctrl.grounded && this.ctrl.velocity.y < -4 ? 'fall' : this.ctrl.swimming ? 'swing' : null);
+    if (this.alive) this.anim.setOverride(this.forcedOverride !== undefined && this.forcedOverride !== null ? this.forcedOverride : !this.ctrl.grounded && this.ctrl.velocity.y < -4 ? 'fall' : this.ctrl.swimming ? 'swing' : null);
     this.anim.update(dt);
     syncVisual(this.model, this.ctrl, dt);
     // footsteps

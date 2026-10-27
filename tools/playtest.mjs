@@ -85,7 +85,7 @@ export async function playtest(gameDir, { quality, shotsDir, serveRoot, file = n
     await page.evaluate(() => window.__GF.pause());
     check('no runtime errors', errors.length === 0, errors.slice(0, 3).join(' | ') || 'none');
   } catch (e) {
-    check('scenario executed without exceptions', false, e.message);
+    check('scenario executed without exceptions', false, e.message + (errors.length ? ' | page errors: ' + errors.slice(0, 3).join(' | ') : ''));
   } finally {
     await browser.close(); server.close();
   }
