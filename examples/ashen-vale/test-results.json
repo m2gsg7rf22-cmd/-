@@ -1,12 +1,12 @@
 {
   "game": "Ashen Vale",
   "quality": "low",
-  "startedAt": "2026-10-27T19:50:13.671Z",
+  "startedAt": "2026-10-27T20:00:10.640Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3547 ms"
+      "detail": "3744 ms"
     },
     {
       "label": "title menu is shown on boot",
@@ -27,9 +27,9 @@
       "label": "gameplay frame is rendered (not blank)",
       "ok": true,
       "detail": {
-        "mean": 75.9,
-        "std": 53.8,
-        "colors": 142
+        "mean": 76.1,
+        "std": 53.7,
+        "colors": 127
       }
     },
     {
@@ -126,11 +126,11 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 2,
-    "calls": 58,
-    "triangles": 368211,
-    "geometries": 138,
-    "textures": 65,
+    "frameMs": 5.599999999627471,
+    "calls": 73,
+    "triangles": 407391,
+    "geometries": 368,
+    "textures": 170,
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
@@ -140,7 +140,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 3547,
-  "durationMs": 46640,
+  "loadMs": 3744,
+  "durationMs": 60547,
   "summary": "22/22 checks passed"
 }

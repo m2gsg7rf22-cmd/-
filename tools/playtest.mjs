@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // GameForge automated playtester. Drives a game through window.__GF hooks with a JSON
-// scenario (games/<id>/playtest.json), asserts on game state, checks for runtime errors,
+// scenario (<project>/playtest.json), asserts on game state, checks for runtime errors,
 // verifies the canvas is not blank, measures performance and captures screenshots.
 // Usage: node tools/playtest.mjs <game-dir> [--quality low|medium|high] [--shots dir] [--headed]
 import fs from 'node:fs';

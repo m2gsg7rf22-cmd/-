@@ -1,6 +1,7 @@
 // Ashen Vale — third-person action demo built with GameForge.
 // Fight through waves of raiders in a ruined hill-fort at dusk and defeat the Warden.
 import * as GF from '../../engine/index.js';
+import * as Humans from '../../engine/humans.js'; // realistic MakeHuman-based characters
 const { THREE } = GF;
 
 const SPEC = { id: 'ashen-vale', title: 'Ashen Vale', seed: 7 };
@@ -52,6 +53,8 @@ const veg = GF.populate(hf, { seed: SPEC.seed, trees: 260, rocks: 90, bushes: 16
 app.scene.add(veg.group);
 for (const c of veg.colliders) app.physics.addStatic({ type: 'cylinder', x: c.x, y: hf.heightAt(c.x, c.z) - 0.5, z: c.z, r: c.r, h: c.h }, { kind: c.kind });
 loader.set(0.75, 'Summoning raiders…');
+Humans.loadHumanData().then((humanData) => {
+app.useHumans(Humans, humanData);
 
 // ---------- Player ----------
 const player = new GF.Player(app, { combat: true, hp: 160, position: new THREE.Vector3(0, ground + 0.6, 18), facing: Math.PI,
@@ -189,3 +192,4 @@ loader.set(1, 'Ready'); setTimeout(() => loader.done(), 300);
 showTitle();
 app.audio.playMusic('mystery', { intensity: 0.3 });
 app.start();
+}).catch((e) => { console.error(e); throw e; });

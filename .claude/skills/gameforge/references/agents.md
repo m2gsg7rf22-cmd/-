@@ -80,15 +80,15 @@ Builds terrain, cities, landmarks, vegetation and level layout; owns spawn point
 - **Accept:** player spawns grounded; all objectives reachable in playtest; no empty plains in screenshots
 
 ## Character Director (`character-director`)
-Designs characters with createHumanoid parameters (proportions, outfits, armour, hair, colours), attachments and silhouettes per faction.
+Designs the cast with the realistic human generator (engine/humans.js: MakeHuman CC0 body/face morphs, skin, eyes, hair, garments, archetypes) — see references/characters.md. Falls back to createHumanoid only for stylized games.
 
 - **Inputs:** Cast list and factions.
-- **Outputs:** look objects in game.spec.js / src/story.js / src/ai.js (coordinate with owners).
+- **Outputs:** look objects ({ archetype, seed, sex, age, heightCm, hair, outfit:[garments], skin, eyes }) in game.spec.js / src/characters.js; screenshots of every named character.
 - **Owns:** src/characters.js
-- **Accept:** player distinguishable from all NPCs/enemies in screenshots; no clipping weapons at idle
+- **Accept:** player distinguishable from all NPCs/enemies in screenshots; no clipping weapons at idle; bench-characters: all checks pass; no hair spikes / exposed skin through garments in portraits
 
 ## Animation Director (`animation-director`)
-Authors new animation clips as pose functions (defineClip), tunes locomotion blending, animation events (hit frames) and cinematic camera moves.
+Authors new animation clips as pose functions (defineClip) — retargeted automatically onto realistic humans — imports CC0/mocap BVH with clipFromBVHCanonical, tunes locomotion blending, hit events and cinematic camera moves.
 
 - **Inputs:** Mechanics needing motion.
 - **Outputs:** src/animation.js (defineClip calls, event hooks).

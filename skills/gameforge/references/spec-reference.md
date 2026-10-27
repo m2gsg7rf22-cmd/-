@@ -1,5 +1,7 @@
 # game.spec.js reference
 
+
+> **Characters:** new projects use realistic humans (`references/characters.md`). Top-level `characters: 'stylized'` switches back to the lightweight mannequin. Every `look` also accepts `{ archetype, seed, sex, age, heightCm, hair, hairColor, outfit: 'casual' | [garments], skin, eyes, beard }`.
 `game.spec.js` exports `SPEC`, consumed by `composeGame()` (runtime), `gameforge gdd` (GDD.md),
 `gameforge plan` (tasks.json) and `new` (playtest.json). Unknown fields are ignored by the
 composer, so you may add design-only fields (e.g. `story`, `art`, `references`).

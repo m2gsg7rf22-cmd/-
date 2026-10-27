@@ -112,6 +112,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 
 - `references/spec-reference.md` — every `game.spec.js` field, with examples per genre
 - `references/engine-api.md` — engine modules and the most useful calls
+- `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/recipes.md` — code recipes: new enemy, boss, vehicle, cutscene, quest, minigame, traversal
 - `references/testing.md` — playtest scenario format and coverage checklist

@@ -133,10 +133,10 @@ if (!flag('no-images')) {
     try {
       await page.waitForFunction(() => window.__frames > 8, null, { timeout: 240000 });
       await page.evaluate(() => { window.__pause = true; });
-      const f = path.join(OUT, name + '.png'); fs.mkdirSync(OUT, { recursive: true });
-      await page.screenshot({ path: f, timeout: 240000 });
-      images.push({ name, file: name + '.png', caption, ms: Date.now() - t0, errors: errs });
-      console.log(`  shot ${name}.png (${Date.now() - t0} ms)${errs.length ? ' errors: ' + errs.join('; ') : ''}`);
+      const f = path.join(OUT, name + '.jpg'); fs.mkdirSync(OUT, { recursive: true });
+      await page.screenshot({ path: f, type: 'jpeg', quality: 85, timeout: 240000 });
+      images.push({ name, file: name + '.jpg', caption, ms: Date.now() - t0, errors: errs });
+      console.log(`  shot ${name}.jpg (${Date.now() - t0} ms)${errs.length ? ' errors: ' + errs.join('; ') : ''}`);
     } catch (e) { images.push({ name, caption, error: e.message.split('\n')[0], errors: errs }); console.log(`  shot ${name} FAILED ${e.message.split('\n')[0]} ${errs.join('; ')}`); }
     await page.close();
   }

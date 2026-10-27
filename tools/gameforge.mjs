@@ -178,13 +178,13 @@ const main = {
   async serve() { const { serve } = await import('./serve.mjs'); const d = path.resolve(positional[0] || '.'); await serve(fs.existsSync(path.join(d, 'engine')) ? d : ROOT, +opt('port', 5173)); },
   async playtest() {
     const { playtest } = await import('./playtest.mjs');
-    const dirs = flag('all') ? fs.readdirSync(path.join(ROOT, 'games')).map((g) => path.join(ROOT, 'games', g)).filter((d) => fs.existsSync(path.join(d, 'playtest.json'))) : [positional[0] || '.'];
+    const dirs = flag('all') ? fs.readdirSync(path.join(ROOT, 'examples')).map((g) => path.join(ROOT, 'examples', g)).filter((d) => fs.existsSync(path.join(d, 'playtest.json'))) : [positional[0] || '.'];
     let failed = 0;
     for (const d of dirs) { console.log(`\n▶ ${d}`); const r = await playtest(d, { quality: opt('quality'), file: opt('file'), resultsName: opt('file') ? 'test-results.dist.json' : 'test-results.json' }); console.log(`  ${r.passed ? '✔' : '✘'} ${r.summary}`); if (!r.passed) failed++; }
     process.exitCode = failed ? 1 : 0;
   },
   async build() {
-    const dirs = flag('all') ? fs.readdirSync(path.join(ROOT, 'games')).map((g) => path.join(ROOT, 'games', g)) : [positional[0] || '.'];
+    const dirs = flag('all') ? fs.readdirSync(path.join(ROOT, 'examples')).map((g) => path.join(ROOT, 'examples', g)) : [positional[0] || '.'];
     for (const d of dirs) await cmdBuild(d);
   },
   async shot() { await cmdShot(positional[0] || '.'); },

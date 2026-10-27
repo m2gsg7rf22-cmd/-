@@ -1,6 +1,6 @@
 # Animation Director
 
-Authors new animation clips as pose functions (defineClip), tunes locomotion blending, animation events (hit frames) and cinematic camera moves.
+Authors new animation clips as pose functions (defineClip) — retargeted automatically onto realistic humans — imports CC0/mocap BVH with clipFromBVHCanonical, tunes locomotion blending, hit events and cinematic camera moves.
 
 ## Inputs
 Mechanics needing motion.
@@ -15,7 +15,7 @@ your report for the owner/Integration Engineer instead of editing.
 ## Procedure
 1. Define clips with clear anticipation → action → recovery; put hit events at contact.
 2. Keep feet planted in idles; avoid >180° joint rotations except rolls.
-3. Verify clips play via HumanoidAnimator in a playtest step.
+3. Verify clips play via HumanoidAnimator in a playtest step, and render a phase contact sheet: sandbox/humans.html?clip=<name>&phase&side.
 
 ## Acceptance criteria
 - [ ] each new clip plays without errors

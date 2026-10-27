@@ -35,7 +35,8 @@ three.js r180. Everything is procedural and runs without network or build step.
 | `GF.PROPS.<name>(opts)` | tree(species oak/pine/palm/dead) rock bush crate barrel lampPost fence bench chest torch pillar stoneWall stall well sword axe shield staff pickup(coin/gem/health/key) trafficCone hydrant trashBin trafficLight barrier |
 | `GF.house/shop/tower(opts)` | buildings with colliders, night windows |
 | `GF.car({ type: sedan/sports/suv/truck/van, color, lightbar, taxi })` | vehicle rig with wheels |
-| `GF.createHumanoid(params)` + `GF.attach(char, 'hand_R', obj)` | skinned procedural human; params: height build shoulders hips skin hair hairStyle(short/long/ponytail/buzz/mohawk/bun/bald) outfit(casual/armor/robe/suit/skin) top bottom shoes accent armor helmet cape capeColor coat beard |
+| `import * as H from './engine/humans.js'`; `H.assembleHuman(await H.loadHumanData(), spec)`; `app.useHumans(H, data)` | **realistic humans** (default in new projects) — see `characters.md` |
+| `GF.createHumanoid(params)` + `GF.attach(char, 'hand_R', obj)` | stylized mannequin (`SPEC.characters='stylized'`); params: height build shoulders hips skin hair hairStyle(short/long/ponytail/buzz/mohawk/bun/bald) outfit(casual/armor/robe/suit/skin) top bottom shoes accent armor helmet cape capeColor coat beard |
 | `GF.exportGLB(obj)` / `GF.exportOBJ(obj)` | asset export (also `gameforge export <asset>`) |
 
 ## Animation

@@ -24,7 +24,7 @@ const unitNames = [...unitOut.matchAll(/^(ok|not ok) \d+ - (.*)$/gm)].map((m) =>
 console.log(`unit: ${count('pass')}/${count('tests')}`);
 
 // 2. playtests
-const projects = [...fs.readdirSync(path.join(ROOT, 'games')).map((g) => 'games/' + g), ...fs.readdirSync(path.join(ROOT, 'examples')).map((g) => 'examples/' + g)]
+const projects = fs.readdirSync(path.join(ROOT, 'examples')).map((g) => 'examples/' + g)
   .filter((d) => fs.existsSync(path.join(ROOT, d, 'playtest.json')) && (!only || d.includes(only)));
 const rows = [];
 for (const d of projects) {
