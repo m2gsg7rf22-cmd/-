@@ -81,7 +81,9 @@ export class Vehicle {
         const curve = 1 - Math.pow(clamp(fwdSpeed / top, 0, 1), 2);
         accel += this.throttle * this.enginePower * curve * (boosting ? this.boostMult : 1);
       }
-      if (this.brakeInput > 0) accel += fwdSpeed > 0.5 ? -this.brakeInput * this.brakeForce : -this.brakeInput * this.enginePower * 0.45 * (fwdSpeed > -top * 0.3 ? 1 : 0);
+      // brake until stopped; reverse only after the brake has been held at standstill briefly
+      this.stoppedBrake = this.brakeInput > 0 && fwdSpeed < 0.5 ? (this.stoppedBrake || 0) + dt : 0;
+      if (this.brakeInput > 0) accel += fwdSpeed > 0.5 ? -this.brakeInput * this.brakeForce : this.stoppedBrake > 0.35 ? -this.brakeInput * this.enginePower * 0.45 * (fwdSpeed > -top * 0.3 ? 1 : 0) : -fwdSpeed / Math.max(dt, 1e-3) * 0.5;
       accel -= fwdSpeed * 0.06 + Math.sign(fwdSpeed) * fwdSpeed * fwdSpeed * 0.0012; // rolling + drag
       if (this.handbrake) accel -= Math.sign(fwdSpeed) * Math.min(Math.abs(fwdSpeed) / dt, 9);
       const newFwd = fwdSpeed + accel * dt;

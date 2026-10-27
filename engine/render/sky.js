@@ -73,10 +73,10 @@ export class Atmosphere {
       this.lightDir = this.sunDir.clone();
     } else {
       this.sun.color.setRGB(0.55, 0.65, 1.0);
-      this.sun.intensity = 0.35;
+      this.sun.intensity = 0.55;
       this.lightDir = this.sunDir.clone().multiplyScalar(-1).setY(Math.abs(this.sunDir.y) + 0.4).normalize();
     }
-    this.hemi.intensity = 0.12 + this.daylight * 0.38;
+    this.hemi.intensity = 0.3 + this.daylight * 0.2;
     this.hemi.color.setRGB(0.55 + 0.2 * this.daylight, 0.62 + 0.22 * this.daylight, 0.85 + 0.15 * this.daylight).multiplyScalar(1);
     this.hemi.groundColor.setRGB(0.18 + 0.2 * this.daylight, 0.16 + 0.15 * this.daylight, 0.14 + 0.1 * this.daylight);
     const fogDay = new THREE.Color(0.72, 0.8, 0.88).lerp(new THREE.Color(0.95, 0.68, 0.5), warm * 0.7);
