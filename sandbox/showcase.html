@@ -1,0 +1,52 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge asset showcase</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#c{position:fixed;inset:0}</style></head>
+<body><div id="c"></div>
+<script type="module">
+import * as THREE from '../engine/vendor/three/three.module.js';
+import { createRenderer } from '../engine/render/renderer.js';
+import { Atmosphere } from '../engine/render/sky.js';
+import { PROPS } from '../engine/geometry/props.js';
+import { car } from '../engine/geometry/vehicles.js';
+import { house, shop, tower } from '../engine/geometry/buildings.js';
+import { createHumanoid, attach } from '../engine/character/humanoid.js';
+import { HumanoidAnimator } from '../engine/animation/animator.js';
+import { pbr, SHARED_UNIFORMS } from '../engine/render/materials.js';
+const q = new URLSearchParams(location.search);
+const R = createRenderer({ container: document.getElementById('c') });
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 3000);
+R.setup(scene, camera);
+const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || 16.5) });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), pbr('grass', { repeat: 40 }));
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const place = (o, x, z, ry = 0) => { o.position.set(x, 0, z); o.rotation.y = ry; scene.add(o); o.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); return o; };
+const chars = [];
+const clips = ['idle', 'walk', 'run', 'attack1', 'combatIdle', 'talk', 'wave'];
+const configs = [{ seed: 2 }, { seed: 5, outfit: 'armor', armor: true, helmet: true, cape: true, top: 0x3a3a46, bottom: 0x2a2a30, accent: 0xb02a2a }, { seed: 9, outfit: 'robe', hairStyle: 'long', top: 0x4a2a6a, accent: 0xd0a030 }, { seed: 13, outfit: 'suit', top: 0xb01a2a, bottom: 0x1a2a8a, accent: 0xffffff, hairStyle: 'short' }, { seed: 21, hairStyle: 'ponytail', top: 0x2a7a6a }];
+configs.forEach((c, i) => {
+  const h = createHumanoid(c); place(h, -4 + i * 2, 2, 0.15 * (i - 2));
+  if (i === 1) { attach(h, 'hand_R', PROPS.sword({})); }
+  const an = new HumanoidAnimator(h); an.setLocomotion(0);
+  if (i === 1) an.stance = 'combat';
+  const anim = q.get('anim'); if (anim) { if (['walk','run'].includes(anim)) an.setLocomotion(anim==='walk'?1.6:4.8); else an.setUpperOverride(anim === 'talk' ? 'talk' : null); }
+  if (i === 2) an.setUpperOverride('talk'); if (i === 4) an.setUpperOverride('wave');
+  chars.push(an);
+});
+place(car({ type: 'sports', color: 0xb01c1c }), 6, -3, -0.6);
+place(car({ type: 'suv', seed: 3 }), 10.5, -4, -0.3);
+place(house({ seed: 4 }), -10, -10, 0.3);
+place(shop({ seed: 2 }), 2, -16);
+place(tower({ floors: 14, seed: 3 }), 22, -30);
+let x = -9; for (const k of ['crate', 'barrel', 'lampPost', 'bench', 'chest', 'torch', 'well', 'stall', 'trafficCone', 'hydrant']) { place(PROPS[k]({}), x, 7, 0.4); x += k === 'well' || k === 'stall' ? 3.5 : 2; }
+for (let i = 0; i < 6; i++) place(PROPS.tree({ seed: i, species: ['oak', 'pine', 'palm'][i % 3] }), -20 + i * 7, -24 + (i % 2) * 5);
+for (let i = 0; i < 5; i++) place(PROPS.rock({ seed: i, size: 0.6 + i * 0.2 }), -14 + i * 3, 12);
+place(PROPS.pillar({}), -14, 0); place(PROPS.pillar({ broken: true, seed: 3 }), -16, -2); place(PROPS.stoneWall({ ruined: true }), -16, 4, 1.2);
+camera.position.set(q.get('cx') ? +q.get('cx') : 0, q.get('cy') ? +q.get('cy') : 2.2, q.get('cz') ? +q.get('cz') : 9);
+camera.lookAt(0, 1.2, 0);
+atm.setFocus(new THREE.Vector3(0, 0, 0));
+const clock = new THREE.Clock();
+let frames = 0;
+function loop() { if (window.__pause) return; const dt = Math.min(clock.getDelta(), 0.05); SHARED_UNIFORMS.uTime.value += dt; for (const c of chars) c.update(dt); R.render(); frames++; window.__frames = frames; requestAnimationFrame(loop); }
+loop(); window.__ready = true;
+window.__stats = () => R.stats();
+</script></body></html>

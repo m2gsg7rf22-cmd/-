@@ -1,0 +1,15 @@
+{
+  "name": "gameforge-aaa",
+  "version": "0.1.0",
+  "description": "GameForge AAA: an Agent Skill + zero-install procedural 3D browser game toolkit for autonomous game creation.",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "gameforge": "tools/gameforge.mjs" },
+  "scripts": {
+    "test": "node --test tests/unit/",
+    "test:e2e": "node tools/gameforge.mjs playtest --all",
+    "build": "node tools/gameforge.mjs build --all",
+    "serve": "node tools/serve.mjs ."
+  },
+  "engines": { "node": ">=18" }
+}

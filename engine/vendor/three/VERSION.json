@@ -1,0 +1,30 @@
+{
+  "name": "three",
+  "version": "0.180.0",
+  "license": "MIT",
+  "addons": [
+    "environments/RoomEnvironment.js",
+    "exporters/GLTFExporter.js",
+    "loaders/GLTFLoader.js",
+    "math/SimplexNoise.js",
+    "objects/Sky.js",
+    "objects/Water.js",
+    "postprocessing/EffectComposer.js",
+    "postprocessing/FXAAPass.js",
+    "postprocessing/MaskPass.js",
+    "postprocessing/OutputPass.js",
+    "postprocessing/Pass.js",
+    "postprocessing/RenderPass.js",
+    "postprocessing/SMAAPass.js",
+    "postprocessing/ShaderPass.js",
+    "postprocessing/UnrealBloomPass.js",
+    "shaders/CopyShader.js",
+    "shaders/FXAAShader.js",
+    "shaders/LuminosityHighPassShader.js",
+    "shaders/OutputShader.js",
+    "shaders/SMAAShader.js",
+    "shaders/VignetteShader.js",
+    "utils/BufferGeometryUtils.js",
+    "utils/SkeletonUtils.js"
+  ]
+}
