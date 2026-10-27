@@ -43,11 +43,12 @@ export function normalizeSpec(spec) {
   return s;
 }
 
-export function composeGame(rawSpec, { container = document.getElementById('game') || document.body, modules = [] } = {}) {
+export function composeGame(rawSpec, { container = document.getElementById('game') || document.body, modules = [], humans = null } = {}) {
   const spec = normalizeSpec(rawSpec);
   const biome = { ...BIOMES[spec.world.biome] || BIOMES.temperate, ...(spec.world.palette || {}) };
   const app = new GameApp({ id: spec.id, title: spec.title, container, timeOfDay: spec.world.timeOfDay ?? biome.time, dayLength: spec.world.dayLength ?? 0,
     theme: spec.theme || {}, atmosphere: { fogDensity: biome.fog, ...(spec.atmosphere || {}) } });
+  if (humans && spec.characters !== 'stylized') app.useHumans(humans.H, humans.data);
   const rng = new RNG(spec.seed);
   const game = { app, spec, rng, enemies: [], npcs: {}, collectibles: [], vehicle: null, state: {} };
   const loader = app.ui.loading('Generating world…');

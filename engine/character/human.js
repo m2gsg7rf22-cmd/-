@@ -214,7 +214,20 @@ export function buildHuman(data, params = {}) {
   if (data.eyes) root.add(buildEyes(data, pos, sk, p, skeleton));
   // 6. sockets
   const sockets = {};
-  const hand = (side) => { const w = sk.byName['wrist.' + side], m = sk.byName['finger3-1.' + side]; const o = new THREE.Object3D(); o.name = 'socket_hand_' + side; w.add(o); const local = w.worldToLocal(m.getWorldPosition(new THREE.Vector3())); o.position.copy(local.multiplyScalar(0.6)); return o; };
+  const hand = (side) => {
+    // grip socket: centred in the palm, weapon +Y aligned with the thumb direction (out of the fist)
+    const w = sk.byName['wrist.' + side], m3 = sk.byName['finger3-1.' + side], th = sk.byName['finger1-2.' + side], m5 = sk.byName['finger5-1.' + side];
+    const o = new THREE.Object3D(); o.name = 'socket_hand_' + side; w.add(o);
+    const wp = w.getWorldPosition(new THREE.Vector3()), mp = m3.getWorldPosition(new THREE.Vector3()), tp = th.getWorldPosition(new THREE.Vector3()), lp = m5.getWorldPosition(new THREE.Vector3());
+    const grip = wp.clone().lerp(mp, 0.75); const fingers = mp.clone().sub(wp).normalize();
+    const across = tp.clone().sub(lp).normalize(); // little finger -> thumb
+    const up = across.clone().sub(fingers.clone().multiplyScalar(across.dot(fingers))).normalize();
+    const zAxis = new THREE.Vector3().crossVectors(fingers, up).normalize();
+    const worldRot = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(fingers.clone().cross(up).cross(up).negate().normalize(), up, zAxis));
+    o.position.copy(w.worldToLocal(grip.clone()));
+    o.quaternion.copy(w.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(worldRot));
+    return o;
+  };
   sockets.hand_R = hand('R'); sockets.hand_L = hand('L');
   for (const [n, bn, off] of [['head', 'head', [0, 0.12, 0]], ['back', 'spine03', [0, 0, -0.15]], ['hip_L', 'pelvis.L', [0, 0, 0]], ['hip_R', 'pelvis.R', [0, 0, 0]]]) { const s = new THREE.Object3D(); s.name = 'socket_' + n; s.position.set(...off); sk.byName[bn].add(s); sockets[n] = s; }
   const box = new THREE.Box3().setFromBufferAttribute(geo.attributes.position);

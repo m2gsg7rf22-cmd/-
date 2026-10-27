@@ -28,9 +28,9 @@ list.forEach((w, i) => {
   scene.add(h); people.push(h);
   const api = h.userData;
   const clipName = q.get('clip') || 'idle';
-  const clip = api.retargeter.clipFromPoseFn(clipName, (await_clip(clipName)));
-  const mixer = new THREE.AnimationMixer(h); const act = mixer.clipAction(clip); act.time = i * 0.37; act.play();
-  api.mixer = mixer; if (q.get('expr')) api.setExpression(q.get('expr'));
+  const clip = q.get('bvh') ? H.clipFromBVHCanonical(api.retargeter, data.poses[q.get('bvh')], { name: 'bvh' }) : api.retargeter.clipFromPoseFn(clipName, (await_clip(clipName)));
+  const mixer = new THREE.AnimationMixer(h); const act = mixer.clipAction(clip); act.time = q.has('phase') ? (i / list.length) * clip.duration : i * 0.37; act.play(); if (q.has('phase')) act.timeScale = 0; if (q.has('side')) h.rotation.y = Math.PI / 2;
+  api.mixer = mixer; if (q.get('expr')) api.setExpression(q.get('expr')); if (q.get('exprs')) api.setExpression(q.get('exprs').split(',')[i] || 'neutral'); if (q.has('noblink')) api.face.nextBlink = 1e9;
 });
 function await_clip(n) { return CLIP_LIBRARY[n]; }
 camera.position.set(+(q.get('cx') || 0), +(q.get('cy') || 1.45), +(q.get('cz') || 6.5));

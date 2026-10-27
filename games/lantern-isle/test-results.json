@@ -1,12 +1,12 @@
 {
   "game": "Lantern Isle",
   "quality": "low",
-  "startedAt": "2026-10-27T18:30:05.896Z",
+  "startedAt": "2026-10-27T19:22:13.783Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "4300 ms"
+      "detail": "4977 ms"
     },
     {
       "label": "title menu on boot",
@@ -27,9 +27,9 @@
       "label": "island frame renders",
       "ok": true,
       "detail": {
-        "mean": 144.7,
-        "std": 34.2,
-        "colors": 84
+        "mean": 123.3,
+        "std": 40.5,
+        "colors": 97
       }
     },
     {
@@ -152,7 +152,7 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 5.199999999254942,
+    "frameMs": 4.7000000001862645,
     "calls": 45,
     "triangles": 264081,
     "geometries": 169,
@@ -166,7 +166,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 4300,
-  "durationMs": 40808,
+  "loadMs": 4977,
+  "durationMs": 38528,
   "summary": "27/27 checks passed"
 }

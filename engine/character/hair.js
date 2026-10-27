@@ -15,8 +15,8 @@ export const HAIR_STYLES = ['bald', 'buzz', 'crop', 'short', 'slick', 'bob', 'me
 
 const STYLE = {
   buzz: { vol: 0.003, len: 0, flow: 0, ends: 0, fringe: 0, rough: 0.7 },
-  crop: { vol: 0.012, len: 0, flow: 0.2, ends: 0.3, fringe: 0.25, clump: 0.6 },
-  short: { vol: 0.018, len: 0.03, flow: 0.4, ends: 0.5, fringe: 0.45, clump: 0.8 },
+  crop: { vol: 0.01, len: 0, flow: 0.2, ends: 0.3, fringe: 0.05, clump: 0.6 },
+  short: { vol: 0.016, len: 0.0, flow: 0.4, ends: 0.5, fringe: 0.12, clump: 0.9 },
   slick: { vol: 0.012, len: 0.02, flow: 1, ends: 0.2, fringe: 0, gloss: 1, clump: 0.3, back: 1 },
   bob: { vol: 0.022, len: 0.16, flow: 0.6, ends: 0.6, fringe: 0.7, clump: 0.7, flare: 0.25 },
   medium: { vol: 0.024, len: 0.24, flow: 0.6, ends: 0.8, fringe: 0.4, clump: 0.9, flare: 0.3 },
@@ -121,7 +121,8 @@ export function addHair(human, opts = {}) {
         const rs = surfaceRadius(F, dir);
         const clump = (st.clump ?? 0.5) * 0.006 * (noise.noise2(az * 9 + (st.curl ? t * 20 : 0), t * 4) + 0.4 * clumpPhase);
         const partDip = Math.exp(-Math.pow((az - part * 0.6) * 6, 2)) * Math.max(0, 1 - polar * 2) * 0.006;
-        const lift = st.vol * (0.6 + 0.4 * Math.sin(Math.min(polar, 1.5))) + clump - partDip + (st.curl ? Math.abs(noise.noise2(az * 14, t * 14)) * st.vol * 0.4 * st.curl : 0);
+        const edge = st.len < 0.05 ? THREE.MathUtils.smoothstep(polar / Math.max(1e-3, limit), 1.0, 0.72) : 1; // taper to the skin at the hairline
+        const lift = (st.vol * (0.6 + 0.4 * Math.sin(Math.min(polar, 1.5))) + clump - partDip) * edge + 0.0015 + (st.curl ? Math.abs(noise.noise2(az * 14, t * 14)) * st.vol * 0.4 * st.curl : 0);
         p = F.c.clone().addScaledVector(dir, rs + lift);
       } else {
         // curtain: continue from the last cap point, falling under gravity, flaring outward, colliding

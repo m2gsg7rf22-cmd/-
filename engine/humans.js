@@ -6,9 +6,9 @@ import { buildHuman, defaultHumanParams, EXPRESSIONS, VISEMES, listModifiers, SK
 import { applySkin, computeSkinMasks } from './character/skin.js';
 import { addHair, addBeard, HAIR_STYLES } from './character/hair.js';
 import { dress, OUTFITS, GARMENTS } from './character/clothing.js';
-import { Retargeter, clipFromBVH, parseBVH, fingerCurl } from './animation/retarget.js';
-export { loadHumanData, buildHuman, defaultHumanParams, EXPRESSIONS, VISEMES, listModifiers, SKIN_TONES, applySkin, addHair, addBeard, HAIR_STYLES, dress, OUTFITS, GARMENTS, Retargeter, clipFromBVH, parseBVH, fingerCurl };
-export { ARCHETYPES, createCharacter, characterFromSpec } from './character/archetypes.js';
+import { Retargeter, clipFromBVH, clipFromBVHCanonical, parseBVH, fingerCurl, BVH_NAME_MAPS } from './animation/retarget.js';
+export { loadHumanData, buildHuman, defaultHumanParams, EXPRESSIONS, VISEMES, listModifiers, SKIN_TONES, applySkin, addHair, addBeard, HAIR_STYLES, dress, OUTFITS, GARMENTS, Retargeter, clipFromBVH, clipFromBVHCanonical, parseBVH, fingerCurl, BVH_NAME_MAPS };
+export { ARCHETYPES, createCharacter, characterFromSpec, lookToHumanSpec } from './character/archetypes.js';
 
 /** One call: data + body + skin + hair + clothes + retargeter. */
 export async function createRealisticHuman(spec = {}) {

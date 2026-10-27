@@ -68,6 +68,22 @@ export class GameApp {
   setState(s) { const prev = this.state; this.state = s; if (s !== 'playing') this.ui.prompt(null); this.events.emit('state', { from: prev, to: s }); }
   // Run fn after `seconds` of simulated time (deterministic under test stepping).
   after(seconds, fn) { this.timers.push({ t: seconds, fn }); }
+  // Enable realistic parametric humans for every Actor/Player/NPC/Enemy created afterwards.
+  // H = the module namespace of engine/humans.js, data = await H.loadHumanData().
+  useHumans(H, data, { textureSize } = {}) {
+    const tex = textureSize ?? (this.gfx.tier.name === 'low' ? 512 : 1024);
+    this.humans = {
+      H, data,
+      create: (look = {}) => {
+        const spec = H.lookToHumanSpec(look);
+        const h = H.assembleHuman(data, { textureSize: tex, ...spec });
+        if (look.armed) h.userData.retargeter?.setHands(0.35, 1.1); // right hand grips a weapon
+        return h;
+      },
+    };
+    return this;
+  }
+
   _preUpdate(dt) {
     for (let i = this.timers.length - 1; i >= 0; i--) { this.timers[i].t -= dt; if (this.timers[i].t <= 0) { const f = this.timers[i].fn; this.timers.splice(i, 1); f(); } }
     this.input.pollGamepad();

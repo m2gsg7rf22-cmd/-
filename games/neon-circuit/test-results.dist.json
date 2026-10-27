@@ -1,12 +1,12 @@
 {
   "game": "Neon Circuit",
   "quality": "low",
-  "startedAt": "2026-10-27T18:32:05.085Z",
+  "startedAt": "2026-10-27T19:24:07.002Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "2346 ms"
+      "detail": "2261 ms"
     },
     {
       "label": "title menu on boot",
@@ -37,9 +37,9 @@
       "label": "driving frame renders",
       "ok": true,
       "detail": {
-        "mean": 55.8,
-        "std": 48.7,
-        "colors": 173
+        "mean": 48,
+        "std": 48.1,
+        "colors": 172
       }
     },
     {
@@ -104,8 +104,8 @@
     "../../../../../tmp/gf-dist-shots/neon-circuit/03-finish.png"
   ],
   "metrics": {
-    "fps": 5.806077027288554,
-    "frameMs": 7.900000000372529,
+    "fps": 5.807200929152164,
+    "frameMs": 7.700000001117587,
     "calls": 201,
     "triangles": 122878,
     "geometries": 595,
@@ -119,7 +119,7 @@
   "errors": [],
   "passed": true,
   "url": "file://neon-circuit.html",
-  "loadMs": 2346,
-  "durationMs": 33554,
+  "loadMs": 2261,
+  "durationMs": 32197,
   "summary": "18/18 checks passed"
 }

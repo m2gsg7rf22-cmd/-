@@ -1,12 +1,12 @@
 {
   "game": "Skyline Vigil",
   "quality": "low",
-  "startedAt": "2026-10-27T18:33:45.153Z",
+  "startedAt": "2026-10-27T19:25:40.461Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3565 ms"
+      "detail": "5274 ms"
     },
     {
       "label": "title menu on boot",
@@ -22,9 +22,9 @@
       "label": "city frame renders",
       "ok": true,
       "detail": {
-        "mean": 37.2,
-        "std": 44.1,
-        "colors": 123
+        "mean": 33.6,
+        "std": 43.8,
+        "colors": 122
       }
     },
     {
@@ -144,7 +144,7 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 9.799999999813735,
+    "frameMs": 9.5,
     "calls": 303,
     "triangles": 196970,
     "geometries": 579,
@@ -152,13 +152,13 @@
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
-    "audioEvents": 61,
-    "particles": 568
+    "audioEvents": 59,
+    "particles": 504
   },
   "errors": [],
   "passed": true,
   "url": "file://skyline-vigil.html",
-  "loadMs": 3565,
-  "durationMs": 67492,
+  "loadMs": 5274,
+  "durationMs": 59379,
   "summary": "25/25 checks passed"
 }

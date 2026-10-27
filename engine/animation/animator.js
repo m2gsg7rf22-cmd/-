@@ -9,21 +9,31 @@ const LOWER = new Set(BONES.filter((b) => !UPPER_BODY.has(b)));
 const LOCO = ['idle', 'walk', 'run', 'sprint'];
 
 export class HumanoidAnimator {
-  constructor(character, { clips = Object.keys(CLIP_LIBRARY), locomotionSpeeds = { walk: 1.6, run: 4.8, sprint: 7.5 } } = {}) {
+  constructor(character, { clips = Object.keys(CLIP_LIBRARY), locomotionSpeeds = { walk: 1.6, run: 4.8, sprint: 7.5 }, bvhClips = {} } = {}) {
     this.character = character;
     this.mixer = new THREE.AnimationMixer(character);
     this.height = character.userData.height || 1.8;
+    // Realistic humans carry a Retargeter: bake clips for their rig and map body-part filters.
+    const rt = character.userData.retargeter;
+    if (rt) {
+      const isLower = (n) => /^(root|pelvis|upperleg|lowerleg|foot|toe|metatarsal)/.test(n);
+      const all = Object.keys(rt.bones);
+      const sets = { upper: new Set(all.filter((n) => !isLower(n))), lower: new Set(all.filter(isLower)) };
+      const build = (name, def, opts = {}) => rt.clipFromPoseFn(name, def, { boneFilter: opts.boneFilter === UPPER_BODY ? sets.upper : opts.boneFilter === LOWER ? sets.lower : null, suffix: opts.suffix || '' });
+      this._build = build;
+    } else this._build = (name, def, opts = {}) => buildClip(name, def, { height: this.height, ...opts });
+    for (const [n, clip] of Object.entries(bvhClips)) this.bvh = { ...(this.bvh || {}), [n]: clip };
     this.speeds = locomotionSpeeds;
     this.full = {}; this.upper = {}; this.lower = {};
     this.actions = {};
     for (const name of clips) {
       const def = CLIP_LIBRARY[name];
-      this.full[name] = buildClip(name, def, { height: this.height });
+      this.full[name] = this._build(name, def, {});
       if (LOCO.includes(name) || name === 'combatIdle' || name === 'block') {
-        this.upper[name] = buildClip(name, def, { height: this.height, boneFilter: UPPER_BODY, suffix: ':upper' });
-        this.lower[name] = buildClip(name, def, { height: this.height, boneFilter: LOWER, suffix: ':lower' });
+        this.upper[name] = this._build(name, def, { boneFilter: UPPER_BODY, suffix: ':upper' });
+        this.lower[name] = this._build(name, def, { boneFilter: LOWER, suffix: ':lower' });
       } else if (def.events || ['cast', 'wave', 'interact'].includes(name)) {
-        this.upper[name] = buildClip(name, def, { height: this.height, boneFilter: UPPER_BODY, suffix: ':upper' });
+        this.upper[name] = this._build(name, def, { boneFilter: UPPER_BODY, suffix: ':upper' });
       }
     }
     // Locomotion layers always playing; weights driven by speed.
@@ -60,7 +70,7 @@ export class HumanoidAnimator {
     if (this.upperOverride?.name === name) return;
     if (this.upperOverride) this.upperOverride.action.fadeOut(0.15);
     if (!name) { this.upperOverride = null; return; }
-    const clip = this.upper[name] || buildClip(name, CLIP_LIBRARY[name], { height: this.height, boneFilter: UPPER_BODY, suffix: ':upper' });
+    const clip = this.upper[name] || this._build(name, CLIP_LIBRARY[name], { boneFilter: UPPER_BODY, suffix: ':upper' });
     this.upper[name] = clip;
     const a = this.mixer.clipAction(clip); a.reset().setLoop(THREE.LoopRepeat, Infinity).fadeIn(0.15).play();
     this.upperOverride = { name, action: a };

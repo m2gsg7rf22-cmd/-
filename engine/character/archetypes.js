@@ -38,3 +38,40 @@ export function characterFromSpec(archetype = 'civilian', seed = 1, overrides = 
 }
 // createCharacter(Humans, 'knight', seed, overrides) -> THREE.Group (requires loaded data)
 export function createCharacter(assemble, data, archetype, seed, overrides) { return assemble(data, characterFromSpec(archetype, seed, overrides)); }
+
+// Convert the legacy stylized `look` format (outfit casual/armor/robe/suit, top/bottom/accent
+// colours, hairStyle, cape, helmet…) or an { archetype, seed, ...overrides } object into a
+// realistic human spec, so existing game specs automatically get realistic characters.
+export function lookToHumanSpec(look = {}) {
+  const legacyArch = { armor: 'knight', robe: 'wizard', suit: 'superhero', casual: 'civilian', skin: 'athlete' }[look.outfit];
+  const arch = look.archetype || legacyArch || 'civilian';
+  const base = characterFromSpec(arch, look.seed ?? 1);
+  const spec = { ...base };
+  for (const k of ['sex', 'age', 'muscle', 'weight', 'heightCm', 'proportions', 'ethnicity', 'face', 'body', 'skin', 'eyes', 'beard', 'hairColor']) if (look[k] !== undefined) spec[k] = look[k];
+  if (look.height && look.height > 1.2) spec.heightCm = look.height * 100;
+  if (look.hairStyle) spec.hair = { buzz: 'buzz', bald: 'bald', mohawk: 'mohawk', ponytail: 'ponytail', long: 'long', bun: 'bun', short: 'short' }[look.hairStyle] || look.hairStyle;
+  if (look.hair !== undefined && typeof look.hair !== 'number') spec.hair = look.hair; else if (typeof look.hair === 'number') spec.hairColor = look.hair;
+  if (look.skin !== undefined && typeof look.skin === 'number') spec.skin = { color: look.skin };
+  if (Array.isArray(look.outfit)) spec.outfit = look.outfit;
+  else if (!legacyArch && look.outfit) spec.outfit = look.outfit;
+  // recolour the outfit preset from legacy colours
+  if (!Array.isArray(spec.outfit)) {
+    const preset = (OUTFIT_COLORS[spec.outfit] || ((o) => o));
+    spec.outfit = preset(spec.outfit, look);
+  }
+  if (look.beard === true) spec.beard = 'beard';
+  return spec;
+}
+import { OUTFITS } from './clothing.js';
+const OUTFIT_COLORS = new Proxy({}, { get: () => (name, look) => {
+  const items = (OUTFITS[name] || OUTFITS.casual).map((x) => ({ ...x }));
+  const upper = ['tshirt', 'longsleeve', 'shirt', 'hoodie', 'tanktop', 'bodysuit', 'robe', 'dress'], outer = ['jacket', 'coat', 'vest'], lower = ['pants', 'jeans', 'shorts', 'skirt'];
+  for (const it of items) {
+    if (look.top !== undefined && upper.includes(it.type)) it.color = look.top;
+    if (look.bottom !== undefined && lower.includes(it.type)) it.color = look.bottom;
+    if (look.accent !== undefined && (outer.includes(it.type) || it.type === 'belt' || it.type === 'gloves')) it.color = look.accent;
+    if (look.shoes !== undefined && ['boots', 'shoes', 'sneakers'].includes(it.type)) it.color = look.shoes;
+  }
+  if (look.helmet) items.push({ type: 'helmet' });
+  return items;
+} });

@@ -205,3 +205,91 @@ export function fingerCurl(rt, side, amount = 0.3, thumb = 0.3) {
 export function poseLibraryFor(rt) {
   const out = {}; for (const [n, d] of Object.entries(CLIP_LIBRARY)) out[n] = rt.clipFromPoseFn(n, d); return out;
 }
+
+// ---------- BVH -> canonical joints (any naming / up axis) ----------
+// Canonical joint <- candidate BVH joint names (first match wins).
+export const BVH_NAME_MAPS = {
+  hips: ['hips', 'Hips', 'Root', 'root', 'pelvis', 'Pelvis', 'mixamorig:Hips'],
+  spine: ['Spine', 'Spine1', 'spine', 'spine05', 'Chest', 'mixamorig:Spine', 'LowerBack'],
+  chest: ['Spine2', 'Spine3', 'Chest', 'chest', 'spine02', 'mixamorig:Spine2', 'Spine1'],
+  neck: ['Neck', 'neck', 'neck01', 'Neck1', 'mixamorig:Neck'],
+  head: ['Head', 'head', 'mixamorig:Head'],
+  shoulder_L: ['LeftShoulder', 'Clavicle_L', 'clavicle.L', 'LeftCollar', 'lShldr', 'mixamorig:LeftShoulder'],
+  upperArm_L: ['LeftArm', 'UpArm_L', 'upperarm01.L', 'LeftUpArm', 'lShldr', 'mixamorig:LeftArm'],
+  lowerArm_L: ['LeftForeArm', 'LoArm_L', 'lowerarm01.L', 'LeftLowArm', 'lForeArm', 'mixamorig:LeftForeArm'],
+  hand_L: ['LeftHand', 'Hand_L', 'wrist.L', 'lHand', 'mixamorig:LeftHand'],
+  shoulder_R: ['RightShoulder', 'Clavicle_R', 'clavicle.R', 'RightCollar', 'rShldr', 'mixamorig:RightShoulder'],
+  upperArm_R: ['RightArm', 'UpArm_R', 'upperarm01.R', 'RightUpArm', 'mixamorig:RightArm'],
+  lowerArm_R: ['RightForeArm', 'LoArm_R', 'lowerarm01.R', 'RightLowArm', 'rForeArm', 'mixamorig:RightForeArm'],
+  hand_R: ['RightHand', 'Hand_R', 'wrist.R', 'rHand', 'mixamorig:RightHand'],
+  upperLeg_L: ['LeftUpLeg', 'UpLeg_L', 'upperleg01.L', 'LeftHip', 'lThigh', 'mixamorig:LeftUpLeg'],
+  lowerLeg_L: ['LeftLeg', 'LoLeg_L', 'lowerleg01.L', 'LeftKnee', 'lShin', 'mixamorig:LeftLeg'],
+  foot_L: ['LeftFoot', 'Foot_L', 'foot.L', 'LeftAnkle', 'lFoot', 'mixamorig:LeftFoot'],
+  upperLeg_R: ['RightUpLeg', 'UpLeg_R', 'upperleg01.R', 'RightHip', 'rThigh', 'mixamorig:RightUpLeg'],
+  lowerLeg_R: ['RightLeg', 'LoLeg_R', 'lowerleg01.R', 'RightKnee', 'rShin', 'mixamorig:RightLeg'],
+  foot_R: ['RightFoot', 'Foot_R', 'foot.R', 'RightAnkle', 'rFoot', 'mixamorig:RightFoot'],
+};
+const CANON_PARENT = { hips: null, spine: 'hips', chest: 'spine', neck: 'chest', head: 'neck', shoulder_L: 'chest', upperArm_L: 'shoulder_L', lowerArm_L: 'upperArm_L', hand_L: 'lowerArm_L', shoulder_R: 'chest', upperArm_R: 'shoulder_R', lowerArm_R: 'upperArm_R', hand_R: 'lowerArm_R', upperLeg_L: 'hips', lowerLeg_L: 'upperLeg_L', foot_L: 'lowerLeg_L', upperLeg_R: 'hips', lowerLeg_R: 'upperLeg_R', foot_R: 'lowerLeg_R' };
+
+/**
+ * Convert a BVH into a clip for a Retargeter's rig through canonical joints.
+ * opts: { up: 'y'|'z' (auto-detected), forward: 'z'|'-z'|'y'|'-y', names: overrides, name, loop }
+ */
+export function clipFromBVHCanonical(rt, text, opts = {}) {
+  const b = typeof text === 'string' ? parseBVH(text) : text;
+  const byName = new Map(b.joints.map((j) => [j.name, j]));
+  // up axis auto-detect: compare the hips->head chain direction
+  const head = b.joints.find((j) => /head/i.test(j.name));
+  const worldOffset = (j) => { const v = new THREE.Vector3(); for (let k = j; k; k = k.parent) if (k.offset && k.parent) v.add(new THREE.Vector3(...k.offset)); return v; };
+  let up = opts.up; if (!up && head) { const w = worldOffset(head); up = Math.abs(w.z) > Math.abs(w.y) ? 'z' : 'y'; }
+  // C converts BVH frame -> Y-up GameForge frame (+Z forward)
+  const C = new THREE.Quaternion(); if (up === 'z') C.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+  const Ci = C.clone().invert();
+  const pick = (c) => { for (const n of (opts.names?.[c] ? [opts.names[c]] : BVH_NAME_MAPS[c])) if (byName.has(n)) return byName.get(n); return null; };
+  const roles = {}; for (const c of Object.keys(CANON_PARENT)) roles[c] = pick(c);
+  // facing: detect from hips->left hip direction (character left should be +X)
+  // rest directions in GameForge frame
+  const restDir = (j) => { const c = j.children[0]; const o = c ? c.offset : j.endOffset; if (!o) return null; const v = new THREE.Vector3(...o).applyQuaternion(C); return v.lengthSq() > 1e-12 ? v.normalize() : null; };
+  let flip = new THREE.Quaternion();
+  if (roles.upperLeg_L && roles.upperLeg_R) { const l = worldOffset(roles.upperLeg_L).applyQuaternion(C), r = worldOffset(roles.upperLeg_R).applyQuaternion(C); const side = l.sub(r); side.y = 0; if (side.lengthSq() > 1e-8) flip.setFromUnitVectors(side.normalize(), new THREE.Vector3(1, 0, 0)); }
+  const F = flip.clone().multiply(C), Fi = F.clone().invert();
+  // canonicalization Q_c: canonical rest dir -> bvh rest dir (in GF frame, after facing fix)
+  const Q = {};
+  for (const [c, j] of Object.entries(roles)) { if (!j || !CANON_DIRS[c]) continue; const d = restDir(j); if (!d) continue; Q[c] = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(...CANON_DIRS[c]).normalize(), d.applyQuaternion(flip).normalize()); }
+  const nOut = b.frames, times = new Float32Array(nOut), deltasPerFrame = [];
+  const e = new THREE.Euler(), deg = Math.PI / 180;
+  let rootRest = null;
+  for (let f = 0; f < nOut; f++) {
+    times[f] = f * b.frameTime;
+    let c = f * b.nCh; const world = new Map(); let rootPos = null;
+    for (const j of b.joints) {
+      let rx = 0, ry = 0, rz = 0; const order = []; const p = [0, 0, 0];
+      for (const ch of j.channels) { const v = b.data[c++]; if (ch.endsWith('position')) p['XYZ'.indexOf(ch[0])] = v; else { order.push(ch[0]); if (ch[0] === 'X') rx = v; else if (ch[0] === 'Y') ry = v; else rz = v; } }
+      if (j.channels.some((ch) => ch.endsWith('position')) && !j.parent) rootPos = new THREE.Vector3(...p);
+      const local = new THREE.Quaternion().setFromEuler(e.set(rx * deg, ry * deg, rz * deg, order.join('') || 'XYZ'));
+      const pw = j.parent ? world.get(j.parent) : new THREE.Quaternion();
+      world.set(j, pw.clone().multiply(local));
+    }
+    // canonical world rotations (GF frame), then canonical local deltas
+    const cw = {};
+    for (const [cn, j] of Object.entries(roles)) { if (!j) continue; const w = F.clone().multiply(world.get(j)).multiply(Fi); cw[cn] = Q[cn] ? w.multiply(Q[cn]) : w; }
+    const d = {};
+    for (const cn of Object.keys(CANON_PARENT)) { if (!cw[cn]) continue; const p = CANON_PARENT[cn]; let pw = p && cw[p] ? cw[p] : null; let pp = p; while (!pw && pp) { pp = CANON_PARENT[pp]; pw = pp && cw[pp] ? cw[pp] : null; } d[cn] = pw ? pw.clone().invert().multiply(cw[cn]) : cw[cn].clone(); }
+    if (rootPos) { const rp = rootPos.applyQuaternion(F); if (!rootRest) rootRest = rp.clone(); d.__root = rp.sub(rootRest); }
+    deltasPerFrame.push(d);
+  }
+  // scale root motion by leg length ratio
+  const legLen = roles.upperLeg_L ? Math.abs(worldOffset(roles.lowerLeg_L || roles.upperLeg_L).applyQuaternion(F).y - worldOffset(roles.upperLeg_L).applyQuaternion(F).y) * 2 : 1;
+  const s = rt.hipsHeight / Math.max(1e-6, legLen || 1);
+  const tracks = {}, hips = new Float32Array(nOut * 3), prev = {};
+  for (let f = 0; f < nOut; f++) {
+    const local = rt.solve({ ...deltasPerFrame[f], __bones: rt.handDeltas() });
+    for (const [bn, q] of Object.entries(local)) { const arr = tracks[bn] ||= new Float32Array(nOut * 4); if (prev[bn] && prev[bn].dot(q) < 0) q.set(-q.x, -q.y, -q.z, -q.w); prev[bn] = q.clone(); arr.set([q.x, q.y, q.z, q.w], f * 4); }
+    const r = deltasPerFrame[f].__root || new THREE.Vector3(); const r0 = rt.restHipsPos;
+    hips.set([r0.x, r0.y + r.y * s * (opts.bob ?? 1), r0.z], f * 3);
+  }
+  const kt = Object.entries(tracks).map(([bn, arr]) => new THREE.QuaternionKeyframeTrack(`${bn}.quaternion`, times, arr));
+  kt.push(new THREE.VectorKeyframeTrack(`${rt.hipsBone}.position`, times, hips));
+  const clip = new THREE.AnimationClip(opts.name || 'bvh', (nOut - 1) * b.frameTime, kt); clip.userData = { loop: opts.loop ?? true, events: {}, source: 'bvh', up, roles: Object.fromEntries(Object.entries(roles).map(([k, v]) => [k, v?.name || null])) };
+  return clip;
+}

@@ -16,7 +16,10 @@ let ACTOR_ID = 1;
 export class Actor {
   constructor(app, { look = {}, position = new THREE.Vector3(), facing = 0, hp = 100, weapon = null, name = 'Actor', tags = [], scale = 1, speed = {} } = {}) {
     this.app = app; this.id = 'a' + ACTOR_ID++; this.name = name; this.tags = new Set(tags);
-    this.model = createHumanoid(look);
+    // Realistic humans when the app has the human system loaded (app.useHumans), unless the
+    // look asks for the legacy stylized mannequin.
+    this.realistic = !!(app.humans && look.style !== 'stylized');
+    this.model = this.realistic ? app.humans.create({ ...look, armed: !!weapon }) : createHumanoid(look);
     if (scale !== 1) this.model.scale.setScalar(scale);
     app.scene.add(this.model);
     const h = this.model.userData.height * scale;
@@ -60,6 +63,7 @@ export class Actor {
     this.anim.setLocomotion(this.alive ? hs : 0, this.ctrl.grounded);
     if (this.alive) this.anim.setOverride(this.forcedOverride !== undefined && this.forcedOverride !== null ? this.forcedOverride : !this.ctrl.grounded && this.ctrl.velocity.y < -4 ? 'fall' : this.ctrl.swimming ? 'swing' : null);
     this.anim.update(dt);
+    this.model.userData.face?.update(dt);
     syncVisual(this.model, this.ctrl, dt);
     // footsteps
     if (this.ctrl.grounded && hs > 1) { this.footT += dt * hs / 1.6; if (this.footT > 1) { this.footT = 0; this.emit('footstep', hs); } }
