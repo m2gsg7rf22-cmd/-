@@ -143,7 +143,7 @@ app.add((dt) => {
   timeC.set(fmt(raceTime)); lapC.set(`${nextGate}/${gates.length}`); scoreC.set(score); dmgBar.set(1 - car.damage);
   const g = gates[Math.min(nextGate, gates.length - 1)];
   compass.set(((car.yaw * 180) / Math.PI + 360) % 360, [{ angle: ((Math.atan2(g.x - car.position.x, g.z - car.position.z) * 180) / Math.PI + 360) % 360, color: '#3ae0ff' }]);
-  minimap.draw({ center: car.position, yaw: -car.yaw + Math.PI, background: (ctx, toMap, k) => {
+  minimap.draw({ center: car.position, yaw: car.yaw + Math.PI, background: (ctx, toMap, k) => {
     ctx.strokeStyle = 'rgba(160,180,210,.35)'; ctx.lineWidth = city.roadWidth * k;
     for (const c of rc) { let [x1, y1] = toMap(c, -city.extent); let [x2, y2] = toMap(c, city.extent); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); [x1, y1] = toMap(-city.extent, c); [x2, y2] = toMap(city.extent, c); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
   }, markers: [...traffic.cars.map((c) => ({ x: c.position.x, z: c.position.z, color: '#ffd04a', size: 3 })), { x: g.x, z: g.z, color: '#3ae0ff', size: 8, shape: 'diamond', clamp: true }] });

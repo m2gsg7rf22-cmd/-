@@ -76,7 +76,7 @@ export class Atmosphere {
       this.sun.intensity = 0.55;
       this.lightDir = this.sunDir.clone().multiplyScalar(-1).setY(Math.abs(this.sunDir.y) + 0.4).normalize();
     }
-    this.hemi.intensity = 0.3 + this.daylight * 0.2;
+    this.hemi.intensity = 0.3 + this.daylight * 0.1;
     this.hemi.color.setRGB(0.55 + 0.2 * this.daylight, 0.62 + 0.22 * this.daylight, 0.85 + 0.15 * this.daylight).multiplyScalar(1);
     this.hemi.groundColor.setRGB(0.18 + 0.2 * this.daylight, 0.16 + 0.15 * this.daylight, 0.14 + 0.1 * this.daylight);
     const fogDay = new THREE.Color(0.72, 0.8, 0.88).lerp(new THREE.Color(0.95, 0.68, 0.5), warm * 0.7);
@@ -95,7 +95,7 @@ export class Atmosphere {
     if (this.envRT) this.envRT.dispose();
     this.envRT = this.pmrem.fromScene(this.envScene, 0, 0.1, 2000);
     this.scene.environment = this.envRT.texture;
-    this.scene.environmentIntensity = 0.2 + 0.55 * this.daylight;
+    this.scene.environmentIntensity = 0.2 + 0.4 * this.daylight;
   }
   // Keep the shadow frustum centred on the focus point, snapped to shadow texels.
   setFocus(v) { this.follow.copy(v); this._placeShadow(); }

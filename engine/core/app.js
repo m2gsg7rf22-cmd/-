@@ -62,12 +62,13 @@ export class GameApp {
   }
   // Register per-step logic; runs only in states listed (default: playing).
   add(fn, { order = 0, states = ['playing'] } = {}) { return this.loop.add((dt, t) => { if (states === 'all' || states.includes(this.state)) fn(dt, t); }, order); }
-  setState(s) { const prev = this.state; this.state = s; this.events.emit('state', { from: prev, to: s }); }
+  setState(s) { const prev = this.state; this.state = s; if (s !== 'playing') this.ui.prompt(null); this.events.emit('state', { from: prev, to: s }); }
   // Run fn after `seconds` of simulated time (deterministic under test stepping).
   after(seconds, fn) { this.timers.push({ t: seconds, fn }); }
   _preUpdate(dt) {
     for (let i = this.timers.length - 1; i >= 0; i--) { this.timers[i].t -= dt; if (this.timers[i].t <= 0) { const f = this.timers[i].fn; this.timers.splice(i, 1); f(); } }
     this.input.pollGamepad();
+    this.ui.update(dt);
     SHARED_UNIFORMS.uTime.value += dt;
     if (this.state !== 'paused') {
       this.atmosphere.update(dt);

@@ -1,0 +1,171 @@
+{
+  "game": "Lantern Isle",
+  "quality": "low",
+  "startedAt": "2026-10-27T18:03:16.585Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "4537 ms"
+    },
+    {
+      "label": "title menu on boot",
+      "ok": true,
+      "detail": "menu"
+    },
+    {
+      "label": "new game starts on the beach",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "player stands on the island",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "island frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 144.7,
+        "std": 34.2,
+        "colors": 82
+      }
+    },
+    {
+      "label": "player can walk",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "approaching an NPC shows a talk prompt",
+      "ok": true,
+      "detail": "npc:mira"
+    },
+    {
+      "label": "E starts a conversation",
+      "ok": true,
+      "detail": "dialogue"
+    },
+    {
+      "label": "dialogue shows the speaker",
+      "ok": true,
+      "detail": "Keeper Mira"
+    },
+    {
+      "label": "branching choices are offered",
+      "ok": true,
+      "detail": 3
+    },
+    {
+      "label": "dialogue choice starts the main quest",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "label": "dialogue action gives an item",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "conversation ends and control returns",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "a second NPC branch sets story flags",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "side quest is defined",
+      "ok": true,
+      "detail": "inactive"
+    },
+    {
+      "label": "collecting a crystal adds it to the inventory",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "the key opens the ruin chest (item-gated interaction)",
+      "ok": true,
+      "detail": 50
+    },
+    {
+      "label": "three crystals complete the quest",
+      "ok": true,
+      "detail": "complete"
+    },
+    {
+      "label": "quest chain unlocks the next quest",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "label": "game state is saved",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "loading restores inventory and quests",
+      "ok": true,
+      "detail": 3
+    },
+    {
+      "label": "lighthouse accepts the crystals",
+      "ok": true,
+      "detail": "lighthouse"
+    },
+    {
+      "label": "relighting plays the ending cinematic",
+      "ok": true,
+      "detail": "cutscene"
+    },
+    {
+      "label": "the lighthouse is lit",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "main story completes",
+      "ok": true,
+      "detail": "complete"
+    },
+    {
+      "label": "ending screen is shown",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-title.png",
+    "screenshots/02-beach.png",
+    "screenshots/03-dialogue.png",
+    "screenshots/04-cinematic.png",
+    "screenshots/05-ending.png"
+  ],
+  "metrics": {
+    "fps": 4,
+    "frameMs": 3,
+    "calls": 45,
+    "triangles": 264081,
+    "geometries": 169,
+    "textures": 118,
+    "tier": "low",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 21,
+    "particles": 358
+  },
+  "errors": [],
+  "passed": true,
+  "loadMs": 4537,
+  "durationMs": 40384,
+  "summary": "27/27 checks passed"
+}

@@ -37,6 +37,7 @@ export class QuestSystem {
     if (this.status(id) !== 'inactive') return false;
     this.state[id] = { status: 'active', progress: Object.fromEntries(q.objectives.map((o) => [o.id, 0])), done: {} };
     if (!this.tracked) this.tracked = id;
+    this.flags.set('quest:' + id, 'active');
     this._emit('quest:start', { id, quest: q });
     this._checkFlags(id);
     return true;
@@ -81,6 +82,7 @@ export class QuestSystem {
     st.status = 'complete';
     if (q.rewards?.flags) for (const [k, v] of Object.entries(q.rewards.flags)) this.flags.set(k, v);
     this.flags.set('quest:' + id + ':complete', true);
+    this.flags.set('quest:' + id, 'complete');
     if (this.tracked === id) this.tracked = this.activeQuests()[0]?.id || null;
     this._emit('quest:complete', { id, quest: q, rewards: q.rewards || {} });
     q.onComplete?.();
@@ -112,6 +114,7 @@ export class DialogueSystem {
     const node = this.active.graph.nodes[nodeId];
     if (!node) { console.warn('missing dialogue node', nodeId); return this.end(); }
     if (node.if && !this.flags.test(node.if)) return this.goto(node.else || node.next);
+    if (!node.text && !node.choices?.length && node.next) { for (const a of [].concat(node.do || [])) this.run(a); return this.goto(node.next); } // router node
     this.active.node = nodeId;
     this.history.push({ dialogue: this.active.id, node: nodeId, speaker: node.speaker, text: node.text });
     this.flags.set(`seen:${this.active.id}:${nodeId}`, true);
@@ -122,7 +125,8 @@ export class DialogueSystem {
   current() {
     if (!this.active || !this.active.node) return null;
     const n = this.active.graph.nodes[this.active.node];
-    return { speaker: n.speaker, text: n.text, choices: (n.choices || []).map((c, i) => ({ ...c, index: i })).filter((c) => this.flags.test(c.if)), node: this.active.node, mood: n.mood, anim: n.anim };
+    const interp = (t) => (t || '').replace(/\{([\w.:-]+)\}/g, (_, k) => String(this.flags.get(k, 0)));
+    return { speaker: n.speaker, text: interp(n.text), choices: (n.choices || []).map((c, i) => ({ ...c, index: i })).filter((c) => this.flags.test(c.if)), node: this.active.node, mood: n.mood, anim: n.anim };
   }
   // Advance: with choice index for choice nodes, without for linear nodes.
   advance(choice = null) {

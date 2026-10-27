@@ -188,7 +188,7 @@ export class UI {
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, S, S);
         ctx.fillStyle = 'rgba(14,20,30,.9)'; ctx.fillRect(0, 0, S, S);
         ctx.translate(S / 2, S / 2); ctx.rotate(yaw);
-        const toMap = (x, z) => [(x - center.x) * -k, (z - center.z) * -k];
+        const toMap = (x, z) => [(x - center.x) * k, (z - center.z) * k]; // yaw = camera yaw (forward = -sin,-cos) -> up
         background?.(ctx, toMap, k);
         for (const m of markers) {
           let [mx, my] = toMap(m.x, m.z); const dd = Math.hypot(mx, my), lim = S / 2 - 10;
@@ -229,16 +229,22 @@ export class UI {
     const tx = d.querySelector('.tx'), ch = d.querySelector('.ch'), hint = d.querySelector('.hint');
     ch.innerHTML = '';
     clearInterval(this._typeT);
-    let i = 0; tx.textContent = '';
-    const full = () => { clearInterval(this._typeT); tx.textContent = text; this._typing = false; renderChoices(); };
+    tx.textContent = '';
+    const full = () => { tx.textContent = text; this._typing = false; renderChoices(); };
     const renderChoices = () => {
       ch.innerHTML = ''; hint.textContent = choices.length ? 'Choose 1-' + choices.length : '[E / Space] Continue';
       choices.forEach((c, k) => { const b = document.createElement('button'); b.textContent = `${k + 1}. ${c.text}`; b.onclick = (e) => { e.stopPropagation(); onChoice?.(c.index ?? k); }; ch.appendChild(b); });
     };
     this._typing = true; this._skipType = full;
+    // typewriter advances in simulation time via update(dt) so it is deterministic under test stepping
+    this._type = { text, shown: 0, speed: typeSpeed, el: tx, done: full };
     if (this.settings.reducedMotion || typeSpeed <= 0) full();
-    else this._typeT = setInterval(() => { i += 2; tx.textContent = text.slice(0, i); if (i >= text.length) full(); }, 1000 / typeSpeed);
     d.onclick = () => { if (this._typing) full(); else if (!choices.length) onChoice?.(null); };
+  }
+  update(dt) {
+    const t = this._type; if (!t || !this._typing) return;
+    t.shown += dt * t.speed * 1.6; const n = Math.floor(t.shown);
+    if (n >= t.text.length) { this._type = null; t.done(); } else t.el.textContent = t.text.slice(0, n);
   }
   // returns true if a typewriter effect was skipped
   skipTyping() { if (this._typing) { this._skipType(); return true; } return false; }
