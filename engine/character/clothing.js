@@ -85,7 +85,7 @@ const MATERIALS = {
   wool: (c) => pbr('fabric', { color: c, weave: 128, repeat: [10, 10], normalScale: 0.6 }),
   silk: (c) => { const m = pbr('fabric', { color: c, weave: 256, repeat: [18, 18], normalScale: 0.15 }).clone(); return m; },
   spandex: (c) => { const m = new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.38, sheen: 0.8, sheenRoughness: 0.3, sheenColor: new THREE.Color(c).offsetHSL(0, 0, 0.25), clearcoat: 0.15 }); return m; },
-  leather: (c) => pbr('leather', { color: c ?? 0x3a2418, repeat: [5, 5] }),
+  leather: (c) => pbr('leather', { color: c ?? 0x3a2418, repeat: [3, 3], normalScale: 0.35 }),
   canvas: (c) => pbr('fabric', { color: c ?? 0xeeeeee, weave: 200, repeat: [14, 14], normalScale: 0.5 }),
   steel: (c) => { const m = pbr('metal', { color: c ?? 0xb8bcc2, roughness: 0.28, repeat: [3, 3] }).clone(); m.metalness = 1; return m; },
 };
@@ -163,7 +163,7 @@ export function dress(human, items = []) {
   const P = g.attributes.position, N = g.attributes.normal;
   f.pos = P.array;
   const jt = f.jt;
-  f.waistBandY = jt.pelvis.y + 0.085; f.neckBaseY = jt.neck.y + 0.01; f.chestY = jt.chest.y; f.ankleY = jt.ankleL.y + 0.04;
+  f.waistBandY = jt.pelvis.y + 0.085; f.neckBaseY = jt.neck.y + 0.01; f.chestY = jt.chest.y; f.ankleY = jt.ankleL.y + 0.04; f.shoeTopY = jt.ankleL.y - 0.005;
   f.shoulderX = Math.abs(jt.shoulderL.x); f.browY = api.bones['eye.L'].userData.head.y + 0.03; f.headY = jt.head.y; f.faceZ = jt.head.z + 0.03;
   const hemYs = { 'hips-high': jt.pelvis.y + 0.05, hips: jt.pelvis.y + 0.005, waist: jt.waist.y - 0.02 };
   const bodyIdx = g.index.array.subarray(g.groups[0].start, g.groups[0].start + g.groups[0].count);
@@ -173,13 +173,13 @@ export function dress(human, items = []) {
     const spec = { ...GARMENTS[it.type], ...it }; if (!GARMENTS[it.type]) { console.warn('unknown garment', it.type); continue; }
     const hemY = hemYs[spec.hem] ?? jt.pelvis.y - 0.05;
     const cov = new Uint8Array(P.count); for (let i = 0; i < P.count; i++) cov[i] = covered(spec, f, i, hemY) ? 1 : 0;
-    // triangles fully covered
-    const tris = [];
-    for (let t = 0; t < bodyIdx.length; t += 3) { const a = bodyIdx[t], b = bodyIdx[t + 1], c = bodyIdx[t + 2]; if (cov[a] && cov[b] && cov[c]) tris.push(a, b, c); }
+    // triangles fully covered (all of them are hidden; footwear builds its shell only above the shoe)
+    const tris = [], shellTris = [];
+    const inShoe = (i) => spec.foot && f.region[i] === 'foot' && P.getY(i) < f.shoeTopY;
+    for (let t = 0; t < bodyIdx.length; t += 3) { const a = bodyIdx[t], b = bodyIdx[t + 1], c = bodyIdx[t + 2]; if (cov[a] && cov[b] && cov[c]) { tris.push(a, b, c); if (!(inShoe(a) && inShoe(b) && inShoe(c))) shellTris.push(a, b, c); } }
     if (!tris.length) continue;
-    const mesh = buildGarment(api, tris, spec, f);
-    mesh.name = 'garment:' + it.type;
-    human.add(mesh); out.push(mesh);
+    if (shellTris.length) { const mesh = buildGarment(api, shellTris, spec, f); mesh.name = 'garment:' + it.type; human.add(mesh); out.push(mesh); }
+    if (spec.foot) for (const side of ['L', 'R']) { const sh = shoeMesh(api, f, spec, side); if (sh) { sh.name = 'garment:' + it.type + ':' + side; human.add(sh); out.push(sh); } }
     if (spec.skirt) { const sk = skirtMesh(api, f, spec); if (sk) { human.add(sk); out.push(sk); } }
     if (spec.opaque !== false) {
       // erode the culling mask 2 rings away from the garment boundary (hems move when draped)
@@ -227,7 +227,7 @@ function buildGarment(api, tris, spec, f) {
   for (let t = 0; t < tris.length; t += 3) { const ws = [welded.get(tris[t]), welded.get(tris[t + 1]), welded.get(tris[t + 2])]; for (let e = 0; e < 3; e++) { const a = ws[e], b = ws[(e + 1) % 3]; nbr[a].add(b); nbr[b].add(a); const k = a < b ? a + '_' + b : b + '_' + a; edgeUse.set(k, (edgeUse.get(k) || 0) + 1); } }
   const bnbr = wpos.map(() => []); for (const [k, c] of edgeUse) if (c === 1) { const [a, b] = k.split('_').map(Number); bnbr[a].push(b); bnbr[b].push(a); }
   const isBoundary = bnbr.map((l) => l.length > 0);
-  const iters = spec.drape ?? (spec.armor ? 14 : spec.material === 'spandex' ? 1 : spec.offset > 0.012 ? 10 : 6);
+  const iters = spec.drape ?? (spec.foot ? 18 : spec.armor ? 14 : spec.material === 'spandex' ? 1 : spec.offset > 0.012 ? 10 : 6);
   const tmp = wpos.map((v) => v.clone());
   for (let it = 0; it < iters; it++) {
     for (let w = 0; w < wpos.length; w++) {
@@ -270,7 +270,6 @@ function buildGarment(api, tris, spec, f) {
     const ai = innerOf(a), bi = innerOf(b); idx.push(b, a, ai, b, ai, bi);
   }
   // soles for footwear: push the lowest vertices down
-  if (spec.sole) for (let i = 0; i < pos.length / 3; i++) if (pos[i * 3 + 1] < 0.03) pos[i * 3 + 1] -= spec.sole * (1 - pos[i * 3 + 1] / 0.03) * 0.5;
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
@@ -301,3 +300,72 @@ export const OUTFITS = {
   dress: [{ type: 'underwear' }, { type: 'dress', color: 0x8a1a3a }, { type: 'shoes', color: 0x1a1a1a }],
 };
 export { solid };
+
+
+// Procedural shoe for one foot: a superellipse loft (a shoe "last") traced from the footprint of
+// the morphed body in bind pose, plus a flat outsole slab with toe spring. Rigidly skinned to the
+// foot bone. Replaces the body-offset shell below the ankle, which looked like a sock (toes,
+// lumps). The ankle/shaft part of the garment is still a body shell (see dress()).
+function shoeMesh(api, f, spec, side) {
+  const P = api.mesh.geometry.attributes.position, foot = api.bones['foot.' + side];
+  if (!foot) return null;
+  const pts = [];
+  for (let i = 0; i < P.count; i++) if (f.region[i] === 'foot' && (side === 'L' ? P.getX(i) > 0 : P.getX(i) < 0) && P.getY(i) < f.shoeTopY + 0.01) pts.push([P.getX(i), P.getY(i), P.getZ(i)]);
+  if (pts.length < 20) return null;
+  // long axis of the footprint (principal direction in XZ)
+  let cx = 0, cz = 0; for (const q of pts) { cx += q[0]; cz += q[2]; } cx /= pts.length; cz /= pts.length;
+  let sxx = 0, sxz = 0, szz = 0; for (const q of pts) { sxx += (q[0] - cx) ** 2; sxz += (q[0] - cx) * (q[2] - cz); szz += (q[2] - cz) ** 2; }
+  let ang = 0.5 * Math.atan2(2 * sxz, szz - sxx); let ax = [Math.sin(ang), Math.cos(ang)];
+  const fz = api.bones['toe1-1.' + side]?.userData.head?.z ?? 1; if ((fz - cz) * ax[1] < 0) ax = [-ax[0], -ax[1]]; // point to the toes
+  const bx = [ax[1], -ax[0]];
+  let smin = Infinity, smax = -Infinity; const pr = pts.map((q) => { const s = (q[0] - cx) * ax[0] + (q[2] - cz) * ax[1]; smin = Math.min(smin, s); smax = Math.max(smax, s); return [s, (q[0] - cx) * bx[0] + (q[2] - cz) * bx[1], q[1]]; });
+  const NB = 20, lo = new Array(NB).fill(Infinity), hi = new Array(NB).fill(-Infinity), top = new Array(NB).fill(0);
+  for (const [s, t, y] of pr) { const b = Math.min(NB - 1, Math.floor(((s - smin) / (smax - smin)) * NB)); lo[b] = Math.min(lo[b], t); hi[b] = Math.max(hi[b], t); top[b] = Math.max(top[b], y); }
+  for (let b = 0; b < NB; b++) if (!Number.isFinite(lo[b])) { lo[b] = lo[b - 1] ?? -0.03; hi[b] = hi[b - 1] ?? 0.03; top[b] = top[b - 1] ?? 0.05; }
+  // smooth the profile (no toe bumps), keep it enclosing the foot
+  const sm = (a, keepMax) => { for (let k = 0; k < 3; k++) { const c = a.slice(); for (let b = 1; b < NB - 1; b++) { const avg = (c[b - 1] + c[b] + c[b + 1]) / 3; a[b] = keepMax ? Math.max(c[b], avg) : Math.min(c[b], avg); } } };
+  sm(hi, true); sm(lo, false); sm(top, true); sm(hi, true); sm(lo, false);
+  const m = spec.offset + 0.003, sole = spec.sole ?? 0.015, base = sole * 0.5;
+  const at = (s, t) => [cx + ax[0] * s + bx[0] * t, cz + ax[1] * s + bx[1] * t];
+  const K = 20, e = 2.6; // ring resolution, superellipse exponent (boxy toe box)
+  const rings = []; // [s, mid, halfW, topY, scale]
+  const sOf = (b) => smin + ((b + 0.5) / NB) * (smax - smin);
+  rings.push([smin - m * 0.9, (lo[0] + hi[0]) / 2, (hi[0] - lo[0]) / 2 * 0.72, top[0] * 0.92]);
+  for (let b = 0; b < NB; b++) rings.push([sOf(b), (lo[b] + hi[b]) / 2, (hi[b] - lo[b]) / 2 + m, top[b] + m]);
+  const L = NB - 1; for (const [ds, k] of [[0.5, 0.86], [1, 0.62], [1.35, 0.3]]) rings.push([smax + m * ds, (lo[L] + hi[L]) / 2, ((hi[L] - lo[L]) / 2 + m) * k, base + (top[L] + m - base) * (0.55 + 0.45 * k)]);
+  const toeSpring = (s) => { const u = (s - smin) / (smax - smin); return u > 0.78 ? 0.014 * Math.min(1, (u - 0.78) / 0.25) ** 2 : 0; };
+  const pos = [], uv = [], idx = [];
+  rings.forEach(([s, mid, hw, ty], r) => {
+    const yc = (ty + base) / 2, hh = (ty - base) / 2, lift = toeSpring(s);
+    for (let k = 0; k <= K; k++) {
+      const th = (k / K) * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th);
+      const t = mid + hw * Math.sign(c) * Math.abs(c) ** (2 / e), y = yc + hh * Math.sign(sn) * Math.abs(sn) ** (2 / e);
+      const [x, z] = at(s, t); pos.push(x, Math.max(base, y) + lift, z); uv.push(k / K * 2, r / rings.length * 3);
+    }
+  });
+  const W = K + 1;
+  for (let r = 0; r < rings.length - 1; r++) for (let k = 0; k < K; k++) { const a = r * W + k, b = a + W; idx.push(a, a + 1, b, a + 1, b + 1, b); }
+  // caps
+  for (const [r, flip] of [[0, true], [rings.length - 1, false]]) { const c = pos.length / 3; let sx = 0, sy = 0, sz = 0; for (let k = 0; k < K; k++) { sx += pos[(r * W + k) * 3]; sy += pos[(r * W + k) * 3 + 1]; sz += pos[(r * W + k) * 3 + 2]; } pos.push(sx / K, sy / K, sz / K); uv.push(0.5, 0.5); for (let k = 0; k < K; k++) flip ? idx.push(c, r * W + k + 1, r * W + k) : idx.push(c, r * W + k, r * W + k + 1); }
+  // outsole: flat slab under the outline (rings' widest points)
+  const outline = []; for (const [s, mid, hw] of rings) outline.push(at(s, mid + hw + 0.003)); for (let r = rings.length - 1; r >= 0; r--) { const [s, mid, hw] = rings[r]; outline.push(at(s, mid - hw - 0.003)); }
+  const n = outline.length, s0 = pos.length / 3;
+  const sOfXZ = (x, z) => (x - cx) * ax[0] + (z - cz) * ax[1];
+  for (const [x, z] of outline) pos.push(x, -0.002 + toeSpring(sOfXZ(x, z)), z), uv.push(x * 6, z * 6);
+  for (const [x, z] of outline) pos.push(x, base + 0.004 + toeSpring(sOfXZ(x, z)), z), uv.push(x * 6, z * 6);
+  pos.push(cx, -0.002, cz, cx, base + 0.004, cz); uv.push(0, 0, 0, 0); const cb = s0 + 2 * n, ct = cb + 1;
+  const soleStart = idx.length;
+  for (let i = 0; i < n; i++) { const j = (i + 1) % n; idx.push(cb, s0 + i, s0 + j, ct, s0 + n + j, s0 + n + i, s0 + i, s0 + n + j, s0 + j, s0 + i, s0 + n + i, s0 + n + j); }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
+  geo.addGroup(0, soleStart, 0); geo.addGroup(soleStart, idx.length - soleStart, 1);
+  const nv = pos.length / 3, si = new Uint16Array(nv * 4), sw = new Float32Array(nv * 4), bi = api.skeleton.bones.indexOf(foot);
+  for (let i = 0; i < nv; i++) { si[i * 4] = bi; sw[i * 4] = 1; }
+  geo.setAttribute('skinIndex', new THREE.BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
+  geo.computeVertexNormals();
+  const upper = (MATERIALS[spec.material] || MATERIALS.leather)(spec.color ?? 0x2a1a10); const um = upper.clone ? upper.clone() : upper;
+  if (um.normalScale) um.normalScale.multiplyScalar(0.4);
+  const soleMat = new THREE.MeshStandardMaterial({ color: spec.soleColor ?? (spec.material === 'canvas' ? 0xeeeae2 : 0x15120f), roughness: 0.8 }); soleMat.name = 'gf:sole';
+  const mesh = new THREE.SkinnedMesh(geo, [um, soleMat]); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
+  mesh.bind(api.skeleton, api.mesh.bindMatrix);
+  return mesh;
+}

@@ -78,9 +78,14 @@ function headFrame(api) {
 
 // Surface radius of the head along direction d (from centre): max projection of head verts in a cone.
 function surfaceRadius(F, dir) {
-  let best = 0;
-  for (const v of F.headVerts) { const o = v.clone().sub(F.c); const l = o.length(); if (l < 1e-6) continue; const cos = o.dot(dir) / l; if (cos > 0.985) best = Math.max(best, l * cos); }
-  return best || F.r.x;
+  // sparse regions (crown) may have no vertex in the narrow cone: widen it, then fall back to the
+  // skull ellipsoid along `dir` (falling back to r.x made spikes on top of the head)
+  for (const minCos of [0.985, 0.96]) {
+    let best = 0;
+    for (const v of F.headVerts) { const o = v.clone().sub(F.c); const l = o.length(); if (l < 1e-6) continue; const cos = o.dot(dir) / l; if (cos > minCos) best = Math.max(best, l * cos); }
+    if (best) return best;
+  }
+  return 1 / Math.hypot(dir.x / F.r.x, dir.y / F.r.y, dir.z / F.r.z);
 }
 
 /**
@@ -104,7 +109,8 @@ export function addHair(human, opts = {}) {
     const side = Math.abs(Math.sin(az));
     const back = Math.cos(az) < 0 ? Math.pow(Math.cos(az), 2) : 0;
     const frontPolar = Math.acos(THREE.MathUtils.clamp((fh - F.c.y) / F.r.y, -1, 1)) * (1 + st.fringe * 0.35);
-    return frontPolar * front + 1.75 * side * (1 - back) * (1 - front) + 2.05 * back;
+    const temple = 0.16 * Math.exp(-Math.pow((Math.abs(az) - 0.72) / 0.22, 2)); // natural recession at the temples (not a bowl cut)
+    return frontPolar * front + 1.75 * side * (1 - back) * (1 - front) + 2.05 * back - temple;
   };
   const cols = [];
   for (let iu = 0; iu <= NU; iu++) {
@@ -119,10 +125,12 @@ export function addHair(human, opts = {}) {
         const polar = (t / (st.len > 0.001 ? capRows : 1)) * limit;
         const dir = new THREE.Vector3(Math.sin(polar) * Math.sin(az), Math.cos(polar), Math.sin(polar) * Math.cos(az)).normalize();
         const rs = surfaceRadius(F, dir);
-        const clump = (st.clump ?? 0.5) * 0.006 * (noise.noise2(az * 9 + (st.curl ? t * 20 : 0), t * 4) + 0.4 * clumpPhase);
-        const partDip = Math.exp(-Math.pow((az - part * 0.6) * 6, 2)) * Math.max(0, 1 - polar * 2) * 0.006;
+        // all azimuth-dependent offsets fade out at the crown pole, where every column meets (else: spikes)
+        const pole = THREE.MathUtils.smoothstep(polar, 0.04, 0.4);
+        const clump = pole * (st.clump ?? 0.5) * 0.006 * (noise.noise2(az * 9 + (st.curl ? t * 20 : 0), t * 4) + 0.4 * clumpPhase);
+        const partDip = Math.exp(-Math.pow((az - part * 0.6) * 6, 2)) * pole * (1 - THREE.MathUtils.smoothstep(polar, 0.7, 1.1)) * 0.006;
         const edge = st.len < 0.05 ? THREE.MathUtils.smoothstep(polar / Math.max(1e-3, limit), 1.0, 0.72) : 1; // taper to the skin at the hairline
-        const lift = (st.vol * (0.6 + 0.4 * Math.sin(Math.min(polar, 1.5))) + clump - partDip) * edge + 0.0015 + (st.curl ? Math.abs(noise.noise2(az * 14, t * 14)) * st.vol * 0.4 * st.curl : 0);
+        const lift = (st.vol * (0.6 + 0.4 * Math.sin(Math.min(polar, 1.5))) + clump - partDip) * edge + 0.0015 + (st.curl ? pole * Math.abs(noise.noise2(az * 14, t * 14)) * st.vol * 0.4 * st.curl : 0);
         p = F.c.clone().addScaledVector(dir, rs + lift);
       } else {
         // curtain: continue from the last cap point, falling under gravity, flaring outward, colliding

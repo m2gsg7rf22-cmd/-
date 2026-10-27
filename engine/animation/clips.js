@@ -26,7 +26,7 @@ function locomotion(p, { stride = 25, knee = 40, arm = 18, elbow = 12, bob = 0.0
 }
 
 export const CLIP_LIBRARY = {
-  idle: { duration: 3.2, loop: true, pose: (p) => relaxed({ hipsY: -0.004 * (1 - C(p)), chest: [1.5 * S(p), 0, 0], spine: [1, 0, 0.6 * S(p * 0.5)], head: [-1 + S(p) * 1.5, 3 * S(p * 0.5), 0], upperArm_L: [0, 0, -4 - S(p)], upperArm_R: [0, 0, 4 + S(p)], upperLeg_L: [0, 0, 1], upperLeg_R: [-2, 0, -1], lowerLeg_R: [4, 0, 0] }) },
+  idle: { duration: 3.2, loop: true, pose: (p) => relaxed({ hipsY: -0.004 * (1 - C(p)), chest: [1.5 * S(p), 0, 0], spine: [1, 0, 0.6 * S(p * 0.5)], head: [-1 + S(p) * 1.5, 3 * S(p * 0.5), 0], upperArm_L: [0, 0, 3 - S(p)], upperArm_R: [0, 0, -3 + S(p)], upperLeg_L: [0, 0, -2.5], upperLeg_R: [-2, 0, 1.5], lowerLeg_R: [4, 0, 0] }) },
   combatIdle: { duration: 1.8, loop: true, pose: (p) => ({ hipsY: -0.05 - 0.008 * S(p), hips: [0, 25, 0], spine: [8, -10, 0], chest: [4 + S(p), -10, 0], head: [-6, -10, 0], upperLeg_L: [-22, 10, 0], lowerLeg_L: [30, 0, 0], upperLeg_R: [12, -10, 0], lowerLeg_R: [28, 0, 0], foot_L: [-8, 0, 0], upperArm_L: [-40, 0, -20], lowerArm_L: [-80, 0, 0], upperArm_R: [-30, 0, 20 + S(p) * 2], lowerArm_R: [-70, 0, 0], hand_R: [20, 0, 0] }) },
   walk: { duration: 1.05, loop: true, pose: (p) => locomotion(p, {}) },
   run: { duration: 0.68, loop: true, pose: (p) => locomotion(p, { stride: 42, knee: 95, arm: 45, elbow: 70, bob: 0.06, lean: 12, twist: 9 }) },

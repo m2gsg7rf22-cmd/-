@@ -162,6 +162,12 @@ export function buildHuman(data, params = {}) {
   let minY = Infinity; const body = data.groups.body, r2b = data.renderToBase;
   for (let i = 0; i < body.length; i++) minY = Math.min(minY, pos[r2b[body[i]] * 3 + 1]);
   for (let i = 1; i < pos.length; i += 3) pos[i] -= minY;
+  // exact stature: the solve above is approximate (sampled, before detail targets) -> rescale by ≤ a few %
+  if (p.heightCm) {
+    let top = -Infinity; for (let i = 0; i < body.length; i++) top = Math.max(top, pos[r2b[body[i]] * 3 + 1]);
+    const k = p.heightCm / (top * DM * 100);
+    if (Math.abs(k - 1) < 0.08) for (let i = 0; i < pos.length; i++) pos[i] *= k;
+  }
   // 2. skeleton from joints
   const sk = buildSkeleton(data, pos);
   // 3. render geometry
@@ -230,14 +236,17 @@ export function buildHuman(data, params = {}) {
   };
   sockets.hand_R = hand('R'); sockets.hand_L = hand('L');
   for (const [n, bn, off] of [['head', 'head', [0, 0.12, 0]], ['back', 'spine03', [0, 0, -0.15]], ['hip_L', 'pelvis.L', [0, 0, 0]], ['hip_R', 'pelvis.R', [0, 0, 0]]]) { const s = new THREE.Object3D(); s.name = 'socket_' + n; s.position.set(...off); sk.byName[bn].add(s); sockets[n] = s; }
-  const box = new THREE.Box3().setFromBufferAttribute(geo.attributes.position);
-  const height = box.max.y - box.min.y;
+  let top = -Infinity; for (let i = 0; i < body.length; i++) top = Math.max(top, pos[r2b[body[i]] * 3 + 1]);
+  const height = top * DM; // stature: floor (feet at y=0) to vertex top of the body mesh (helpers excluded)
   const api = {
     kind: 'human', params: p, mesh, skeleton, bones: sk.byName, sockets, height, data, positions: pos,
     collider: { type: 'capsule', radius: 0.3, height },
     expression: {},
     // Set facial expression: name from EXPRESSIONS / VISEMES or { unit: weight }; blends additively with blink/visemes layers.
-    setExpression(e, w = 1) { api.expression = typeof e === 'string' ? (EXPRESSIONS[e] || VISEMES[e] || {}) : e; api.expressionWeight = w; },
+    setExpression(e, w = 1) {
+      if (typeof e === 'string') { const n = EXPRESSION_ALIASES[e] || e; if (!EXPRESSIONS[n] && !VISEMES[n]) console.warn('unknown expression', e); e = EXPRESSIONS[n] || VISEMES[n] || {}; }
+      api.expression = e; api.expressionWeight = w;
+    },
   };
   root.userData = api;
   root.userData.face = new FaceRig(api);
@@ -261,7 +270,7 @@ function buildEyes(data, pos, sk, p, skeleton) {
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
   g.setIndex(new THREE.BufferAttribute(new Uint32Array(E.tris), 1)); g.computeVertexNormals();
   // iris / pupil / sclera from the angle to each eye's forward axis (independent of the proxy UV layout)
-  const col = new Float32Array(nR * 3), irisC = new THREE.Color(p.eyes?.color ?? 0x5a3a20), sclera = new THREE.Color(0xe8e0d6), pupil = new THREE.Color(0x060606), limbal = irisC.clone().multiplyScalar(0.35);
+  const col = new Float32Array(nR * 3), irisC = new THREE.Color(p.eyes?.color ?? 0x5a3a20), sclera = new THREE.Color(0xdcd3c8), pupil = new THREE.Color(0x060606), limbal = irisC.clone().multiplyScalar(0.35);
   const centers = { L: new THREE.Vector3(), R: new THREE.Vector3() }, cnt = { L: 0, R: 0 };
   for (let i = 0; i < nR; i++) { const s = rp[i * 3] > 0 ? 'L' : 'R'; centers[s].add(new THREE.Vector3(rp[i * 3], rp[i * 3 + 1], rp[i * 3 + 2])); cnt[s]++; }
   for (const s of ['L', 'R']) centers[s].multiplyScalar(1 / Math.max(1, cnt[s]));
@@ -270,8 +279,9 @@ function buildEyes(data, pos, sk, p, skeleton) {
     const s = rp[i * 3] > 0 ? 'L' : 'R'; vv.set(rp[i * 3], rp[i * 3 + 1], rp[i * 3 + 2]).sub(centers[s]).normalize();
     const ang = Math.acos(Math.min(1, vv.z)) * 180 / Math.PI, az = Math.atan2(vv.y, vv.x);
     let c;
-    if (ang < 7.5) c = pupil;
-    else if (ang < 21) { const fib = 0.75 + 0.25 * Math.sin(az * 40 + seedN) * Math.sin(az * 13); c = irisC.clone().multiplyScalar(fib * (ang < 11 ? 0.7 : 1)); if (ang > 18.5) c.lerp(limbal, (ang - 18.5) / 2.5); }
+    // anatomical sizes on a 24 mm globe: iris Ø≈11.7 mm -> 29° half-angle, pupil Ø≈3.5 mm -> 8.5°
+    if (ang < 8.5) c = pupil;
+    else if (ang < 28) { const fib = 0.75 + 0.25 * Math.sin(az * 40 + seedN) * Math.sin(az * 13); c = irisC.clone().multiplyScalar(fib * (ang < 13 ? 0.7 : 1)); if (ang > 24.5) c.lerp(limbal, (ang - 24.5) / 3.5); }
     else c = sclera.clone().lerp(new THREE.Color(0xd8b8b0), Math.max(0, (ang - 60) / 60) * 0.4);
     col.set([c.r, c.g, c.b], i * 3);
   }
@@ -307,6 +317,7 @@ function eyeMaterial() {
 
 // ---------------- facial animation ----------------
 // Layered facial animation: expression (target) + automatic blinking + visemes (talking).
+export const EXPRESSION_ALIASES = { happy: 'smile', joy: 'smile', laugh: 'grin', mad: 'angry', rage: 'angry', shock: 'surprised', scared: 'fear', afraid: 'fear', disgusted: 'disgust', focused: 'determined', hurt: 'pain', sorrow: 'sad' };
 export class FaceRig {
   constructor(api) { this.api = api; this.t = 0; this.nextBlink = 2 + Math.random() * 3; this.blink = 0; this.talk = 0; this.visemeT = 0; this.viseme = {}; this.cur = {}; this.look = null; }
   speak(seconds = 2) { this.talk = seconds; }

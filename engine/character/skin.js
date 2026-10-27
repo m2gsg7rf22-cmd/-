@@ -64,10 +64,13 @@ export function bakeSkinTextures(human, { size = 1024, seed = 1 } = {}) {
   const attrs = new Float32Array(n * 11);
   for (let i = 0; i < n; i++) { attrs.set(m.masks.subarray(i * 8, i * 8 + 8), i * 11); attrs[i * 11 + 8] = P.getX(i); attrs[i * 11 + 9] = P.getY(i); attrs[i * 11 + 10] = P.getZ(i); }
   const noise = new Noise(seed);
-  const base = skinToneFor(p), dark = base.r < 0.45;
-  const lipCol = base.clone().lerp(new THREE.Color(dark ? 0x5a2a28 : 0xb4505a), dark ? 0.45 : 0.55);
-  const blush = new THREE.Color(dark ? 0x6a2a20 : 0xd06a64);
-  const hair = new THREE.Color(p.hair?.color ?? p.hairColor ?? 0x2a1a10);
+  // Shade in sRGB (the space the tone presets are authored in): the albedo texture is tagged
+  // SRGBColorSpace, so writing linear values here would decode twice (dark, oversaturated skin).
+  const srgb = (c) => new THREE.Color(c).convertLinearToSRGB();
+  const base = skinToneFor(p).convertLinearToSRGB(), dark = base.r < 0.7;
+  const lipCol = base.clone().lerp(srgb(dark ? 0x5a2a28 : 0xb4505a), dark ? 0.35 : 0.45);
+  const blush = srgb(dark ? 0x6a2a20 : 0xd06a64);
+  const hair = srgb(p.hair?.color ?? p.hairColor ?? 0x2a1a10).multiplyScalar(0.7); // brows are usually darker than scalp hair
   const age = Math.min(1, Math.max(0, ((p.age ?? 30) - 30) / 50));
   const freckles = p.skin?.freckles ?? 0, makeup = p.skin?.makeup ?? 0;
   const albedo = new Uint8Array(size * size * 4), rough = new Uint8Array(size * size * 4);

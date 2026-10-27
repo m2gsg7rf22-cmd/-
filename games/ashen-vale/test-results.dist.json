@@ -1,12 +1,12 @@
 {
   "game": "Ashen Vale",
   "quality": "low",
-  "startedAt": "2026-10-27T19:21:25.213Z",
+  "startedAt": "2026-10-27T19:51:00.483Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3981 ms"
+      "detail": "3716 ms"
     },
     {
       "label": "title menu is shown on boot",
@@ -27,9 +27,9 @@
       "label": "gameplay frame is rendered (not blank)",
       "ok": true,
       "detail": {
-        "mean": 75.8,
+        "mean": 76,
         "std": 53.8,
-        "colors": 138
+        "colors": 144
       }
     },
     {
@@ -65,7 +65,7 @@
     {
       "label": "melee combo damages enemies",
       "ok": true,
-      "detail": 188
+      "detail": 180
     },
     {
       "label": "enemies can be killed",
@@ -80,7 +80,7 @@
     {
       "label": "shockwave ability works",
       "ok": true,
-      "detail": 252.39999999999998
+      "detail": 244.39999999999998
     },
     {
       "label": "clearing a wave starts the next",
@@ -125,22 +125,22 @@
     "../../../../../tmp/gf-dist-shots/ashen-vale/04-victory.png"
   ],
   "metrics": {
-    "fps": 4,
-    "frameMs": 3,
+    "fps": 6.000600060005948,
+    "frameMs": 6.5,
     "calls": 58,
     "triangles": 368211,
-    "geometries": 134,
+    "geometries": 138,
     "textures": 65,
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
-    "audioEvents": 72,
-    "particles": 942
+    "audioEvents": 73,
+    "particles": 974
   },
   "errors": [],
   "passed": true,
   "url": "file://ashen-vale.html",
-  "loadMs": 3981,
-  "durationMs": 48471,
+  "loadMs": 3716,
+  "durationMs": 48846,
   "summary": "22/22 checks passed"
 }
