@@ -39,11 +39,31 @@ function finish(obj, { kind = 'prop', collider, name } = {}) {
   return obj;
 }
 
+/**
+ * Attachment socket: an Object3D child named `socket_<name>` at `pos`, whose +Z points along `dir`
+ * (+Y up hint). Listed in obj.userData.sockets[name]. Conventions in references/modeling.md
+ * (weapons: grip at the origin, muzzle +Z; props: base at y=0).
+ */
+function socket(obj, name, pos = [0, 0, 0], dir = [0, 0, 1], up = [0, 1, 0]) {
+  const s = new THREE.Object3D(); s.name = 'socket_' + name; s.position.set(...pos);
+  const z = V(...dir).normalize(), x = V(...up).cross(z).normalize(), y = z.clone().cross(x);
+  s.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
+  obj.add(s); (obj.userData.sockets ||= {})[name] = s; return s;
+}
+/** Common non-textured surfaces: polymer (gun furniture, plastics), rubber, chrome, ceramic. */
+const surfaces = {
+  polymer: (c = 0x2a2c30) => solid(c, { roughness: 0.55, metalness: 0 }),
+  rubber: (c = 0x1a1a1c) => solid(c, { roughness: 0.92, metalness: 0 }),
+  chrome: (c = 0xd8dce0) => solid(c, { roughness: 0.12, metalness: 1 }),
+  anodized: (c = 0x2a3a5a) => solid(c, { roughness: 0.35, metalness: 0.9 }),
+  ceramic: (c = 0xeeeae2) => solid(c, { roughness: 0.25, metalness: 0 }),
+};
+
 /** Ground an object so its lowest point sits at y=0 and it is centred in XZ. */
 function ground(obj) { obj.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(obj); const c = b.getCenter(V()); obj.position.x -= c.x; obj.position.z -= c.z; obj.position.y -= b.min.y; return obj; }
 
 export const K = {
-  THREE, V, mesh, mirrorMerge, finish, ground,
+  THREE, V, mesh, mirrorMerge, finish, ground, socket, ...surfaces,
   // primitives & builders: loft, smoothLoft, lathe, tube, roundedBox, displace, boxUV, merge,
   // MeshBuilder, mat4, ellipseRing, superRing, profileRing, mergeByMaterial, validateGeometry, validateObject
   ...builders,

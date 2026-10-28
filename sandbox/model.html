@@ -18,16 +18,17 @@ R.setup(scene, camera);
 const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || 14.5), sunAzimuth: 150 });
 if (scene.fog && q.get('mode') !== 'scene') scene.fog = null;
 const obj = await mod.default(K, params);
-scene.add(obj); obj.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-obj.updateMatrixWorld(true);
-const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+const yaw = +(q.get('yaw') || 0) * Math.PI / 180, root = new THREE.Group(); root.add(obj); root.rotation.y = yaw; // review-only rotation
+scene.add(root); obj.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+root.updateMatrixWorld(true);
+const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
 const radius = Math.max(size.x, size.y, size.z, 0.05);
 // floor grid (1 m, or 10 cm for small objects)
 const cellSize = radius < 1.5 ? 0.1 : radius > 60 ? 10 : 1, ext = Math.ceil(radius * 3 / cellSize) * cellSize;
 const grid = q.get('mode') === 'scene' ? new THREE.Group() : new THREE.GridHelper(ext * 2, Math.round(ext * 2 / cellSize), 0x666a73, 0x3a3d44); grid.position.set(ctr.x, Math.min(0, box.min.y) - 0.001, ctr.z); scene.add(grid);
 const floor = q.get('mode') === 'scene' ? new THREE.Group() : new THREE.Mesh(new THREE.PlaneGeometry(ext * 2, ext * 2), new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 1 })); if (floor.isMesh) { floor.rotation.x = -Math.PI / 2; floor.position.copy(grid.position).y -= 0.002; floor.receiveShadow = true; } scene.add(floor);
 // 1.75 m human-scale reference
-if (q.get('ref') !== '0' && q.get('mode') !== 'scene' && radius > 0.3 && radius < 80) {
+if (q.get('ref') !== '0' && q.get('mode') !== 'scene' && radius > 1.2 && radius < 80) { // small props: grid only (figure would dominate the frame)
   const ref = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: 0x8a93a0, roughness: 0.8, transparent: true, opacity: 0.55 });
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 1.2, 4, 12), m); body.position.y = 0.77; ref.add(body);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), m); head.position.y = 1.64; ref.add(head);
@@ -64,8 +65,11 @@ function draw() {
     camera.aspect = cw / ch; camera.updateProjectionMatrix();
     if (sceneMode && i > 0) { const e = eyeShots[i - 1]; camera.position.copy(e.pos); camera.lookAt(e.look); R.renderer.render(scene, camera); return; }
     if (!dir) { // detail: eye level (1.6 m, or mid-height for small objects), close to the front
-      const eyeY = Math.min(1.6, box.min.y + size.y * 0.6), d = Math.max(size.z / 2 + Math.min(3, radius * 0.6), radius * 0.35);
-      camera.position.set(ctr.x + d * 0.35, eyeY, ctr.z + d); camera.lookAt(ctr.x, Math.min(eyeY, ctr.y), ctr.z); R.renderer.render(scene, camera); return;
+      // look at the broad side: long-in-Z objects (rifles, cars, benches) are viewed from +X
+      const eyeY = Math.min(1.6, box.min.y + size.y * 0.6), sideways = size.z > size.x * 1.4, across = sideways ? size.x : size.z, along = sideways ? size.z : size.x;
+      const d = Math.max(across / 2 + Math.min(3, radius * 0.6), along * 0.75 / Math.tan((camera.fov * Math.PI) / 360) * 0.5 + across / 2);
+      if (sideways) camera.position.set(ctr.x + d, eyeY, ctr.z + d * 0.25); else camera.position.set(ctr.x + d * 0.35, eyeY, ctr.z + d);
+      camera.lookAt(ctr.x, Math.min(eyeY, ctr.y), ctr.z); R.renderer.render(scene, camera); return;
     }
     const dist = (sceneMode ? 0.75 : 1) * radius * 0.62 / Math.tan((camera.fov * Math.PI) / 360) + radius * (sceneMode ? 0.15 : 0.6);
     camera.position.copy(ctr).addScaledVector(dir.clone().normalize(), dist); camera.lookAt(ctr);
@@ -74,6 +78,6 @@ function draw() {
 }
 views.map((v) => v[0]).forEach((n, i) => { const cols = views.length > 4 ? 3 : 2; const d = document.createElement('div'); d.className = 'lbl'; d.textContent = n; d.style.left = (i % cols) * (W / cols) + 8 + 'px'; d.style.top = (i < cols ? 0 : H / 2) + 8 + 'px'; document.body.appendChild(d); });
 const info = document.createElement('div'); info.className = 'lbl'; info.style.right = '8px'; info.style.bottom = '8px';
-info.textContent = `W ${size.x.toFixed(2)} × H ${size.y.toFixed(2)} × D ${size.z.toFixed(2)} m · grid ${cellSize} m · figure 1.75 m`; document.body.appendChild(info);
+info.textContent = `W ${size.x.toFixed(2)} × H ${size.y.toFixed(2)} × D ${size.z.toFixed(2)} m · grid ${cellSize} m${radius > 1.2 && q.get('ref') !== '0' && q.get('mode') !== 'scene' ? ' · figure 1.75 m' : ''}`; document.body.appendChild(info);
 let frames = 0; function loop() { if (window.__pause) return; draw(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
 </script></body></html>

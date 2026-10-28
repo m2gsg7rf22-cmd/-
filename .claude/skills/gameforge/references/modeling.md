@@ -38,6 +38,8 @@ Worked examples are in `skills/gameforge/models/`:
 
 | Example | Technique it teaches |
 |---|---|
+| `scifi-rifle` | hard-surface lofts, insets, emissive strips, sockets, grip-origin |
+| `willow` | pendulous strands with `cardStrip` |
 | `tree-lsystem` | grammar-driven branching, tubes, leaf cards |
 | `boulder` | SDF sculpt, ridged noise, flat base |
 | `armchair` | hard-surface blockout, lathe, mirrored parts |
@@ -69,6 +71,10 @@ Read the one closest to your task first.
    | adult human | 1.6–1.9 m |
    | oak | 15–25 m; game trees 6–12 m |
    | sword | about 1 m |
+   | rifle | 0.85–1.0 m long, receiver about 6 cm wide |
+   | pistol | 0.18–0.22 m long |
+   | weapon grip | about 0.12 × 0.03 m, about 10–15° rake |
+   | magazine | 0.15–0.25 m |
    | coin | 2.5 cm |
 
 3. **Blockout (primary forms).** Build only the big masses, then review. Fix the silhouette and
@@ -142,6 +148,13 @@ or a lofted hull with hard-surface fittings.
     - `asphalt`: `lanes`.
 
   Unknown keys are ignored. The kinds are listed in `K.TEXTURE_KINDS`.
+- **Untextured surfaces:** `K.polymer(c)`, `K.rubber(c)`, `K.chrome(c)`, `K.anodized(c)` and
+  `K.ceramic(c)` cover gun furniture, plastics, tyres and grips.
+- **Other material signatures:**
+  - `K.solid(color, { roughness, metalness, emissive, emissiveIntensity, flat, vertexColors, transparent, opacity, side })`
+  - `K.emissive(color, intensity = 3)` for glow strips, screens and lamps.
+  - `K.glass({ color, opacity = 0.35, roughness = 0.05 })` for lenses, windows and visors.
+  - `K.carPaint(color, { metallic, flakes })`
 - **`K.RNG(seed)`** (always seed everything):
   - `next()`, `range(a, b)`, `int(a, b)` (inclusive), `chance(p)`, `pick(arr)`, `sign()`;
   - `gaussian(mean, sd)`, `shuffle(arr)`, `weighted([[value, weight], …])`, `fork(salt)`
@@ -168,7 +181,55 @@ or a lofted hull with hard-surface fittings.
   forms (trunk, limbs, main masses). When you hit the budget, reduce tube sides
   (`radialFor`: 6 for thick limbs, 3–4 for thin ones) before cutting foliage coverage.
 
+## Builder axes (which way things point, how to aim them at +Z)
+
+| Builder | Built along | To point along +Z |
+|---|---|---|
+| `lathe(profile)` | Y; profile `[radius, y]` | `geo.rotateX(Math.PI / 2)` |
+| `THREE.CylinderGeometry` / `CapsuleGeometry` | Y | `rotateX(Math.PI / 2)` |
+| `tube(points, r)`, `skinBranches`, `curve` | along your points | — (design the points along +Z) |
+| `loft(sections, { axis: 'z' })` (default) | sections at `z`, ring points `[x, y]` | — |
+| `loft(..., { axis: 'y' })` | sections stacked in Y; a ring point `[a, b]` lands at (a, *, −b) | rotate as needed |
+| `roundedBox(w, h, d)` | centred box: w = X, h = Y, d = Z | — |
+| `MeshBuilder.add(geo, mat, mat4(pos, rot, scale))` | `rot` = Euler XYZ radians | — |
+
+## Origins, sockets and grounding
+
+- **Default origin:** the base at y = 0, centred in XZ (`K.ground`). The model faces +Z.
+- **Held or attached assets** (weapons, tools, torches): put the **grip at the origin**, with
+  +Z the pointing or muzzle direction and +Y up. Pass `--params '{"floating":true}'` to the
+  review so the grounding warning is skipped. The grid is then drawn under the object, which is
+  purely visual.
+- **Sockets.** `K.socket(obj, name, pos, dir)` adds an oriented child and lists it in
+  `obj.userData.sockets`. Standard names:
+
+  | Asset | Socket names |
+  |---|---|
+  | Weapons | `grip`, `muzzle`, `offHand`, `sight` |
+  | Vehicles | `seat`, `door_L`, `door_R`, `exhaust` |
+  | Props | `top`, `handle` |
+
+  A character holds a weapon with `human.userData.sockets.hand_R.add(weapon)`. Because the grip
+  is at the origin, no offset is needed.
+- **Review flags:**
+  - `--no-ref` hides the 1.75 m figure. Small props (under about 1.2 m) hide it
+    automatically and use a 10 cm grid.
+  - `--yaw <deg>` rotates the asset for the review only.
+  - The eye-level detail view looks at the broad side of long objects automatically.
+
 ## Recipes for common hard cases
+
+- **Insets, vents, panel lines, ports (hard-surface without booleans):** there are no mesh
+  booleans. Use one of these:
+  - **Shallow details:** a dark recessed strip, i.e. a thin `roundedBox` in a dark `trim`
+    material, sunk 0.5–1 mm *into* the surface so only its face shows flush. Use 1–2 mm wide
+    lines for seams, and slats spaced by their own width for vents.
+  - **Real openings:** build the part from frames around the hole, i.e. 4 boxes around an
+    ejection port, or `loft` a ring profile.
+  - **Organic parts:** use SDF `subtract` / `smoothSubtract` and then `meshSDF`.
+
+  Raised armour plates must be at least 2–3 mm proud and have bevels, or they vanish at
+  gameplay distance.
 
 - **Pendulous / weeping growth** (willow, wisteria, vines, hanging moss, tentacles):
   - **Structure:** build ascending limbs first. Limb rise should be inversely proportional to
@@ -194,6 +255,7 @@ or a lofted hull with hard-surface fittings.
 | Asset class | Budget |
 |---|---|
 | Hero prop or creature | 10–60k |
+| Hero weapon (first/third person) | 8–20k |
 | Vehicle | 15–30k |
 | Tree (near) / tree (forest, instanced) | 5–10k / 0.5–2k |
 | Building | 2–15k |

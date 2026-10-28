@@ -114,6 +114,7 @@ export function lathe(profile, segments = 24, phiStart = 0, phiLength = Math.PI 
 export function tube(points, radius = 0.1, radial = 8, segments = 24, closed = false) {
   const curve = new THREE.CatmullRomCurve3(points.map((p) => (p.isVector3 ? p : new THREE.Vector3(...p))), closed);
   const geo = new THREE.TubeGeometry(curve, segments, typeof radius === 'number' ? radius : 1, radial, closed);
+  geo.userData.open = true; // uncapped ends (cap with spheres/discs if the end is visible)
   if (typeof radius === 'function') {
     const pos = geo.attributes.position, frames = curve.computeFrenetFrames(segments, closed);
     const v = new THREE.Vector3();
@@ -224,6 +225,7 @@ export class MeshBuilder {
     const group = new THREE.Group(); group.name = name;
     for (const [key, list] of this.parts) {
       const mesh = new THREE.Mesh(merge(list), this.materials.get(key));
+      if (list.some((g) => g.userData.open)) mesh.geometry.userData.open = true; // keep 'intentionally open' through merges
       mesh.castShadow = castShadow; mesh.receiveShadow = receiveShadow;
       group.add(mesh);
     }

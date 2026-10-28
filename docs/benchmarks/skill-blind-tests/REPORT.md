@@ -37,3 +37,28 @@ The agent produced `skills/gameforge/models/willow.model.js` (now kept as an exa
 - review sheet: scale figure hidden, top view dark, no eye-level detail view (now 6 views with
   a hemisphere fill light);
 - no "fine detail is a texture" budget guidance.
+
+## Test 2: sci-fi assault rifle (2026-10-28)
+
+The agent produced `skills/gameforge/models/scifi-rifle.model.js` (kept as an example).
+
+| Measure | Result |
+|---|---|
+| Review rounds | 5 + 1 (blockout → shapes → sci-fi identity → silhouette → surface detail) |
+| Final metrics | 11 316 triangles, 6 meshes, 6 materials, W 0.08 × H 0.36 × D 0.94 m, 0 open edges |
+| Checks | all pass |
+| Sockets | `grip`, `muzzle`, `offHand`, `sight` (grip at the origin, muzzle +Z) |
+
+![rifle](rifle.views.jpg)
+
+**Gaps found → fixed:**
+- the 1.75 m figure dominated small props (now hidden automatically, plus `--no-ref`);
+- the detail view looked down the muzzle (it now looks at the broad side, plus `--yaw`);
+- `floating` was undocumented;
+- MeshBuilder lost the open flag, and `tube` was not marked open;
+- no builder-axis table;
+- no inset/vent recipe;
+- no socket convention (`K.socket`);
+- no weapon sizes or budget;
+- no polymer/rubber materials (`K.polymer`, `K.rubber`, `K.chrome`, `K.anodized`, `K.ceramic`);
+- `glass`/`emissive` signatures undocumented.
