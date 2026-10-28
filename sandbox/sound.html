@@ -9,7 +9,11 @@ const q = new URLSearchParams(location.search);
 const mod = await import(q.get('sfx'));
 const def = mod.default; const recipe = def.recipe || def;
 const duration = def.duration ?? 1.5, reverb = def.reverb ?? 0;
+// deterministic renders: seeded Math.random during the recipe (?seed=, default 1)
+let seedState = (+(q.get('seed') || 1) >>> 0) || 1; const realRandom = Math.random;
+Math.random = () => { seedState = (seedState + 0x6D2B79F5) >>> 0; let t = seedState; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const buf = await renderSfxOffline(recipe, { duration, pitch: 1, reverb });
+Math.random = realRandom;
 const L = buf.getChannelData(0), R = buf.getChannelData(1), sr = buf.sampleRate, n = L.length;
 const mono = new Float32Array(n); for (let i = 0; i < n; i++) mono[i] = (L[i] + R[i]) / 2;
 // ---- metrics
@@ -23,19 +27,28 @@ const tailAbs = Math.max(...Array.from(mono.slice(n - Math.round(sr * 0.005))).m
 function fft(re, im) { const N = re.length; for (let i = 1, j = 0; i < N; i++) { let bit = N >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } } for (let len = 2; len <= N; len <<= 1) { const a = -2 * Math.PI / len, wr = Math.cos(a), wi = Math.sin(a); for (let i = 0; i < N; i += len) { let cr = 1, ci = 0; for (let j = 0; j < len / 2; j++) { const ur = re[i + j], ui = im[i + j], vr = re[i + j + len / 2] * cr - im[i + j + len / 2] * ci, vi = re[i + j + len / 2] * ci + im[i + j + len / 2] * cr; re[i + j] = ur + vr; im[i + j] = ui + vi; re[i + j + len / 2] = ur - vr; im[i + j + len / 2] = ui - vi; const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t; } } } }
 const F = 2048, hop = 256, frames = Math.max(1, Math.floor((n - F) / hop)), spec = []; let cNum = 0, cDen = 0;
 for (let f = 0; f < frames; f++) { const re = new Float32Array(F), im = new Float32Array(F); for (let i = 0; i < F; i++) re[i] = mono[f * hop + i] * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / F)); fft(re, im); const mag = new Float32Array(F / 2); for (let k = 0; k < F / 2; k++) { mag[k] = Math.hypot(re[k], im[k]); cNum += mag[k] * k * sr / F; cDen += mag[k]; } spec.push(mag); }
-const metrics = { duration, sampleRate: sr, peakDbfs: +db(peak).toFixed(1), rmsDbfs: +db(Math.sqrt(sum / n)).toFixed(1), clippedSamples: clip, dcOffset: +(dc / n).toFixed(4), onsetS: +onset.toFixed(3), audibleUntilS: +(lastAudible * 0.01).toFixed(2), tailPeak: +tailAbs.toFixed(4), spectralCentroidHz: Math.round(cNum / Math.max(1e-9, cDen)), builtins: SFX_NAMES.length };
+const seg = (a, b) => { let num = 0, den = 0; const f0 = Math.floor(a * sr / hop), f1 = Math.min(spec.length, Math.ceil(b * sr / hop)); for (let f = f0; f < f1; f++) for (let k = 0; k < F / 2; k++) { num += spec[f][k] * k * sr / F; den += spec[f][k]; } return den ? Math.round(num / den) : 0; };
+let eLow = 0, eMid = 0, eHigh = 0; const avg = new Float32Array(F / 2); for (const m of spec) for (let k = 0; k < F / 2; k++) { const fr = k * sr / F, e = m[k] * m[k]; avg[k] += e; if (fr < 250) eLow += e; else if (fr < 2000) eMid += e; else eHigh += e; }
+const eTot = eLow + eMid + eHigh || 1;
+const peaks = []; for (let k = 3; k < F / 2 - 1; k++) if (avg[k] > avg[k - 1] && avg[k] >= avg[k + 1] && k * sr / F > 30) peaks.push([avg[k], Math.round(k * sr / F)]);
+peaks.sort((a, b) => b[0] - a[0]); const topPeaks = []; for (const [, f] of peaks) { if (topPeaks.every((x) => Math.abs(Math.log2(x / f)) > 0.08)) topPeaks.push(f); if (topPeaks.length >= 6) break; }
+let clicks = 0; for (let i = 2; i < n - 2; i++) { const d2 = Math.abs(mono[i] - mono[i - 1]), ctx2 = (Math.abs(mono[i - 1] - mono[i - 2]) + Math.abs(mono[i + 1] - mono[i])) / 2; if (d2 > 0.25 && d2 > 8 * (ctx2 + 1e-4)) clicks++; }
+const metrics = { bandEnergyPct: { low_below250: Math.round(eLow / eTot * 100), mid_250to2k: Math.round(eMid / eTot * 100), high_above2k: Math.round(eHigh / eTot * 100) }, centroidTransient0_50ms: seg(0, 0.05), centroidBody50_300ms: seg(0.05, 0.3), centroidTail300ms: seg(0.3, duration), spectralPeaksHz: topPeaks, clickCount: clicks, seed: +(q.get('seed') || 1), duration, sampleRate: sr, peakDbfs: +db(peak).toFixed(1), rmsDbfs: +db(Math.sqrt(sum / n)).toFixed(1), clippedSamples: clip, dcOffset: +(dc / n).toFixed(4), onsetS: +onset.toFixed(3), audibleUntilS: +(lastAudible * 0.01).toFixed(2), tailPeak: +tailAbs.toFixed(4), spectralCentroidHz: Math.round(cNum / Math.max(1e-9, cDen)), builtins: SFX_NAMES.length };
 // ---- drawing: waveform (top), spectrogram (middle, log freq 40 Hz–16 kHz), envelope dB (bottom)
 const cv = document.getElementById('c'), g = cv.getContext('2d'), W = cv.width;
 g.fillStyle = '#15171c'; g.fillRect(0, 0, W, 900);
 const lane = (y, h, label) => { g.fillStyle = '#1d2027'; g.fillRect(40, y, W - 60, h); g.fillStyle = '#8a93a0'; g.fillText(label, 44, y + 14); };
 lane(10, 200, 'waveform (L+R)'); g.strokeStyle = '#6ad0ff'; g.beginPath(); for (let x = 0; x < W - 60; x++) { const a = Math.floor(x / (W - 60) * n), b = Math.floor((x + 1) / (W - 60) * n); let mn = 0, mx = 0; for (let i = a; i < b; i++) { mn = Math.min(mn, mono[i]); mx = Math.max(mx, mono[i]); } g.moveTo(40 + x, 110 - mx * 95); g.lineTo(40 + x, 110 - mn * 95); } g.stroke();
-lane(220, 480, 'spectrogram (log frequency, dB)');
+lane(220, 480, 'spectrogram (log frequency; colour: 0 dB bright → −80 dB dark)');
 const fLo = Math.log(40), fHi = Math.log(16000), img = g.createImageData(W - 60, 480), maxMag = Math.max(...spec.map((m) => Math.max(...m)));
 for (let x = 0; x < W - 60; x++) { const m = spec[Math.min(spec.length - 1, Math.floor(x / (W - 60) * spec.length))]; for (let y = 0; y < 480; y++) { const fr = Math.exp(fHi - (y / 480) * (fHi - fLo)), k = Math.min(F / 2 - 1, Math.round(fr * F / sr)); const v = Math.max(0, Math.min(1, (db(m[k] / maxMag) + 80) / 80)); const o = (y * (W - 60) + x) * 4; img.data[o] = 255 * Math.pow(v, 1.5); img.data[o + 1] = 255 * Math.pow(v, 3) * 0.9 + 40 * v; img.data[o + 2] = 90 * v + 40 * (1 - v); img.data[o + 3] = 255; } }
 g.putImageData(img, 40, 220);
 g.fillStyle = '#cfd6e0'; for (const f of [100, 500, 1000, 5000, 10000]) { const y = 220 + (fHi - Math.log(f)) / (fHi - fLo) * 480; g.fillText(f >= 1000 ? f / 1000 + 'k' : f, 6, y + 4); g.fillRect(36, y, 4, 1); }
 lane(710, 180, 'loudness envelope (dB, 10 ms)'); g.strokeStyle = '#ffb347'; g.beginPath(); env.forEach((v, i) => { const x = 40 + i / env.length * (W - 60), y = 710 + 170 * (1 - Math.max(0, db(v) + 60) / 60); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
-for (let s = 0; s <= duration; s += 0.25) { const x = 40 + s / duration * (W - 60); g.fillStyle = '#555c66'; g.fillRect(x, 892, 1, 6); g.fillStyle = '#8a93a0'; g.fillText(s.toFixed(2) + 's', x + 2, 899); }
+for (let y = 0; y < 120; y++) { const v = 1 - y / 120; g.fillStyle = `rgb(${255 * Math.pow(v, 1.5)},${255 * Math.pow(v, 3) * 0.9 + 40 * v},${90 * v + 40 * (1 - v)})`; g.fillRect(W - 16, 230 + y, 10, 1); } g.fillStyle = '#cfd6e0'; g.fillText('0', W - 30, 236); g.fillText('-80', W - 38, 352);
+const zoomN = Math.min(n, Math.round(sr * 0.12)); g.fillStyle = '#0e1014'; g.fillRect(W - 470, 30, 420, 150); g.fillStyle = '#8a93a0'; g.fillText('zoom: first 120 ms', W - 466, 44); g.strokeStyle = '#ffd36a'; g.beginPath(); for (let x = 0; x < 420; x++) { const a = Math.floor(x / 420 * zoomN), b2 = Math.max(a + 1, Math.floor((x + 1) / 420 * zoomN)); let mn = 0, mx = 0; for (let i = a; i < b2; i++) { mn = Math.min(mn, mono[i]); mx = Math.max(mx, mono[i]); } g.moveTo(W - 470 + x, 105 - mx * 70); g.lineTo(W - 470 + x, 105 - mn * 70); } g.stroke(); for (let ms = 0; ms <= 120; ms += 20) { g.fillStyle = '#8a93a0'; g.fillText(ms + 'ms', W - 470 + ms / 120 * 420, 178); }
+const step = duration <= 0.6 ? 0.05 : duration <= 1.5 ? 0.1 : 0.25;
+for (let s = 0; s <= duration + 1e-6; s += step) { const x = 40 + s / duration * (W - 60); g.fillStyle = '#555c66'; g.fillRect(x, 892, 1, 6); g.fillStyle = '#8a93a0'; g.fillText(s.toFixed(2) + 's', x + 2, 899); }
 document.getElementById('m').textContent = Object.entries(metrics).map(([k, v]) => `${k}: ${v}`).join('\n');
 // ---- WAV for listening (16-bit stereo)
 const wav = new DataView(new ArrayBuffer(44 + n * 4)), w = (o, s) => { for (let i = 0; i < s.length; i++) wav.setUint8(o + i, s.charCodeAt(i)); };

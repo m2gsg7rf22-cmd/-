@@ -6,12 +6,14 @@ import { RenderPass } from '../vendor/three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from '../vendor/three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from '../vendor/three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from '../vendor/three/addons/postprocessing/ShaderPass.js';
+import { GTAOPass } from '../vendor/three/addons/postprocessing/GTAOPass.js';
+import { SMAAPass } from '../vendor/three/addons/postprocessing/SMAAPass.js';
 import { FXAAShader } from '../vendor/three/addons/shaders/FXAAShader.js';
 
 export const QUALITY = {
   low: { pixelRatio: 0.75, shadows: true, shadowSize: 1024, post: false, bloom: false, aa: false, maxAniso: 1, drawDistance: 0.6, density: 0.4 },
   medium: { pixelRatio: 1, shadows: true, shadowSize: 2048, post: true, bloom: true, aa: true, maxAniso: 4, drawDistance: 0.8, density: 0.7 },
-  high: { pixelRatio: 1.5, shadows: true, shadowSize: 4096, post: true, bloom: true, aa: true, maxAniso: 8, drawDistance: 1, density: 1 },
+  high: { pixelRatio: 1.5, shadows: true, shadowSize: 4096, post: true, bloom: true, aa: true, ao: true, smaa: true, maxAniso: 8, drawDistance: 1, density: 1 },
 };
 
 // Display-space color grade: contrast, saturation, lift/gain tint, vignette, grain.
@@ -77,6 +79,15 @@ export function createRenderer({ canvas, container, quality = 'auto', clearColor
     if (!tier.post) { state.resize(); return; }
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
+    // ambient occlusion (GTAO): contact shadows in creases, under cars, between buildings. ?ao=0|1 overrides.
+    const aoQ = globalThis.location?.search.match(/[?&]ao=(\d)/)?.[1];
+    if (aoQ === '1' || (aoQ !== '0' && tier.ao)) {
+      state.ao = new GTAOPass(scene, camera, 256, 256);
+      state.ao.output = GTAOPass.OUTPUT.Default; state.ao.blendIntensity = 0.85;
+      state.ao.updateGtaoMaterial({ radius: 0.6, distanceExponent: 1.5, thickness: 1.2, scale: 1.0, samples: 12 });
+      state.ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 });
+      composer.addPass(state.ao);
+    }
     if (tier.bloom) {
       const bq = (globalThis.location?.search.match(/bloom=([\d.]+),([\d.]+),([\d.]+)/) || []).slice(1).map(Number);
       state.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), bq[0] ?? 0.3, bq[1] ?? 0.4, bq[2] ?? 3.5); // HDR threshold: only emissives/speculars bloom, not the sky
@@ -85,7 +96,8 @@ export function createRenderer({ canvas, container, quality = 'auto', clearColor
     composer.addPass(new OutputPass());
     state.grade = new ShaderPass(GradeShader);
     composer.addPass(state.grade);
-    if (tier.aa) { state.fxaa = new ShaderPass(FXAAShader); composer.addPass(state.fxaa); }
+    if (tier.aa && tier.smaa) { state.smaa = new SMAAPass(256, 256); composer.addPass(state.smaa); }
+    else if (tier.aa) { state.fxaa = new ShaderPass(FXAAShader); composer.addPass(state.fxaa); }
     state.composer = composer;
     state.resize();
   };
@@ -99,6 +111,7 @@ export function createRenderer({ canvas, container, quality = 'auto', clearColor
       state.composer.setSize(w, h);
       const pr = renderer.getPixelRatio();
       if (state.fxaa) state.fxaa.material.uniforms.resolution.value.set(1 / (w * pr), 1 / (h * pr));
+      if (state.ao) state.ao.setSize(w * pr, h * pr);
     }
   };
   state.render = (time = 0) => {

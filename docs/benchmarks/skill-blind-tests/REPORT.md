@@ -86,3 +86,21 @@ The agent produced `skills/gameforge/anims/zombie-walk.anim.js` (kept as an exam
 - grounding check too loose (now ≤ 3 cm every frame);
 - small figures and a misleading perspective camera (now orthographic, 1800 × 1000, phase
   labels and contact discs).
+
+## Test 4: sound design (2026-10-28)
+
+The agent produced three sounds: a car door, an explosion and a healing chime. All passed in 3–4
+rounds each. They were verified by analysis only; **nobody listened to them**. All three are kept
+as examples in `skills/gameforge/sounds/`.
+
+**Gaps found → fixed:**
+- voice signatures undocumented (`slide` is a target in Hz, envelope shapes, the usable `_pluck`
+  range);
+- no distortion, delay or filter helpers (now `e.saturate`, `e.delay`, `e.filter`);
+- whole-file centroid only (now per-segment centroids, band split, spectral peaks and a click
+  detector);
+- renders weren't deterministic (now `--seed`);
+- sheet had no dB colour bar or zoom (both added, plus denser time labels);
+- CLI crashed on `--help`;
+- the tail message was misleading;
+- no peak or centroid targets per category.

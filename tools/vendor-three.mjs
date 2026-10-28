@@ -14,7 +14,7 @@ const ADDONS = [
   'postprocessing/FXAAPass.js', 'shaders/VignetteShader.js', 'shaders/FXAAShader.js',
   'objects/Sky.js', 'objects/Water.js', 'exporters/GLTFExporter.js', 'loaders/GLTFLoader.js',
   'environments/RoomEnvironment.js', 'utils/BufferGeometryUtils.js', 'utils/SkeletonUtils.js',
-  'math/SimplexNoise.js',
+  'math/SimplexNoise.js', 'postprocessing/GTAOPass.js', 'postprocessing/BokehPass.js',
 ];
 const importRe = /^(import|export)\s[^;]*?from\s*['"]([^'"]+)['"]/gms;
 

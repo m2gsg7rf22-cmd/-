@@ -96,6 +96,25 @@ export class AudioEngine {
     let prev = 0; for (let i = 0; i < n; i++) { const k = i % period, v = ring[k]; d[i] = v; const nv = damping * (brightness * v + (1 - brightness) * (v + prev) * 0.5); prev = v; ring[k] = nv; }
     const s = c.createBufferSource(), g = c.createGain(); s.buffer = b; g.gain.value = gain; s.connect(g).connect(dest); s.start(t);
   }
+  // ---- insert effects: each returns a node to use as the destination `d` of voices, routed into `dest`
+  // Soft-clip saturation (tanh). drive 1..20; output is level-compensated so peaks stay ≈ input level.
+  saturate(dest, drive = 4) {
+    const c = this.ctx, ws = c.createWaveShaper(), n = 2048, curve = new Float32Array(n), norm = Math.tanh(drive);
+    for (let i = 0; i < n; i++) { const x = (i / (n - 1)) * 2 - 1; curve[i] = Math.tanh(x * drive) / norm; }
+    ws.curve = curve; ws.oversample = '4x'; const g = c.createGain(); g.gain.value = 0.8; ws.connect(g).connect(dest); return ws;
+  }
+  // Feedback echo. time s, feedback 0..0.9, mix 0..1 (dry always passes).
+  delay(dest, time = 0.25, feedback = 0.35, mix = 0.35) {
+    const c = this.ctx, inp = c.createGain(), dl = c.createDelay(4), fb = c.createGain(), wet = c.createGain();
+    dl.delayTime.value = time; fb.gain.value = feedback; wet.gain.value = mix;
+    inp.connect(dest); inp.connect(dl); dl.connect(fb).connect(dl); dl.connect(wet).connect(dest); return inp;
+  }
+  // Filter insert (lowpass/highpass/bandpass/peaking…), optional sweep to `to` Hz over `dur` from t.
+  filter(dest, type = 'lowpass', freq = 1000, q = 0.7, { t = null, to = null, dur = 0.5, gain = 0 } = {}) {
+    const f = this.ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; f.gain.value = gain;
+    if (to && t !== null) { f.frequency.setValueAtTime(freq, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, to), t + dur); }
+    f.connect(dest); return f;
+  }
   // Play a named SFX preset. opts: { pos, pitch, volume }
   play(name, opts = {}) {
     this.played++;

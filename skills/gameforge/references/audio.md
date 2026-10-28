@@ -31,13 +31,31 @@ To register the sound in a game: `import { defineSfx } from './engine/audio/audi
 
 ## Voices (on `e`)
 
-| Voice | Use for |
+All times are seconds. `t` is the start time (use the `t` you receive plus offsets), and `d` is
+the destination node.
+
+| Voice | Use for | Notes |
+|---|---|---|
+| `_osc(type, freq, t, dur, d, { gain = 0.3, a = 0.005, slide, detune })` | tones, thumps (sine with a downward slide), buzzes (`sawtooth`/`square`/`triangle`) | Envelope: linear attack `a`, then an exponential decay to silence over `dur`. `slide` is the **target frequency in Hz**, reached at `t + dur` |
+| `_noiseBurst(t, dur, d, { gain = 0.4, type = 'bandpass', freq = 1000, q = 1, slide, a = 0.003 })` | whooshes, cracks, wind, impacts, footsteps, fire, rain (many tiny bursts) | Same envelope. `slide` sweeps the filter frequency (Hz) |
+| `_fm(freq, ratio, index, t, dur, d, { gain = 0.3, a = 0.003, indexDecay = 0.5, type = 'sine', slide })` | metal, bells (non-integer `ratio`), lasers, growls, alarms | `index` is the modulation depth in Hz and decays to `index·indexDecay` (bright attack, mellow tail) |
+| `_pluck(freq, t, dur, d, { gain = 0.4, damping = 0.996, brightness = 0.5 })` | strings, harps, plinks, bowstrings | Usable **40–1500 Hz**; above that the integer period quantises into noise, so use `_fm` or `_osc` for high tones. `damping` 0.98–0.999 sets the length; `brightness` 0..1 |
+
+**Insert effects.** Each returns a node you pass as `d` to voices; it routes into its own `dest`:
+
+| Effect | What it does |
 |---|---|
-| `_osc(type, freq, t, dur, d, { gain, a, slide, detune })` | Tones, thumps (sine plus a downward `slide`), buzzes (`sawtooth`/`square`) |
-| `_noiseBurst(t, dur, d, { gain, type: 'bandpass'/'lowpass'/'highpass', freq, q, slide })` | Whooshes, cracks, wind, impacts, footsteps, fire, rain (many tiny bursts) |
-| `_fm(freq, ratio, index, t, dur, d, { gain, indexDecay, type, slide })` | Metal, bells (non-integer `ratio`), lasers, growls, alarms |
-| `_pluck(freq, t, dur, d, { gain, damping, brightness })` | Strings, harps, plinks, bowstrings, twangs |
-| `e.ctx` | Any raw WebAudio node: BiquadFilter, WaveShaper (distortion), Convolver, DelayNode (echo), oscillators with periodic waves |
+| `e.saturate(dest, drive = 4)` | tanh soft clip, level-compensated. Use it for explosions, engines, gritty impacts, growls |
+| `e.delay(dest, time = 0.25, feedback = 0.35, mix = 0.35)` | echo for canyons, tunnels, sci-fi and magic |
+| `e.filter(dest, type, freq, q, { t, to, dur, gain })` | static or swept filter (`lowpass`, `highpass`, `bandpass`, `peaking`…) |
+| `e.ctx` | any raw WebAudio node |
+
+Effects chain. For example, a saturated, low-passed boom:
+
+```js
+const fx = e.saturate(e.filter(d, 'lowpass', 900), 6);
+e._osc('sine', 60 * p, t, 0.8, fx, { gain: 0.5, slide: 28 });
+```
 
 ## The method (how a sound designer works)
 
@@ -74,7 +92,9 @@ To register the sound in a game: `import { defineSfx } from './engine/audio/audi
 | Tail | the tail must decay inside `duration`. A cut-off tail clicks |
 | SFX onset | under 50 ms. Slow swells are fine for ambience or music, where the warning is OK |
 
-Typical spectral centroids:
+Typical spectral centroids (whole file). For layered sounds also read the per-segment centroids
+(transient 0–50 ms, body 50–300 ms, tail) and the band-energy split. A quiet bright click can
+dominate the whole-file centroid while the energy is in the lows.
 
 | Sound | Centroid |
 |---|---|
@@ -83,6 +103,34 @@ Typical spectral centroids:
 | Explosions | below 1.5 kHz |
 | Lasers / UI clicks | 3–8 kHz |
 | Engines | below 800 Hz |
+| Car door / heavy mechanical foley | body 100–400 Hz, latch transient 2–4 kHz |
+| Magic chimes / pickups | 2–5 kHz, with clear tonal peaks |
+| Debris tails | 1–3 kHz scattered bursts |
+
+Peak targets by role:
+
+| Role | Peak |
+|---|---|
+| UI, chimes, pickups | −12 to −18 dBFS |
+| Footsteps | −14 to −20 dBFS |
+| Hits, doors | −6 to −10 dBFS |
+| Explosions | −3 to −6 dBFS |
+
+The −3 dBFS headroom warning is advisory for the loudest category only.
+
+## Reading the sheet and metrics
+
+- **Seeds:** renders are deterministic per `--seed` (default 1), because `Math.random()` is
+  seeded during the recipe. Try 2–3 seeds for sounds with random clusters.
+- **Spectrogram:** log frequency from 40 Hz to 16 kHz. Colour runs from 0 dB (bright) to
+  −80 dB (dark); see the colour bar. Faint vertical stripes at a sharp onset are window leakage
+  (2048-sample FFT), not clicks; `clickCount` detects real discontinuities. A faint
+  low-frequency floor across the whole render is the analysis noise floor.
+- **Zoom panel:** the first 120 ms, for transients and multi-stage events (latches, double hits)
+  that sit under 20 ms apart.
+- **`spectralPeaksHz`:** use it to confirm pitches, e.g. arpeggio notes or engine harmonics.
+- **Examples:** `skills/gameforge/sounds/` contains `car-door`, `explosion` (saturation + debris
+  tail), `heal-chime` (tonal arpeggio + sparkles), `laser-blaster` and `footstep-gravel`.
 
 ## Music
 
