@@ -16,6 +16,7 @@ import { Player } from '../gameplay/player.js';
 import { Enemy, NPC, AttackTokens, separateActors, ENEMY_TYPES } from '../gameplay/actors.js';
 import { Flags, QuestSystem, DialogueSystem } from '../gameplay/narrative.js';
 import { Inventory, Progression } from '../gameplay/systems.js';
+import { applyStoryToSpec } from '../gameplay/story.js';
 import { Vehicle } from '../physics/vehicle.js';
 import { ChaseCamera } from '../camera/cameras.js';
 import { LightPool } from '../render/lightpool.js';
@@ -33,6 +34,9 @@ const DIRS = { north: Math.PI, south: 0, east: Math.PI / 2, west: -Math.PI / 2, 
 
 export function normalizeSpec(spec) {
   const s = JSON.parse(JSON.stringify(spec));
+  // spec.story: a story script (skills/gameforge/references/narrative.md) or its compiled form
+  // (compileStory). Merged into quests / npcs / landmarks / items / startQuests / goal; explicit spec entries win.
+  if (s.story && (s.story.missions || s.story.acts || s.story.format)) applyStoryToSpec(s);
   s.id ||= (s.title || 'game').toLowerCase().replace(/[^a-z0-9]+/g, '-');
   s.title ||= 'Untitled GameForge Game';
   s.seed ??= 1;
@@ -111,7 +115,12 @@ export function composeGame(rawSpec, { container = document.getElementById('game
   Object.assign(game, { flags, quests, inventory, progression, dialogue });
   app.events.on('quest:start', ({ quest }) => { app.ui.toast(quest.title, { big: true, sub: 'New quest' }); app.audio.play('questStart'); });
   app.events.on('quest:complete', ({ quest, rewards }) => { app.ui.toast(quest.title, { big: true, sub: 'Quest complete' }); app.audio.play('questComplete'); if (rewards?.xp) progression.addXP(rewards.xp); checkWin(); });
-  flags.onChange = () => quests.onFlag();
+  flags.onChange = () => { quests.onFlag(); game.storyAutoStart?.(); };
+  if (spec.story?.initialFlags) for (const [k, v] of Object.entries(spec.story.initialFlags)) flags.set(k, v);
+  // story missions with start: 'auto' begin as soon as their requirements are met
+  const autoStart = () => { for (const id of spec.story?.autoStart || []) if (quests.available(id)) quests.start(id); };
+  app.events.on('quest:complete', () => autoStart());
+  game.storyAutoStart = autoStart;
 
   // ---------- Player ----------
   const spawn = spec.player.spawn ? new THREE.Vector3(spec.player.spawn[0], 0, spec.player.spawn[1]) : anchors.center.clone().add(new THREE.Vector3(0, 0, isCity ? 0 : 14));
@@ -235,6 +244,11 @@ export function composeGame(rawSpec, { container = document.getElementById('game
     for (const c of game.collectibles) if (!c.taken) { c.obj.rotation.y += dt * 1.5; c.obj.position.y = c.base + Math.sin(app.loop.time * 2 + c.base) * 0.12; }
     if (!player.alive && app.state === 'playing') { app.setState('gameover'); app.after(1.2, () => app.ui.endScreen({ title: 'Defeated', text: 'Try again?', onRetry: () => location.reload(), onQuit: showTitle })); }
     if (G.type === 'survive' || G.type === 'reach') checkWin();
+    if (app.loop.frame % 10 === 0) for (const q of quests.activeQuests()) for (const o of quests.currentObjectives(q.id)) {
+      if (o.type !== 'reach' || quests.state[q.id].done[o.id]) continue;
+      const pos = game.vehicle ? game.vehicle.position : player.position;
+      for (const t of [].concat(o.target)) { const a = anchors[t]; if (a && Math.hypot(pos.x - a.x, pos.z - a.z) < (o.radius ?? 12)) quests.report('reach', t); }
+    }
     hp?.set(player.health.ratio); st?.set(player.stamina.ratio);
     const gp = goalProgress(); const q = quests.tracked ? quests.defs[quests.tracked] : null;
     obj.set(q ? q.title : spec.title, q ? quests.objectiveText(q.id) : [{ text: gp.text, done: gp.done }], q ? 'Quest' : 'Objective');
@@ -252,7 +266,7 @@ export function composeGame(rawSpec, { container = document.getElementById('game
   app.save.register('inventory', { save: () => inventory.toJSON(), load: (d) => inventory.load(d) });
 
   // ---------- Flow ----------
-  function start() { app.setState('playing'); app.audio.playMusic(spec.music || (spec.enemies.length ? 'combat' : 'exploration'), { intensity: 0.5 }); for (const id of spec.startQuests || []) quests.start(id); }
+  function start() { app.setState('playing'); app.audio.playMusic(spec.music || (spec.enemies.length ? 'combat' : 'exploration'), { intensity: 0.5 }); for (const id of spec.startQuests || []) quests.start(id); autoStart(); }
   function showTitle() { app.setState('menu'); app.ui.mainMenu({ subtitle: spec.pitch || spec.description || '', onStart: start, onContinue: app.save.has('auto') ? () => { app.save.load('auto'); start(); } : null, controls: CONTROLS, credits: 'Generated with GameForge AAA.' }); }
   addEventListener('click', () => { if (app.state === 'playing' && !document.pointerLockElement && !game.vehicle && !('ontouchstart' in window)) app.input.requestPointerLock(app.renderer.domElement); });
   app.debugState = () => ({ player: { x: +player.position.x.toFixed(2), y: +player.position.y.toFixed(2), z: +player.position.z.toFixed(2), hp: Math.round(player.health.value), alive: player.alive, grounded: player.ctrl.grounded },

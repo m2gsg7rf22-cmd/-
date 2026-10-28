@@ -10,6 +10,7 @@
 //   build <dir>                 bundle to dist/<id>.html (single file) + dist/web/
 //   shot <dir> [--quality high] capture screenshots (title + gameplay)
 //   export <asset> [--out f.glb] [--params json]       export a procedural asset to GLB/OBJ
+//   story <file.story.js> [--out dir]   compile + review a story script (graph, bible, checks)
 //   status <dir>                print task/test status
 import fs from 'node:fs';
 import path from 'node:path';
@@ -176,6 +177,10 @@ const main = {
   async cinematic() { const { reviewCinematic } = await import('./cinematic.mjs'); const m = await reviewCinematic(positional[0], { out: opt('out') }); if (!m.ok) process.exitCode = 1; },
   async anim() { if (!positional[0]) return console.log('usage: gameforge anim <file.anim.js> [--out dir] [--phases n] [--no-render]'); const { reviewAnim } = await import('./anim.mjs'); const m = await reviewAnim(positional[0], { out: opt('out'), phases: +opt('phases', 8), render: !flag('no-render') }); if (!m.ok) process.exitCode = 1; },
   async model() { if (!positional[0]) return console.log('usage: gameforge model <file.model.js> [--params json] [--out dir] [--no-render] [--glb] [--no-ref] [--yaw deg]'); const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), glb: flag('glb'), ref: !flag('no-ref'), yaw: +opt('yaw', 0) }); if (!m.ok) process.exitCode = 1; },
+  async scene() { const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), scene: true }); if (!m.ok) process.exitCode = 1; },
+  async anim() { const { reviewAnim } = await import('./anim.mjs'); const m = await reviewAnim(positional[0], { out: opt('out'), phases: +opt('phases', 8), render: !flag('no-render') }); if (!m.ok) process.exitCode = 1; },
+  async story() { const { reviewStory } = await import('./story.mjs'); const r = await reviewStory(positional[0], { out: opt('out'), render: !flag('no-render') }); if (!r.ok) process.exitCode = 1; },
+  async model() { const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), glb: flag('glb'), ref: !flag('no-ref'), yaw: +opt('yaw', 0) }); if (!m.ok) process.exitCode = 1; },
   async new() { await cmdNew(); },
   async gdd() { const d = path.resolve(positional[0] || '.'); fs.writeFileSync(path.join(d, 'GDD.md'), generateGDD(await loadSpec(d))); console.log('  wrote GDD.md'); },
   async plan() { const d = path.resolve(positional[0] || '.'); const g = generateTasks(await loadSpec(d)); const v = validateTasks(g); fs.writeFileSync(path.join(d, 'tasks.json'), JSON.stringify(g, null, 2)); console.log(`  wrote tasks.json: ${g.tasks.length} tasks, ${g.waves} waves, valid=${v.ok}`); for (let w = 0; w < g.waves; w++) console.log(`   wave ${w}: ${g.tasks.filter((t) => t.wave === w).map((t) => `${t.id}(${t.role})`).join(', ')}`); if (!v.ok) { console.log(v.errors.join('\n')); process.exitCode = 1; } },
@@ -196,5 +201,5 @@ const main = {
   async export() { await cmdExport(); },
   async status() { const d = path.resolve(positional[0] || '.'); const t = JSON.parse(fs.readFileSync(path.join(d, 'tasks.json'), 'utf8')); for (const x of t.tasks) console.log(`  [${x.status}] w${x.wave} ${x.id} (${x.role})`); const r = path.join(d, 'test-results.json'); if (fs.existsSync(r)) { const j = JSON.parse(fs.readFileSync(r, 'utf8')); console.log(`  playtest: ${j.summary} at ${j.startedAt}`); } },
 };
-if (!main[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 14).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+if (!main[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 15).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
 main[cmd]().catch((e) => { console.error('gameforge: ' + e.message); process.exit(1); });

@@ -1,0 +1,2793 @@
+{
+  "format": "gameforge.story/1",
+  "id": "blue-ledger",
+  "title": "The Blue Ledger",
+  "premise": "A getaway driver who works alone must join a crew to steal a crime boss's bribe ledger — and decide whether the truth inside it is worth more than her brother's debt.",
+  "logline": "In a drowning port city, the only way to pay a debt is to steal the book it is written in.",
+  "themes": [
+    "Loyalty you are paid for versus loyalty you choose",
+    "Truth has a price, and someone else usually pays it"
+  ],
+  "tone": "Rain-noir with dry humour; grounded violence; warm crew banter against a cold city.",
+  "characters": [
+    {
+      "id": "ines",
+      "name": "Ines Rook",
+      "role": "protagonist",
+      "main": true,
+      "want": "Clear her brother Mika's debt to Crane.",
+      "need": "Let other people carry part of the weight.",
+      "flaw": "Never asks for help; leaves before she can be left.",
+      "arc": "From lone driver who sleeps in her car to a woman who chooses a crew — and chooses what the ledger is for.",
+      "voice": "Clipped, dry, car metaphors, never says please."
+    },
+    {
+      "id": "teo",
+      "name": "Teodor Mallin",
+      "role": "mentor",
+      "main": true,
+      "want": "One last clean score to buy his sister's boat.",
+      "need": "Admit his hands are failing.",
+      "flaw": "Pride.",
+      "arc": "From \"I need a driver, not a partner\" to handing the dial to Ines and taking the wheel.",
+      "voice": "Slow, old-world courtesy, calls everyone \"friend\", talks about people as if they were locks."
+    },
+    {
+      "id": "pell",
+      "name": "Pell Asare",
+      "role": "ally",
+      "main": true,
+      "want": "Expose Crane's ledger to the whole city.",
+      "need": "Learn that people, not causes, pay for the truth.",
+      "flaw": "Treats people as means to a cause.",
+      "arc": "From zealot to someone who weighs who gets hurt — and either forgives Ines or learns to.",
+      "voice": "Fast, jargon, nervous jokes, sentences that trip over each other."
+    },
+    {
+      "id": "crane",
+      "name": "Augustin Crane",
+      "role": "antagonist",
+      "main": true,
+      "want": "Keep the port, keep the book, keep everyone wearing blue.",
+      "need": "To be needed rather than feared (he never learns it).",
+      "flaw": "Believes everyone has a price.",
+      "arc": "A flat arc tested to breaking: his certainty cracks when Ines names her own price.",
+      "voice": "Warm, patient, uses first names, never raises his voice."
+    },
+    {
+      "id": "bram",
+      "name": "Bram Hollis",
+      "role": "enforcer",
+      "main": false,
+      "want": "Collect on time and go home to his pigeons.",
+      "need": "",
+      "flaw": "",
+      "arc": "",
+      "voice": "Polite menace; counts out loud."
+    },
+    {
+      "id": "odile",
+      "name": "Odile Marrow",
+      "role": "inside contact",
+      "main": false,
+      "want": "Get her daughter out of Harrowgate.",
+      "need": "Stop waiting for permission.",
+      "flaw": "Obedience.",
+      "arc": "From Crane's clerk to the witness who ends him (if trusted).",
+      "voice": "Precise, bureaucratic, quietly furious."
+    },
+    {
+      "id": "mika",
+      "name": "Mika Rook",
+      "role": "brother",
+      "main": false,
+      "want": "Be forgiven without having to ask.",
+      "need": "",
+      "flaw": "",
+      "arc": "",
+      "voice": "Earnest, apologetic, sketches on napkins."
+    }
+  ],
+  "npcs": [
+    {
+      "id": "teo",
+      "name": "Teodor Mallin",
+      "role": "mentor",
+      "at": "kettle_street",
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:regatta:complete",
+              "!seen:teo_after"
+            ],
+            "node": "teo_after__start"
+          },
+          {
+            "if": [
+              "quest:regatta==active"
+            ],
+            "node": "teo_heist__start"
+          },
+          {
+            "if": [
+              "quest:inside_man:complete",
+              "!quest:regatta"
+            ],
+            "node": "teo_brief__start"
+          },
+          {
+            "if": [
+              "quest:cold_engine:complete",
+              "!seen:teo_plans"
+            ],
+            "node": "teo_plans__start"
+          },
+          {
+            "if": [
+              "quest:cold_engine==active"
+            ],
+            "node": "teo_wait__start"
+          },
+          {
+            "if": [
+              "!quest:cold_engine"
+            ],
+            "node": "teo_pitch__start"
+          },
+          {
+            "node": "teo__idle"
+          }
+        ],
+        "nodes": {
+          "teo_after__start": {
+            "speaker": "Teo",
+            "text": "The dial turned for you like it turned for me, twenty years ago.",
+            "next": "teo_after__wheel",
+            "do": [
+              "set seen:teo_after"
+            ]
+          },
+          "teo_after__wheel": {
+            "speaker": "Ines",
+            "text": "You drove like it was tomorrow.",
+            "next": "end"
+          },
+          "teo_heist__start": {
+            "if": "bram_fight",
+            "else": "teo_heist__calm",
+            "next": "teo_heist__hot",
+            "do": [
+              "set seen:teo_heist"
+            ]
+          },
+          "teo_heist__hot": {
+            "speaker": "Teo",
+            "text": "Crane's men are doubled tonight. Someone embarrassed them in the yards.",
+            "next": "end"
+          },
+          "teo_heist__calm": {
+            "speaker": "Teo",
+            "text": "Ledger first, then the harbor mouth. I keep the engine warm.",
+            "next": "end"
+          },
+          "teo_brief__start": {
+            "speaker": "Teo",
+            "text": "Lanterns on the water at nine. Every guard will be watching the sky.",
+            "next": "teo_brief__plan",
+            "do": [
+              "set seen:teo_brief"
+            ]
+          },
+          "teo_brief__plan": {
+            "if": "marrow_blackmailed",
+            "else": "teo_brief__plan_door",
+            "next": "teo_brief__plan_risk"
+          },
+          "teo_brief__plan_risk": {
+            "speaker": "Teo",
+            "text": "Your clerk sounded frightened on the phone. Frightened people make calls.",
+            "next": "teo_brief__go"
+          },
+          "teo_brief__plan_door": {
+            "speaker": "Teo",
+            "text": "Your clerk says the service door opens at the second firework. A good friend to have.",
+            "next": "teo_brief__go"
+          },
+          "teo_brief__go": {
+            "choices": [
+              {
+                "text": "Let's go to work.",
+                "next": "end",
+                "do": [
+                  "start regatta"
+                ]
+              },
+              {
+                "text": "Your hands are shaking, Teo.",
+                "next": "teo_brief__hands"
+              }
+            ],
+            "speaker": "Teo",
+            "text": "Well, friend?"
+          },
+          "teo_brief__hands": {
+            "choices": [
+              {
+                "text": "Deal. Let's go.",
+                "next": "end",
+                "do": [
+                  "start regatta"
+                ]
+              }
+            ],
+            "speaker": "Teo",
+            "text": "They shake for coffee. For steel, never. You take the dial tonight. I will drive."
+          },
+          "teo_plans__start": {
+            "speaker": "Teo",
+            "text": "Good paper. Steel door, old dial, newer alarm. The alarm is not from my century.",
+            "next": "teo_plans__pell",
+            "do": [
+              "set seen:teo_plans"
+            ]
+          },
+          "teo_plans__pell": {
+            "speaker": "Teo",
+            "text": "A kid at the Saltline Relay talks to machines. Pell. Be gentle.",
+            "next": "teo_plans__gentle"
+          },
+          "teo_plans__gentle": {
+            "speaker": "Ines",
+            "text": "I'm always gentle.",
+            "next": "teo_plans__parked"
+          },
+          "teo_plans__parked": {
+            "speaker": "Teo",
+            "text": "You are always parked. It is not the same thing.",
+            "next": "end"
+          },
+          "teo_wait__start": {
+            "speaker": "Teo",
+            "text": "Yards first, then the blueprints. The vault will not mail us its floor plan.",
+            "next": "end",
+            "do": [
+              "set seen:teo_wait"
+            ]
+          },
+          "teo_pitch__start": {
+            "speaker": "Teo",
+            "text": "Still sleeping in the car, friend? The seats do not recline that far.",
+            "next": "teo_pitch__reply",
+            "do": [
+              "set seen:teo_pitch"
+            ]
+          },
+          "teo_pitch__reply": {
+            "speaker": "Ines",
+            "text": "They recline exactly as far as I need.",
+            "next": "teo_pitch__pitch"
+          },
+          "teo_pitch__pitch": {
+            "choices": [
+              {
+                "text": "Mika's debt is in that book.",
+                "next": "teo_pitch__family",
+                "do": [
+                  "set motive_family",
+                  "start cold_engine"
+                ]
+              },
+              {
+                "text": "What's my cut?",
+                "next": "teo_pitch__money",
+                "do": [
+                  "set motive_money",
+                  "start cold_engine"
+                ]
+              },
+              {
+                "text": "I drive. I don't steal.",
+                "next": "teo_pitch__refuse"
+              }
+            ],
+            "speaker": "Teo",
+            "text": "Customs House vault. Crane keeps a ledger there. Every bribe in Harrowgate, in his own hand."
+          },
+          "teo_pitch__family": {
+            "speaker": "Teo",
+            "text": "Then we tear out his page together. Scout the Crane Yards first.",
+            "next": "end"
+          },
+          "teo_pitch__money": {
+            "speaker": "Teo",
+            "text": "A third, and the car stays yours. Scout the Crane Yards first.",
+            "next": "end"
+          },
+          "teo_pitch__refuse": {
+            "speaker": "Teo",
+            "text": "Then drive me past the yards tomorrow. Just look. Looking is free.",
+            "next": "end"
+          },
+          "teo__idle": {
+            "speaker": "Teodor Mallin",
+            "text": "Patience opens more doors than dynamite, friend.",
+            "next": "end"
+          }
+        }
+      }
+    },
+    {
+      "id": "pell",
+      "name": "Pell Asare",
+      "role": "ally",
+      "at": "relay_tower",
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:regatta==active"
+            ],
+            "node": "pell_heist__start"
+          },
+          {
+            "if": [
+              "quest:ghost_wire:complete",
+              "!seen:pell_done"
+            ],
+            "node": "pell_done__start"
+          },
+          {
+            "if": [
+              "quest:ghost_wire==active"
+            ],
+            "node": "pell_wait__start"
+          },
+          {
+            "if": [
+              "quest:cold_engine:complete",
+              "!quest:ghost_wire"
+            ],
+            "node": "pell_meet__start"
+          },
+          {
+            "node": "pell__idle"
+          }
+        ],
+        "nodes": {
+          "pell_heist__start": {
+            "if": "promised_sale",
+            "else": "pell_heist__sure",
+            "next": "pell_heist__doubt",
+            "do": [
+              "set seen:pell_heist"
+            ]
+          },
+          "pell_heist__doubt": {
+            "speaker": "Pell",
+            "text": "Cameras die in six minutes. And after, we are still arguing about that ledger.",
+            "next": "end"
+          },
+          "pell_heist__sure": {
+            "speaker": "Pell",
+            "text": "Cameras die in six minutes. Then the whole city gets a bedtime story.",
+            "next": "end"
+          },
+          "pell_done__start": {
+            "speaker": "Pell",
+            "text": "Grid's mine. Customs House cameras go dark for six minutes. Six. Not seven.",
+            "next": "pell_done__seven",
+            "do": [
+              "set seen:pell_done"
+            ]
+          },
+          "pell_done__seven": {
+            "speaker": "Ines",
+            "text": "I've never needed seven.",
+            "next": "end"
+          },
+          "pell_wait__start": {
+            "speaker": "Pell",
+            "text": "Three chips. The tower eats the rest when it rains.",
+            "next": "end",
+            "do": [
+              "set seen:pell_wait"
+            ]
+          },
+          "pell_meet__start": {
+            "speaker": "Pell",
+            "text": "You're the driver? Teo said you'd be taller. Or nicer.",
+            "next": "pell_meet__taller",
+            "do": [
+              "set seen:pell_meet"
+            ]
+          },
+          "pell_meet__taller": {
+            "speaker": "Ines",
+            "text": "Teo lies about both.",
+            "next": "pell_meet__ask"
+          },
+          "pell_meet__ask": {
+            "choices": [
+              {
+                "text": "Deal. The whole city reads it.",
+                "next": "pell_meet__leak",
+                "do": [
+                  "set promised_leak",
+                  "start ghost_wire"
+                ]
+              },
+              {
+                "text": "We see what it's worth first.",
+                "next": "pell_meet__sale",
+                "do": [
+                  "set promised_sale",
+                  "start ghost_wire"
+                ]
+              }
+            ],
+            "speaker": "Pell",
+            "text": "I'll kill the alarm. One condition. The ledger goes public, all of it, the same night."
+          },
+          "pell_meet__leak": {
+            "speaker": "Pell",
+            "text": "Great. Okay. Three relay chips, scattered round the tower. Bring them and I own the grid.",
+            "next": "end"
+          },
+          "pell_meet__sale": {
+            "speaker": "Pell",
+            "text": "Wow. Okay. Still need three relay chips. We can argue on the way down.",
+            "next": "end"
+          },
+          "pell__idle": {
+            "speaker": "Pell Asare",
+            "text": "Do not touch the blue wire. Or the other blue wire.",
+            "next": "end"
+          }
+        }
+      }
+    },
+    {
+      "id": "crane",
+      "name": "Augustin Crane",
+      "role": "antagonist",
+      "at": "crane_tower",
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:ledger_weight==active",
+              "quest:ledger_weight:tower"
+            ],
+            "node": "crane_offer__start"
+          },
+          {
+            "node": "crane__idle"
+          }
+        ],
+        "nodes": {
+          "crane_offer__start": {
+            "speaker": "Crane",
+            "text": "Ines. Sit. You have my book, and I have your brother's future. Let's be adults.",
+            "next": "crane_offer__leverage",
+            "do": [
+              "set seen:crane_offer"
+            ]
+          },
+          "crane_offer__leverage": {
+            "if": "motive_money",
+            "else": "crane_offer__mika",
+            "next": "crane_offer__price"
+          },
+          "crane_offer__mika": {
+            "speaker": "Crane",
+            "text": "Mika's debt, gone. Tonight. Hand me the ledger and he sleeps easy.",
+            "next": "crane_offer__paid"
+          },
+          "crane_offer__price": {
+            "speaker": "Crane",
+            "text": "You came for money. I have more of it than the ledger does. Name a number.",
+            "next": "crane_offer__paid"
+          },
+          "crane_offer__paid": {
+            "if": "bram_pay",
+            "else": "crane_offer__decide",
+            "next": "crane_offer__paid_line"
+          },
+          "crane_offer__paid_line": {
+            "speaker": "Crane",
+            "text": "You paid Bram on time. You are a person who pays. I respect that.",
+            "next": "crane_offer__decide"
+          },
+          "crane_offer__decide": {
+            "choices": [
+              {
+                "text": "Pell's right. Everyone reads it tonight.",
+                "next": "crane_offer__leak",
+                "do": [
+                  "set ending_leak",
+                  "set ledger_decided"
+                ]
+              },
+              {
+                "text": "Take it. Mika walks free.",
+                "next": "crane_offer__sell",
+                "do": [
+                  "set ending_sale",
+                  "set ledger_decided"
+                ]
+              },
+              {
+                "text": "Odile gets it. She'll testify.",
+                "next": "crane_offer__witness",
+                "if": "marrow_trusted",
+                "do": [
+                  "set ending_witness",
+                  "set ledger_decided"
+                ]
+              }
+            ],
+            "speaker": "Crane",
+            "text": "So. What does it weigh?"
+          },
+          "crane_offer__leak": {
+            "speaker": "Crane",
+            "text": "Then you sold yourself for a headline. I hope it keeps you warm.",
+            "next": "crane_offer__leak_reply"
+          },
+          "crane_offer__leak_reply": {
+            "speaker": "Ines",
+            "text": "It won't. That's fine. I've got a car.",
+            "next": "end"
+          },
+          "crane_offer__sell": {
+            "speaker": "Crane",
+            "text": "Sensible. The book, please. Mika's page is already burning.",
+            "next": "crane_offer__sell_reply"
+          },
+          "crane_offer__sell_reply": {
+            "if": "promised_leak",
+            "else": "crane_offer__sell_quiet",
+            "next": "crane_offer__sell_broken"
+          },
+          "crane_offer__sell_broken": {
+            "speaker": "Ines",
+            "text": "Pell is going to hate me. Add it to the list.",
+            "next": "end"
+          },
+          "crane_offer__sell_quiet": {
+            "speaker": "Ines",
+            "text": "Pleasure doing business. Never call me.",
+            "next": "end"
+          },
+          "crane_offer__witness": {
+            "speaker": "Crane",
+            "text": "A clerk? Odile Marrow? She stamps parcels.",
+            "next": "crane_offer__witness_reply"
+          },
+          "crane_offer__witness_reply": {
+            "speaker": "Ines",
+            "text": "She stamped every one of yours. She remembers.",
+            "next": "end"
+          },
+          "crane__idle": {
+            "speaker": "Augustin Crane",
+            "text": "Everyone in Harrowgate works for me. Most of them just don't know it yet.",
+            "next": "end"
+          }
+        }
+      }
+    },
+    {
+      "id": "bram",
+      "name": "Bram Hollis",
+      "role": "enforcer",
+      "at": "crane_yards",
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:hard_way:complete",
+              "!seen:bram_beaten"
+            ],
+            "node": "bram_beaten__start"
+          },
+          {
+            "if": [
+              "quest:hard_way==active"
+            ],
+            "node": "bram_brawl__start"
+          },
+          {
+            "if": [
+              "quest:quiet_money:complete",
+              "!seen:bram_paid"
+            ],
+            "node": "bram_paid__start"
+          },
+          {
+            "if": [
+              "quest:quiet_money==active"
+            ],
+            "node": "bram_wait__start"
+          },
+          {
+            "if": [
+              "quest:cold_engine:complete",
+              "!quest:collectors"
+            ],
+            "node": "bram_corner__start"
+          },
+          {
+            "node": "bram__idle"
+          }
+        ],
+        "nodes": {
+          "bram_beaten__start": {
+            "choices": [
+              {
+                "text": "Then let it climb.",
+                "next": "end"
+              },
+              {
+                "text": "Tell Crane I'm sorry.",
+                "next": "end"
+              }
+            ],
+            "speaker": "Bram",
+            "text": "You've made this loud, Rook. Loud travels uphill.",
+            "do": [
+              "set seen:bram_beaten"
+            ]
+          },
+          "bram_brawl__start": {
+            "speaker": "Bram",
+            "text": "Five. Six. They're still standing, Rook.",
+            "next": "end",
+            "do": [
+              "set seen:bram_brawl"
+            ]
+          },
+          "bram_paid__start": {
+            "choices": [
+              {
+                "text": "Tell him I bite too.",
+                "next": "end"
+              },
+              {
+                "text": "Tell him nothing.",
+                "next": "end"
+              }
+            ],
+            "speaker": "Bram",
+            "text": "Four thousand, exact. Mister Crane will hear that you pay your debts.",
+            "do": [
+              "set seen:bram_paid"
+            ]
+          },
+          "bram_wait__start": {
+            "speaker": "Bram",
+            "text": "The yard office closes when I say. Bring the bundles.",
+            "next": "end",
+            "do": [
+              "set seen:bram_wait"
+            ]
+          },
+          "bram_corner__start": {
+            "speaker": "Bram",
+            "text": "Ines Rook. Your brother owes Mister Crane four thousand. I'm told to count to ten.",
+            "next": "bram_corner__count",
+            "do": [
+              "set seen:bram_corner"
+            ]
+          },
+          "bram_corner__count": {
+            "choices": [
+              {
+                "text": "Take the heist advance. All of it.",
+                "next": "bram_corner__pay",
+                "do": [
+                  "set bram_pay",
+                  "set bram_answered",
+                  "start collectors",
+                  "start quiet_money"
+                ]
+              },
+              {
+                "text": "Count faster.",
+                "next": "bram_corner__fight",
+                "do": [
+                  "set bram_fight",
+                  "set bram_answered",
+                  "start collectors",
+                  "start hard_way"
+                ]
+              }
+            ],
+            "speaker": "Bram",
+            "text": "One. Two. Three."
+          },
+          "bram_corner__pay": {
+            "speaker": "Bram",
+            "text": "Sensible. Bring both cash bundles to the yard office.",
+            "next": "end"
+          },
+          "bram_corner__fight": {
+            "speaker": "Bram",
+            "text": "Four. Boys?",
+            "next": "end"
+          },
+          "bram__idle": {
+            "speaker": "Bram Hollis",
+            "text": "I count, Rook. That's all I do. I count.",
+            "next": "end"
+          }
+        }
+      }
+    },
+    {
+      "id": "odile",
+      "name": "Odile Marrow",
+      "role": "inside contact",
+      "at": "customs_vault",
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:inside_man:complete",
+              "!seen:odile_pass"
+            ],
+            "node": "odile_pass__start"
+          },
+          {
+            "if": [
+              "quest:inside_man==active"
+            ],
+            "node": "odile_wait__start"
+          },
+          {
+            "if": [
+              "quest:ghost_wire:complete",
+              "quest:collectors:complete",
+              "collectors_handled",
+              "!quest:inside_man"
+            ],
+            "node": "odile_meet__start"
+          },
+          {
+            "node": "odile__idle"
+          }
+        ],
+        "nodes": {
+          "odile_pass__start": {
+            "if": "marrow_trusted",
+            "else": "odile_pass__cold",
+            "next": "odile_pass__warm",
+            "do": [
+              "set seen:odile_pass"
+            ]
+          },
+          "odile_pass__warm": {
+            "speaker": "Odile",
+            "text": "Visitor pass and the night rota. Second firework, service door. Be careful.",
+            "next": "end"
+          },
+          "odile_pass__cold": {
+            "speaker": "Odile",
+            "text": "Your pass. Don't come to my window again.",
+            "next": "end"
+          },
+          "odile_wait__start": {
+            "speaker": "Odile",
+            "text": "Walk the building once. Count the doors. Then come back to my window.",
+            "next": "end",
+            "do": [
+              "set seen:odile_wait"
+            ]
+          },
+          "odile_meet__start": {
+            "speaker": "Odile",
+            "text": "You're standing in the customs line without a parcel. People notice that.",
+            "next": "odile_meet__stamp",
+            "do": [
+              "set seen:odile_meet"
+            ]
+          },
+          "odile_meet__stamp": {
+            "speaker": "Ines",
+            "text": "Crane owns you. I can tell by how you hold the stamp.",
+            "next": "odile_meet__offer"
+          },
+          "odile_meet__offer": {
+            "choices": [
+              {
+                "text": "The service door. Or Crane hears you talked.",
+                "next": "odile_meet__threat",
+                "do": [
+                  "set marrow_blackmailed",
+                  "start inside_man"
+                ]
+              },
+              {
+                "text": "The service door. And two seats out of town.",
+                "next": "odile_meet__trust",
+                "do": [
+                  "set marrow_trusted",
+                  "start inside_man"
+                ]
+              }
+            ],
+            "speaker": "Odile",
+            "text": "He owns my daughter's papers. What do you want from me?"
+          },
+          "odile_meet__threat": {
+            "speaker": "Odile",
+            "text": "Then I'll do it. And I'll hate you quietly, which is how I do everything.",
+            "next": "end"
+          },
+          "odile_meet__trust": {
+            "speaker": "Odile",
+            "text": "Nobody has offered me a seat before. The door opens at the second firework.",
+            "next": "end"
+          },
+          "odile__idle": {
+            "speaker": "Odile Marrow",
+            "text": "Window closed. Come back with a form.",
+            "next": "end"
+          }
+        }
+      }
+    },
+    {
+      "id": "mika",
+      "name": "Mika Rook",
+      "role": "brother",
+      "at": "kettle_street",
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:low_tide:complete",
+              "!seen:mika_epilogue"
+            ],
+            "node": "mika_epilogue__start"
+          },
+          {
+            "node": "mika__idle"
+          }
+        ],
+        "nodes": {
+          "mika_epilogue__start": {
+            "if": "ending_leak",
+            "else": "mika_epilogue__check_sale",
+            "next": "mika_epilogue__leak",
+            "do": [
+              "set seen:mika_epilogue"
+            ]
+          },
+          "mika_epilogue__check_sale": {
+            "if": "ending_sale",
+            "else": "mika_epilogue__witness",
+            "next": "mika_epilogue__sale"
+          },
+          "mika_epilogue__leak": {
+            "speaker": "Mika",
+            "text": "The ledger's on every screen in Harrowgate. They're arresting harbor police. Harbor police!",
+            "next": "mika_epilogue__family"
+          },
+          "mika_epilogue__sale": {
+            "speaker": "Mika",
+            "text": "Bram came by. He tore up my marker and apologised for the door. Who apologises?",
+            "next": "mika_epilogue__family"
+          },
+          "mika_epilogue__witness": {
+            "if": "ending_witness",
+            "else": "mika_epilogue__family",
+            "next": "mika_epilogue__witness_line"
+          },
+          "mika_epilogue__witness_line": {
+            "speaker": "Mika",
+            "text": "Odile Marrow testified for six hours. The papers call her the Stamp.",
+            "next": "mika_epilogue__family"
+          },
+          "mika_epilogue__family": {
+            "if": "motive_family",
+            "else": "mika_epilogue__money",
+            "next": "mika_epilogue__thanks"
+          },
+          "mika_epilogue__thanks": {
+            "speaker": "Mika",
+            "text": "You did all that for me. You could have just asked me to stop.",
+            "next": "mika_epilogue__close"
+          },
+          "mika_epilogue__money": {
+            "speaker": "Mika",
+            "text": "Teo says you took the job for the cut. I don't believe him.",
+            "next": "mika_epilogue__close"
+          },
+          "mika_epilogue__close": {
+            "choices": [
+              {
+                "text": "I did ask. You didn't stop.",
+                "next": "end"
+              },
+              {
+                "text": "Get in the car, Mika.",
+                "next": "end"
+              }
+            ]
+          },
+          "mika__idle": {
+            "speaker": "Mika Rook",
+            "text": "I'm not gambling. I'm drawing. Look, it's you.",
+            "next": "end"
+          }
+        }
+      }
+    }
+  ],
+  "quests": [
+    {
+      "id": "cold_engine",
+      "title": "Cold Engine",
+      "description": "Teo pitches the Customs House job. Scout the yards and steal the vault blueprints.",
+      "giver": "teo",
+      "act": "act1",
+      "objectives": [
+        {
+          "id": "scout",
+          "type": "reach",
+          "target": "crane_yards",
+          "text": "Scout the Crane Yards"
+        },
+        {
+          "id": "plans",
+          "type": "collect",
+          "target": "blueprint",
+          "text": "Steal the vault blueprints",
+          "after": [
+            "scout"
+          ]
+        },
+        {
+          "id": "back",
+          "type": "talk",
+          "target": "teo",
+          "text": "Bring the blueprints to Teo",
+          "after": [
+            "plans"
+          ]
+        }
+      ],
+      "requires": [],
+      "rewards": {
+        "xp": 100,
+        "money": 200
+      }
+    },
+    {
+      "id": "ghost_wire",
+      "title": "Ghost in the Wire",
+      "description": "Recruit Pell, who wants the ledger made public. Gather relay chips to own the grid.",
+      "giver": "pell",
+      "act": "act1",
+      "objectives": [
+        {
+          "id": "chips",
+          "type": "collect",
+          "target": "relay_chip",
+          "count": 3,
+          "text": "Gather relay chips"
+        },
+        {
+          "id": "back",
+          "type": "talk",
+          "target": "pell",
+          "text": "Bring the chips to Pell",
+          "after": [
+            "chips"
+          ]
+        }
+      ],
+      "requires": [
+        "quest:cold_engine:complete"
+      ],
+      "rewards": {
+        "xp": 120
+      }
+    },
+    {
+      "id": "collectors",
+      "title": "Collectors",
+      "description": "Crane's enforcer comes for Mika's debt. Pay him off or fight.",
+      "giver": "bram",
+      "act": "act1",
+      "objectives": [
+        {
+          "id": "answer",
+          "type": "flag",
+          "target": "bram_answered",
+          "text": "Answer Bram"
+        }
+      ],
+      "requires": [
+        "quest:cold_engine:complete"
+      ],
+      "rewards": {}
+    },
+    {
+      "id": "quiet_money",
+      "title": "Quiet Money",
+      "description": "Bring Bram the cash.",
+      "giver": "bram",
+      "act": "act2",
+      "objectives": [
+        {
+          "id": "cash",
+          "type": "collect",
+          "target": "cash_bundle",
+          "count": 2,
+          "text": "Collect the cash bundles"
+        },
+        {
+          "id": "hand",
+          "type": "talk",
+          "target": "bram",
+          "text": "Pay Bram",
+          "after": [
+            "cash"
+          ]
+        }
+      ],
+      "requires": [
+        "quest:collectors:complete",
+        "bram_pay"
+      ],
+      "rewards": {
+        "flags": {
+          "collectors_handled": true
+        }
+      },
+      "optional": true
+    },
+    {
+      "id": "hard_way",
+      "title": "The Hard Way",
+      "description": "Put Bram's crew on the ground.",
+      "giver": "bram",
+      "act": "act2",
+      "objectives": [
+        {
+          "id": "thugs",
+          "type": "kill",
+          "target": "thug",
+          "count": 3,
+          "text": "Beat Bram's collectors"
+        },
+        {
+          "id": "done",
+          "type": "talk",
+          "target": "bram",
+          "text": "Face Bram",
+          "after": [
+            "thugs"
+          ]
+        }
+      ],
+      "requires": [
+        "quest:collectors:complete",
+        "bram_fight"
+      ],
+      "rewards": {
+        "flags": {
+          "collectors_handled": true
+        }
+      },
+      "optional": true
+    },
+    {
+      "id": "inside_man",
+      "title": "The Inside Man",
+      "description": "Turn Crane's customs clerk: threaten her or offer her a way out.",
+      "giver": "odile",
+      "act": "act2",
+      "objectives": [
+        {
+          "id": "case",
+          "type": "reach",
+          "target": "customs_vault",
+          "text": "Case the Customs House"
+        },
+        {
+          "id": "pass",
+          "type": "talk",
+          "target": "odile",
+          "text": "Collect the visitor pass from Odile",
+          "after": [
+            "case"
+          ]
+        }
+      ],
+      "requires": [
+        "quest:ghost_wire:complete",
+        "quest:collectors:complete",
+        "collectors_handled"
+      ],
+      "rewards": {}
+    },
+    {
+      "id": "regatta",
+      "title": "Lantern Regatta",
+      "description": "Fireworks at nine. Steal the ledger and get out through the harbor mouth.",
+      "giver": "teo",
+      "act": "act3",
+      "objectives": [
+        {
+          "id": "in",
+          "type": "reach",
+          "target": "customs_vault",
+          "text": "Get into the Customs House"
+        },
+        {
+          "id": "book",
+          "type": "collect",
+          "target": "ledger",
+          "text": "Crack the vault and take the ledger",
+          "after": [
+            "in"
+          ]
+        },
+        {
+          "id": "guards",
+          "type": "kill",
+          "target": "grunt",
+          "count": 2,
+          "text": "Deal with the vault guards",
+          "after": [
+            "in"
+          ]
+        },
+        {
+          "id": "out",
+          "type": "reach",
+          "target": "harbor_mouth",
+          "text": "Escape through the harbor mouth",
+          "after": [
+            "book",
+            "guards"
+          ]
+        }
+      ],
+      "requires": [
+        "quest:inside_man:complete"
+      ],
+      "rewards": {
+        "xp": 300
+      }
+    },
+    {
+      "id": "ledger_weight",
+      "title": "What the Ledger Weighs",
+      "description": "Crane summons Ines to his tower. Leak the ledger, sell it, or hand it to a witness.",
+      "giver": "crane",
+      "act": "act3",
+      "objectives": [
+        {
+          "id": "tower",
+          "type": "reach",
+          "target": "crane_tower",
+          "text": "Go up Crane Tower"
+        },
+        {
+          "id": "decide",
+          "type": "flag",
+          "target": "ledger_decided",
+          "text": "Decide the ledger's fate",
+          "after": [
+            "tower"
+          ]
+        }
+      ],
+      "requires": [
+        "quest:regatta:complete"
+      ],
+      "rewards": {}
+    },
+    {
+      "id": "low_tide",
+      "title": "Low Tide",
+      "description": "Epilogue on Kettle Street: Mika, the morning after.",
+      "giver": "mika",
+      "act": "act3",
+      "objectives": [
+        {
+          "id": "home",
+          "type": "talk",
+          "target": "mika",
+          "text": "Find Mika on Kettle Street"
+        }
+      ],
+      "requires": [
+        "quest:ledger_weight:complete"
+      ],
+      "rewards": {
+        "xp": 200
+      }
+    }
+  ],
+  "dialogues": {
+    "teo": {
+      "start": [
+        {
+          "if": [
+            "quest:regatta:complete",
+            "!seen:teo_after"
+          ],
+          "node": "teo_after__start"
+        },
+        {
+          "if": [
+            "quest:regatta==active"
+          ],
+          "node": "teo_heist__start"
+        },
+        {
+          "if": [
+            "quest:inside_man:complete",
+            "!quest:regatta"
+          ],
+          "node": "teo_brief__start"
+        },
+        {
+          "if": [
+            "quest:cold_engine:complete",
+            "!seen:teo_plans"
+          ],
+          "node": "teo_plans__start"
+        },
+        {
+          "if": [
+            "quest:cold_engine==active"
+          ],
+          "node": "teo_wait__start"
+        },
+        {
+          "if": [
+            "!quest:cold_engine"
+          ],
+          "node": "teo_pitch__start"
+        },
+        {
+          "node": "teo__idle"
+        }
+      ],
+      "nodes": {
+        "teo_after__start": {
+          "speaker": "Teo",
+          "text": "The dial turned for you like it turned for me, twenty years ago.",
+          "next": "teo_after__wheel",
+          "do": [
+            "set seen:teo_after"
+          ]
+        },
+        "teo_after__wheel": {
+          "speaker": "Ines",
+          "text": "You drove like it was tomorrow.",
+          "next": "end"
+        },
+        "teo_heist__start": {
+          "if": "bram_fight",
+          "else": "teo_heist__calm",
+          "next": "teo_heist__hot",
+          "do": [
+            "set seen:teo_heist"
+          ]
+        },
+        "teo_heist__hot": {
+          "speaker": "Teo",
+          "text": "Crane's men are doubled tonight. Someone embarrassed them in the yards.",
+          "next": "end"
+        },
+        "teo_heist__calm": {
+          "speaker": "Teo",
+          "text": "Ledger first, then the harbor mouth. I keep the engine warm.",
+          "next": "end"
+        },
+        "teo_brief__start": {
+          "speaker": "Teo",
+          "text": "Lanterns on the water at nine. Every guard will be watching the sky.",
+          "next": "teo_brief__plan",
+          "do": [
+            "set seen:teo_brief"
+          ]
+        },
+        "teo_brief__plan": {
+          "if": "marrow_blackmailed",
+          "else": "teo_brief__plan_door",
+          "next": "teo_brief__plan_risk"
+        },
+        "teo_brief__plan_risk": {
+          "speaker": "Teo",
+          "text": "Your clerk sounded frightened on the phone. Frightened people make calls.",
+          "next": "teo_brief__go"
+        },
+        "teo_brief__plan_door": {
+          "speaker": "Teo",
+          "text": "Your clerk says the service door opens at the second firework. A good friend to have.",
+          "next": "teo_brief__go"
+        },
+        "teo_brief__go": {
+          "choices": [
+            {
+              "text": "Let's go to work.",
+              "next": "end",
+              "do": [
+                "start regatta"
+              ]
+            },
+            {
+              "text": "Your hands are shaking, Teo.",
+              "next": "teo_brief__hands"
+            }
+          ],
+          "speaker": "Teo",
+          "text": "Well, friend?"
+        },
+        "teo_brief__hands": {
+          "choices": [
+            {
+              "text": "Deal. Let's go.",
+              "next": "end",
+              "do": [
+                "start regatta"
+              ]
+            }
+          ],
+          "speaker": "Teo",
+          "text": "They shake for coffee. For steel, never. You take the dial tonight. I will drive."
+        },
+        "teo_plans__start": {
+          "speaker": "Teo",
+          "text": "Good paper. Steel door, old dial, newer alarm. The alarm is not from my century.",
+          "next": "teo_plans__pell",
+          "do": [
+            "set seen:teo_plans"
+          ]
+        },
+        "teo_plans__pell": {
+          "speaker": "Teo",
+          "text": "A kid at the Saltline Relay talks to machines. Pell. Be gentle.",
+          "next": "teo_plans__gentle"
+        },
+        "teo_plans__gentle": {
+          "speaker": "Ines",
+          "text": "I'm always gentle.",
+          "next": "teo_plans__parked"
+        },
+        "teo_plans__parked": {
+          "speaker": "Teo",
+          "text": "You are always parked. It is not the same thing.",
+          "next": "end"
+        },
+        "teo_wait__start": {
+          "speaker": "Teo",
+          "text": "Yards first, then the blueprints. The vault will not mail us its floor plan.",
+          "next": "end",
+          "do": [
+            "set seen:teo_wait"
+          ]
+        },
+        "teo_pitch__start": {
+          "speaker": "Teo",
+          "text": "Still sleeping in the car, friend? The seats do not recline that far.",
+          "next": "teo_pitch__reply",
+          "do": [
+            "set seen:teo_pitch"
+          ]
+        },
+        "teo_pitch__reply": {
+          "speaker": "Ines",
+          "text": "They recline exactly as far as I need.",
+          "next": "teo_pitch__pitch"
+        },
+        "teo_pitch__pitch": {
+          "choices": [
+            {
+              "text": "Mika's debt is in that book.",
+              "next": "teo_pitch__family",
+              "do": [
+                "set motive_family",
+                "start cold_engine"
+              ]
+            },
+            {
+              "text": "What's my cut?",
+              "next": "teo_pitch__money",
+              "do": [
+                "set motive_money",
+                "start cold_engine"
+              ]
+            },
+            {
+              "text": "I drive. I don't steal.",
+              "next": "teo_pitch__refuse"
+            }
+          ],
+          "speaker": "Teo",
+          "text": "Customs House vault. Crane keeps a ledger there. Every bribe in Harrowgate, in his own hand."
+        },
+        "teo_pitch__family": {
+          "speaker": "Teo",
+          "text": "Then we tear out his page together. Scout the Crane Yards first.",
+          "next": "end"
+        },
+        "teo_pitch__money": {
+          "speaker": "Teo",
+          "text": "A third, and the car stays yours. Scout the Crane Yards first.",
+          "next": "end"
+        },
+        "teo_pitch__refuse": {
+          "speaker": "Teo",
+          "text": "Then drive me past the yards tomorrow. Just look. Looking is free.",
+          "next": "end"
+        },
+        "teo__idle": {
+          "speaker": "Teodor Mallin",
+          "text": "Patience opens more doors than dynamite, friend.",
+          "next": "end"
+        }
+      }
+    },
+    "pell": {
+      "start": [
+        {
+          "if": [
+            "quest:regatta==active"
+          ],
+          "node": "pell_heist__start"
+        },
+        {
+          "if": [
+            "quest:ghost_wire:complete",
+            "!seen:pell_done"
+          ],
+          "node": "pell_done__start"
+        },
+        {
+          "if": [
+            "quest:ghost_wire==active"
+          ],
+          "node": "pell_wait__start"
+        },
+        {
+          "if": [
+            "quest:cold_engine:complete",
+            "!quest:ghost_wire"
+          ],
+          "node": "pell_meet__start"
+        },
+        {
+          "node": "pell__idle"
+        }
+      ],
+      "nodes": {
+        "pell_heist__start": {
+          "if": "promised_sale",
+          "else": "pell_heist__sure",
+          "next": "pell_heist__doubt",
+          "do": [
+            "set seen:pell_heist"
+          ]
+        },
+        "pell_heist__doubt": {
+          "speaker": "Pell",
+          "text": "Cameras die in six minutes. And after, we are still arguing about that ledger.",
+          "next": "end"
+        },
+        "pell_heist__sure": {
+          "speaker": "Pell",
+          "text": "Cameras die in six minutes. Then the whole city gets a bedtime story.",
+          "next": "end"
+        },
+        "pell_done__start": {
+          "speaker": "Pell",
+          "text": "Grid's mine. Customs House cameras go dark for six minutes. Six. Not seven.",
+          "next": "pell_done__seven",
+          "do": [
+            "set seen:pell_done"
+          ]
+        },
+        "pell_done__seven": {
+          "speaker": "Ines",
+          "text": "I've never needed seven.",
+          "next": "end"
+        },
+        "pell_wait__start": {
+          "speaker": "Pell",
+          "text": "Three chips. The tower eats the rest when it rains.",
+          "next": "end",
+          "do": [
+            "set seen:pell_wait"
+          ]
+        },
+        "pell_meet__start": {
+          "speaker": "Pell",
+          "text": "You're the driver? Teo said you'd be taller. Or nicer.",
+          "next": "pell_meet__taller",
+          "do": [
+            "set seen:pell_meet"
+          ]
+        },
+        "pell_meet__taller": {
+          "speaker": "Ines",
+          "text": "Teo lies about both.",
+          "next": "pell_meet__ask"
+        },
+        "pell_meet__ask": {
+          "choices": [
+            {
+              "text": "Deal. The whole city reads it.",
+              "next": "pell_meet__leak",
+              "do": [
+                "set promised_leak",
+                "start ghost_wire"
+              ]
+            },
+            {
+              "text": "We see what it's worth first.",
+              "next": "pell_meet__sale",
+              "do": [
+                "set promised_sale",
+                "start ghost_wire"
+              ]
+            }
+          ],
+          "speaker": "Pell",
+          "text": "I'll kill the alarm. One condition. The ledger goes public, all of it, the same night."
+        },
+        "pell_meet__leak": {
+          "speaker": "Pell",
+          "text": "Great. Okay. Three relay chips, scattered round the tower. Bring them and I own the grid.",
+          "next": "end"
+        },
+        "pell_meet__sale": {
+          "speaker": "Pell",
+          "text": "Wow. Okay. Still need three relay chips. We can argue on the way down.",
+          "next": "end"
+        },
+        "pell__idle": {
+          "speaker": "Pell Asare",
+          "text": "Do not touch the blue wire. Or the other blue wire.",
+          "next": "end"
+        }
+      }
+    },
+    "bram": {
+      "start": [
+        {
+          "if": [
+            "quest:hard_way:complete",
+            "!seen:bram_beaten"
+          ],
+          "node": "bram_beaten__start"
+        },
+        {
+          "if": [
+            "quest:hard_way==active"
+          ],
+          "node": "bram_brawl__start"
+        },
+        {
+          "if": [
+            "quest:quiet_money:complete",
+            "!seen:bram_paid"
+          ],
+          "node": "bram_paid__start"
+        },
+        {
+          "if": [
+            "quest:quiet_money==active"
+          ],
+          "node": "bram_wait__start"
+        },
+        {
+          "if": [
+            "quest:cold_engine:complete",
+            "!quest:collectors"
+          ],
+          "node": "bram_corner__start"
+        },
+        {
+          "node": "bram__idle"
+        }
+      ],
+      "nodes": {
+        "bram_beaten__start": {
+          "choices": [
+            {
+              "text": "Then let it climb.",
+              "next": "end"
+            },
+            {
+              "text": "Tell Crane I'm sorry.",
+              "next": "end"
+            }
+          ],
+          "speaker": "Bram",
+          "text": "You've made this loud, Rook. Loud travels uphill.",
+          "do": [
+            "set seen:bram_beaten"
+          ]
+        },
+        "bram_brawl__start": {
+          "speaker": "Bram",
+          "text": "Five. Six. They're still standing, Rook.",
+          "next": "end",
+          "do": [
+            "set seen:bram_brawl"
+          ]
+        },
+        "bram_paid__start": {
+          "choices": [
+            {
+              "text": "Tell him I bite too.",
+              "next": "end"
+            },
+            {
+              "text": "Tell him nothing.",
+              "next": "end"
+            }
+          ],
+          "speaker": "Bram",
+          "text": "Four thousand, exact. Mister Crane will hear that you pay your debts.",
+          "do": [
+            "set seen:bram_paid"
+          ]
+        },
+        "bram_wait__start": {
+          "speaker": "Bram",
+          "text": "The yard office closes when I say. Bring the bundles.",
+          "next": "end",
+          "do": [
+            "set seen:bram_wait"
+          ]
+        },
+        "bram_corner__start": {
+          "speaker": "Bram",
+          "text": "Ines Rook. Your brother owes Mister Crane four thousand. I'm told to count to ten.",
+          "next": "bram_corner__count",
+          "do": [
+            "set seen:bram_corner"
+          ]
+        },
+        "bram_corner__count": {
+          "choices": [
+            {
+              "text": "Take the heist advance. All of it.",
+              "next": "bram_corner__pay",
+              "do": [
+                "set bram_pay",
+                "set bram_answered",
+                "start collectors",
+                "start quiet_money"
+              ]
+            },
+            {
+              "text": "Count faster.",
+              "next": "bram_corner__fight",
+              "do": [
+                "set bram_fight",
+                "set bram_answered",
+                "start collectors",
+                "start hard_way"
+              ]
+            }
+          ],
+          "speaker": "Bram",
+          "text": "One. Two. Three."
+        },
+        "bram_corner__pay": {
+          "speaker": "Bram",
+          "text": "Sensible. Bring both cash bundles to the yard office.",
+          "next": "end"
+        },
+        "bram_corner__fight": {
+          "speaker": "Bram",
+          "text": "Four. Boys?",
+          "next": "end"
+        },
+        "bram__idle": {
+          "speaker": "Bram Hollis",
+          "text": "I count, Rook. That's all I do. I count.",
+          "next": "end"
+        }
+      }
+    },
+    "odile": {
+      "start": [
+        {
+          "if": [
+            "quest:inside_man:complete",
+            "!seen:odile_pass"
+          ],
+          "node": "odile_pass__start"
+        },
+        {
+          "if": [
+            "quest:inside_man==active"
+          ],
+          "node": "odile_wait__start"
+        },
+        {
+          "if": [
+            "quest:ghost_wire:complete",
+            "quest:collectors:complete",
+            "collectors_handled",
+            "!quest:inside_man"
+          ],
+          "node": "odile_meet__start"
+        },
+        {
+          "node": "odile__idle"
+        }
+      ],
+      "nodes": {
+        "odile_pass__start": {
+          "if": "marrow_trusted",
+          "else": "odile_pass__cold",
+          "next": "odile_pass__warm",
+          "do": [
+            "set seen:odile_pass"
+          ]
+        },
+        "odile_pass__warm": {
+          "speaker": "Odile",
+          "text": "Visitor pass and the night rota. Second firework, service door. Be careful.",
+          "next": "end"
+        },
+        "odile_pass__cold": {
+          "speaker": "Odile",
+          "text": "Your pass. Don't come to my window again.",
+          "next": "end"
+        },
+        "odile_wait__start": {
+          "speaker": "Odile",
+          "text": "Walk the building once. Count the doors. Then come back to my window.",
+          "next": "end",
+          "do": [
+            "set seen:odile_wait"
+          ]
+        },
+        "odile_meet__start": {
+          "speaker": "Odile",
+          "text": "You're standing in the customs line without a parcel. People notice that.",
+          "next": "odile_meet__stamp",
+          "do": [
+            "set seen:odile_meet"
+          ]
+        },
+        "odile_meet__stamp": {
+          "speaker": "Ines",
+          "text": "Crane owns you. I can tell by how you hold the stamp.",
+          "next": "odile_meet__offer"
+        },
+        "odile_meet__offer": {
+          "choices": [
+            {
+              "text": "The service door. Or Crane hears you talked.",
+              "next": "odile_meet__threat",
+              "do": [
+                "set marrow_blackmailed",
+                "start inside_man"
+              ]
+            },
+            {
+              "text": "The service door. And two seats out of town.",
+              "next": "odile_meet__trust",
+              "do": [
+                "set marrow_trusted",
+                "start inside_man"
+              ]
+            }
+          ],
+          "speaker": "Odile",
+          "text": "He owns my daughter's papers. What do you want from me?"
+        },
+        "odile_meet__threat": {
+          "speaker": "Odile",
+          "text": "Then I'll do it. And I'll hate you quietly, which is how I do everything.",
+          "next": "end"
+        },
+        "odile_meet__trust": {
+          "speaker": "Odile",
+          "text": "Nobody has offered me a seat before. The door opens at the second firework.",
+          "next": "end"
+        },
+        "odile__idle": {
+          "speaker": "Odile Marrow",
+          "text": "Window closed. Come back with a form.",
+          "next": "end"
+        }
+      }
+    },
+    "crane": {
+      "start": [
+        {
+          "if": [
+            "quest:ledger_weight==active",
+            "quest:ledger_weight:tower"
+          ],
+          "node": "crane_offer__start"
+        },
+        {
+          "node": "crane__idle"
+        }
+      ],
+      "nodes": {
+        "crane_offer__start": {
+          "speaker": "Crane",
+          "text": "Ines. Sit. You have my book, and I have your brother's future. Let's be adults.",
+          "next": "crane_offer__leverage",
+          "do": [
+            "set seen:crane_offer"
+          ]
+        },
+        "crane_offer__leverage": {
+          "if": "motive_money",
+          "else": "crane_offer__mika",
+          "next": "crane_offer__price"
+        },
+        "crane_offer__mika": {
+          "speaker": "Crane",
+          "text": "Mika's debt, gone. Tonight. Hand me the ledger and he sleeps easy.",
+          "next": "crane_offer__paid"
+        },
+        "crane_offer__price": {
+          "speaker": "Crane",
+          "text": "You came for money. I have more of it than the ledger does. Name a number.",
+          "next": "crane_offer__paid"
+        },
+        "crane_offer__paid": {
+          "if": "bram_pay",
+          "else": "crane_offer__decide",
+          "next": "crane_offer__paid_line"
+        },
+        "crane_offer__paid_line": {
+          "speaker": "Crane",
+          "text": "You paid Bram on time. You are a person who pays. I respect that.",
+          "next": "crane_offer__decide"
+        },
+        "crane_offer__decide": {
+          "choices": [
+            {
+              "text": "Pell's right. Everyone reads it tonight.",
+              "next": "crane_offer__leak",
+              "do": [
+                "set ending_leak",
+                "set ledger_decided"
+              ]
+            },
+            {
+              "text": "Take it. Mika walks free.",
+              "next": "crane_offer__sell",
+              "do": [
+                "set ending_sale",
+                "set ledger_decided"
+              ]
+            },
+            {
+              "text": "Odile gets it. She'll testify.",
+              "next": "crane_offer__witness",
+              "if": "marrow_trusted",
+              "do": [
+                "set ending_witness",
+                "set ledger_decided"
+              ]
+            }
+          ],
+          "speaker": "Crane",
+          "text": "So. What does it weigh?"
+        },
+        "crane_offer__leak": {
+          "speaker": "Crane",
+          "text": "Then you sold yourself for a headline. I hope it keeps you warm.",
+          "next": "crane_offer__leak_reply"
+        },
+        "crane_offer__leak_reply": {
+          "speaker": "Ines",
+          "text": "It won't. That's fine. I've got a car.",
+          "next": "end"
+        },
+        "crane_offer__sell": {
+          "speaker": "Crane",
+          "text": "Sensible. The book, please. Mika's page is already burning.",
+          "next": "crane_offer__sell_reply"
+        },
+        "crane_offer__sell_reply": {
+          "if": "promised_leak",
+          "else": "crane_offer__sell_quiet",
+          "next": "crane_offer__sell_broken"
+        },
+        "crane_offer__sell_broken": {
+          "speaker": "Ines",
+          "text": "Pell is going to hate me. Add it to the list.",
+          "next": "end"
+        },
+        "crane_offer__sell_quiet": {
+          "speaker": "Ines",
+          "text": "Pleasure doing business. Never call me.",
+          "next": "end"
+        },
+        "crane_offer__witness": {
+          "speaker": "Crane",
+          "text": "A clerk? Odile Marrow? She stamps parcels.",
+          "next": "crane_offer__witness_reply"
+        },
+        "crane_offer__witness_reply": {
+          "speaker": "Ines",
+          "text": "She stamped every one of yours. She remembers.",
+          "next": "end"
+        },
+        "crane__idle": {
+          "speaker": "Augustin Crane",
+          "text": "Everyone in Harrowgate works for me. Most of them just don't know it yet.",
+          "next": "end"
+        }
+      }
+    },
+    "mika": {
+      "start": [
+        {
+          "if": [
+            "quest:low_tide:complete",
+            "!seen:mika_epilogue"
+          ],
+          "node": "mika_epilogue__start"
+        },
+        {
+          "node": "mika__idle"
+        }
+      ],
+      "nodes": {
+        "mika_epilogue__start": {
+          "if": "ending_leak",
+          "else": "mika_epilogue__check_sale",
+          "next": "mika_epilogue__leak",
+          "do": [
+            "set seen:mika_epilogue"
+          ]
+        },
+        "mika_epilogue__check_sale": {
+          "if": "ending_sale",
+          "else": "mika_epilogue__witness",
+          "next": "mika_epilogue__sale"
+        },
+        "mika_epilogue__leak": {
+          "speaker": "Mika",
+          "text": "The ledger's on every screen in Harrowgate. They're arresting harbor police. Harbor police!",
+          "next": "mika_epilogue__family"
+        },
+        "mika_epilogue__sale": {
+          "speaker": "Mika",
+          "text": "Bram came by. He tore up my marker and apologised for the door. Who apologises?",
+          "next": "mika_epilogue__family"
+        },
+        "mika_epilogue__witness": {
+          "if": "ending_witness",
+          "else": "mika_epilogue__family",
+          "next": "mika_epilogue__witness_line"
+        },
+        "mika_epilogue__witness_line": {
+          "speaker": "Mika",
+          "text": "Odile Marrow testified for six hours. The papers call her the Stamp.",
+          "next": "mika_epilogue__family"
+        },
+        "mika_epilogue__family": {
+          "if": "motive_family",
+          "else": "mika_epilogue__money",
+          "next": "mika_epilogue__thanks"
+        },
+        "mika_epilogue__thanks": {
+          "speaker": "Mika",
+          "text": "You did all that for me. You could have just asked me to stop.",
+          "next": "mika_epilogue__close"
+        },
+        "mika_epilogue__money": {
+          "speaker": "Mika",
+          "text": "Teo says you took the job for the cut. I don't believe him.",
+          "next": "mika_epilogue__close"
+        },
+        "mika_epilogue__close": {
+          "choices": [
+            {
+              "text": "I did ask. You didn't stop.",
+              "next": "end"
+            },
+            {
+              "text": "Get in the car, Mika.",
+              "next": "end"
+            }
+          ]
+        },
+        "mika__idle": {
+          "speaker": "Mika Rook",
+          "text": "I'm not gambling. I'm drawing. Look, it's you.",
+          "next": "end"
+        }
+      }
+    }
+  },
+  "startQuests": [],
+  "autoStart": [
+    "ledger_weight",
+    "low_tide"
+  ],
+  "items": {
+    "blueprint": {
+      "name": "Vault Blueprints"
+    },
+    "relay_chip": {
+      "name": "Relay Chip"
+    },
+    "cash_bundle": {
+      "name": "Cash Bundle"
+    },
+    "ledger": {
+      "name": "The Blue Ledger"
+    }
+  },
+  "landmarks": [
+    {
+      "id": "kettle_street",
+      "kind": "village",
+      "at": "south",
+      "houses": 5
+    },
+    {
+      "id": "crane_yards",
+      "kind": "camp",
+      "at": "east"
+    },
+    {
+      "id": "relay_tower",
+      "kind": "tower",
+      "at": "north",
+      "floors": 8
+    },
+    {
+      "id": "customs_vault",
+      "kind": "ruins",
+      "at": "west"
+    },
+    {
+      "id": "harbor_mouth",
+      "kind": "camp",
+      "at": "southwest"
+    },
+    {
+      "id": "crane_tower",
+      "kind": "tower",
+      "at": "northeast",
+      "floors": 14
+    }
+  ],
+  "initialFlags": {},
+  "externalFlags": [],
+  "barks": {
+    "teo": [
+      "Patience opens more doors than dynamite, friend.",
+      "Eat something. Heists run on noodles."
+    ],
+    "pell": [
+      "Do not touch the blue wire. Or the other blue wire.",
+      "The grid sings at night. I just hum along."
+    ],
+    "crane": [
+      "Everyone in Harrowgate works for me. Most of them just don't know it yet."
+    ],
+    "bram": [
+      "I count, Rook. That's all I do. I count."
+    ],
+    "odile": [
+      "Window closed. Come back with a form."
+    ],
+    "mika": [
+      "I'm not gambling. I'm drawing. Look, it's you."
+    ]
+  },
+  "ending": {
+    "quests": [
+      "cold_engine",
+      "ghost_wire",
+      "collectors",
+      "inside_man",
+      "regatta",
+      "ledger_weight",
+      "low_tide"
+    ],
+    "title": "Low Tide",
+    "text": "The tide goes out on Harrowgate, and for once the Rooks are not wearing blue."
+  },
+  "acts": [
+    {
+      "id": "act1",
+      "title": "Act I — Wearing Blue",
+      "purpose": "Setup: the debt, the job, the crew. Ends when Ines commits to a crew (ghost_wire + collectors).",
+      "missions": [
+        "cold_engine",
+        "ghost_wire",
+        "collectors"
+      ]
+    },
+    {
+      "id": "act2",
+      "title": "Act II — The Inside",
+      "purpose": "Confrontation: the debt is handled one way or another (foldback), the crew needs a way in.",
+      "missions": [
+        "quiet_money",
+        "hard_way",
+        "inside_man"
+      ]
+    },
+    {
+      "id": "act3",
+      "title": "Act III — Lanterns",
+      "purpose": "Climax and resolution: the heist, the decision, the cost.",
+      "missions": [
+        "regatta",
+        "ledger_weight",
+        "low_tide"
+      ]
+    }
+  ],
+  "meta": {
+    "conversations": {
+      "teo_pitch": {
+        "npc": "teo",
+        "mission": "cold_engine",
+        "when": "offer",
+        "once": false,
+        "priority": 11,
+        "entry": "teo_pitch__start",
+        "nodes": [
+          "teo_pitch__start",
+          "teo_pitch__reply",
+          "teo_pitch__pitch",
+          "teo_pitch__family",
+          "teo_pitch__money",
+          "teo_pitch__refuse"
+        ],
+        "local": [
+          "start",
+          "reply",
+          "pitch",
+          "family",
+          "money",
+          "refuse"
+        ]
+      },
+      "teo_wait": {
+        "npc": "teo",
+        "mission": "cold_engine",
+        "when": "active",
+        "once": false,
+        "priority": 12,
+        "entry": "teo_wait__start",
+        "nodes": [
+          "teo_wait__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "teo_plans": {
+        "npc": "teo",
+        "mission": "cold_engine",
+        "when": "complete",
+        "once": true,
+        "priority": 13,
+        "entry": "teo_plans__start",
+        "nodes": [
+          "teo_plans__start",
+          "teo_plans__pell",
+          "teo_plans__gentle",
+          "teo_plans__parked"
+        ],
+        "local": [
+          "start",
+          "pell",
+          "gentle",
+          "parked"
+        ]
+      },
+      "pell_meet": {
+        "npc": "pell",
+        "mission": "ghost_wire",
+        "when": "offer",
+        "once": false,
+        "priority": 21,
+        "entry": "pell_meet__start",
+        "nodes": [
+          "pell_meet__start",
+          "pell_meet__taller",
+          "pell_meet__ask",
+          "pell_meet__leak",
+          "pell_meet__sale"
+        ],
+        "local": [
+          "start",
+          "taller",
+          "ask",
+          "leak",
+          "sale"
+        ]
+      },
+      "pell_wait": {
+        "npc": "pell",
+        "mission": "ghost_wire",
+        "when": "active",
+        "once": false,
+        "priority": 22,
+        "entry": "pell_wait__start",
+        "nodes": [
+          "pell_wait__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "pell_done": {
+        "npc": "pell",
+        "mission": "ghost_wire",
+        "when": "complete",
+        "once": true,
+        "priority": 23,
+        "entry": "pell_done__start",
+        "nodes": [
+          "pell_done__start",
+          "pell_done__seven"
+        ],
+        "local": [
+          "start",
+          "seven"
+        ]
+      },
+      "bram_corner": {
+        "npc": "bram",
+        "mission": "collectors",
+        "when": "offer",
+        "once": false,
+        "priority": 31,
+        "entry": "bram_corner__start",
+        "nodes": [
+          "bram_corner__start",
+          "bram_corner__count",
+          "bram_corner__pay",
+          "bram_corner__fight"
+        ],
+        "local": [
+          "start",
+          "count",
+          "pay",
+          "fight"
+        ]
+      },
+      "bram_wait": {
+        "npc": "bram",
+        "mission": "quiet_money",
+        "when": "active",
+        "once": false,
+        "priority": 42,
+        "entry": "bram_wait__start",
+        "nodes": [
+          "bram_wait__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "bram_paid": {
+        "npc": "bram",
+        "mission": "quiet_money",
+        "when": "complete",
+        "once": true,
+        "priority": 43,
+        "entry": "bram_paid__start",
+        "nodes": [
+          "bram_paid__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "bram_brawl": {
+        "npc": "bram",
+        "mission": "hard_way",
+        "when": "active",
+        "once": false,
+        "priority": 52,
+        "entry": "bram_brawl__start",
+        "nodes": [
+          "bram_brawl__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "bram_beaten": {
+        "npc": "bram",
+        "mission": "hard_way",
+        "when": "complete",
+        "once": true,
+        "priority": 53,
+        "entry": "bram_beaten__start",
+        "nodes": [
+          "bram_beaten__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "odile_meet": {
+        "npc": "odile",
+        "mission": "inside_man",
+        "when": "offer",
+        "once": false,
+        "priority": 61,
+        "entry": "odile_meet__start",
+        "nodes": [
+          "odile_meet__start",
+          "odile_meet__stamp",
+          "odile_meet__offer",
+          "odile_meet__threat",
+          "odile_meet__trust"
+        ],
+        "local": [
+          "start",
+          "stamp",
+          "offer",
+          "threat",
+          "trust"
+        ]
+      },
+      "odile_wait": {
+        "npc": "odile",
+        "mission": "inside_man",
+        "when": "active",
+        "once": false,
+        "priority": 62,
+        "entry": "odile_wait__start",
+        "nodes": [
+          "odile_wait__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "odile_pass": {
+        "npc": "odile",
+        "mission": "inside_man",
+        "when": "complete",
+        "once": true,
+        "priority": 63,
+        "entry": "odile_pass__start",
+        "nodes": [
+          "odile_pass__start",
+          "odile_pass__warm",
+          "odile_pass__cold"
+        ],
+        "local": [
+          "start",
+          "warm",
+          "cold"
+        ]
+      },
+      "teo_brief": {
+        "npc": "teo",
+        "mission": "regatta",
+        "when": "offer",
+        "once": false,
+        "priority": 71,
+        "entry": "teo_brief__start",
+        "nodes": [
+          "teo_brief__start",
+          "teo_brief__plan",
+          "teo_brief__plan_risk",
+          "teo_brief__plan_door",
+          "teo_brief__go",
+          "teo_brief__hands"
+        ],
+        "local": [
+          "start",
+          "plan",
+          "plan_risk",
+          "plan_door",
+          "go",
+          "hands"
+        ]
+      },
+      "teo_heist": {
+        "npc": "teo",
+        "mission": "regatta",
+        "when": "active",
+        "once": false,
+        "priority": 72,
+        "entry": "teo_heist__start",
+        "nodes": [
+          "teo_heist__start",
+          "teo_heist__hot",
+          "teo_heist__calm"
+        ],
+        "local": [
+          "start",
+          "hot",
+          "calm"
+        ]
+      },
+      "pell_heist": {
+        "npc": "pell",
+        "mission": "regatta",
+        "when": "active",
+        "once": false,
+        "priority": 72,
+        "entry": "pell_heist__start",
+        "nodes": [
+          "pell_heist__start",
+          "pell_heist__doubt",
+          "pell_heist__sure"
+        ],
+        "local": [
+          "start",
+          "doubt",
+          "sure"
+        ]
+      },
+      "teo_after": {
+        "npc": "teo",
+        "mission": "regatta",
+        "when": "complete",
+        "once": true,
+        "priority": 73,
+        "entry": "teo_after__start",
+        "nodes": [
+          "teo_after__start",
+          "teo_after__wheel"
+        ],
+        "local": [
+          "start",
+          "wheel"
+        ]
+      },
+      "crane_offer": {
+        "npc": "crane",
+        "mission": "ledger_weight",
+        "when": "active",
+        "once": false,
+        "priority": 82,
+        "entry": "crane_offer__start",
+        "nodes": [
+          "crane_offer__start",
+          "crane_offer__leverage",
+          "crane_offer__mika",
+          "crane_offer__price",
+          "crane_offer__paid",
+          "crane_offer__paid_line",
+          "crane_offer__decide",
+          "crane_offer__leak",
+          "crane_offer__leak_reply",
+          "crane_offer__sell",
+          "crane_offer__sell_reply",
+          "crane_offer__sell_broken",
+          "crane_offer__sell_quiet",
+          "crane_offer__witness",
+          "crane_offer__witness_reply"
+        ],
+        "local": [
+          "start",
+          "leverage",
+          "mika",
+          "price",
+          "paid",
+          "paid_line",
+          "decide",
+          "leak",
+          "leak_reply",
+          "sell",
+          "sell_reply",
+          "sell_broken",
+          "sell_quiet",
+          "witness",
+          "witness_reply"
+        ]
+      },
+      "mika_epilogue": {
+        "npc": "mika",
+        "mission": "low_tide",
+        "when": "complete",
+        "once": true,
+        "priority": 93,
+        "entry": "mika_epilogue__start",
+        "nodes": [
+          "mika_epilogue__start",
+          "mika_epilogue__check_sale",
+          "mika_epilogue__leak",
+          "mika_epilogue__sale",
+          "mika_epilogue__witness",
+          "mika_epilogue__witness_line",
+          "mika_epilogue__family",
+          "mika_epilogue__thanks",
+          "mika_epilogue__money",
+          "mika_epilogue__close"
+        ],
+        "local": [
+          "start",
+          "check_sale",
+          "leak",
+          "sale",
+          "witness",
+          "witness_line",
+          "family",
+          "thanks",
+          "money",
+          "close"
+        ]
+      }
+    },
+    "undefinedTargets": [],
+    "missionOrder": [
+      "cold_engine",
+      "ghost_wire",
+      "collectors",
+      "quiet_money",
+      "hard_way",
+      "inside_man",
+      "regatta",
+      "ledger_weight",
+      "low_tide"
+    ],
+    "flagDocs": {
+      "motive_family": {
+        "id": "motive_family",
+        "desc": "Ines took the job for Mika",
+        "mission": "cold_engine"
+      },
+      "motive_money": {
+        "id": "motive_money",
+        "desc": "Ines took the job for the money",
+        "mission": "cold_engine"
+      }
+    },
+    "convByMission": {
+      "cold_engine": [
+        "teo_pitch",
+        "teo_wait",
+        "teo_plans"
+      ],
+      "ghost_wire": [
+        "pell_meet",
+        "pell_wait",
+        "pell_done"
+      ],
+      "collectors": [
+        "bram_corner"
+      ],
+      "quiet_money": [
+        "bram_wait",
+        "bram_paid"
+      ],
+      "hard_way": [
+        "bram_brawl",
+        "bram_beaten"
+      ],
+      "inside_man": [
+        "odile_meet",
+        "odile_wait",
+        "odile_pass"
+      ],
+      "regatta": [
+        "teo_brief",
+        "teo_heist",
+        "pell_heist",
+        "teo_after"
+      ],
+      "ledger_weight": [
+        "crane_offer"
+      ],
+      "low_tide": [
+        "mika_epilogue"
+      ]
+    },
+    "convs": [
+      {
+        "id": "teo_pitch",
+        "npc": "teo",
+        "mission": "cold_engine",
+        "entry": "teo_pitch__start"
+      },
+      {
+        "id": "teo_wait",
+        "npc": "teo",
+        "mission": "cold_engine",
+        "entry": "teo_wait__start"
+      },
+      {
+        "id": "teo_plans",
+        "npc": "teo",
+        "mission": "cold_engine",
+        "entry": "teo_plans__start"
+      },
+      {
+        "id": "pell_meet",
+        "npc": "pell",
+        "mission": "ghost_wire",
+        "entry": "pell_meet__start"
+      },
+      {
+        "id": "pell_wait",
+        "npc": "pell",
+        "mission": "ghost_wire",
+        "entry": "pell_wait__start"
+      },
+      {
+        "id": "pell_done",
+        "npc": "pell",
+        "mission": "ghost_wire",
+        "entry": "pell_done__start"
+      },
+      {
+        "id": "bram_corner",
+        "npc": "bram",
+        "mission": "collectors",
+        "entry": "bram_corner__start"
+      },
+      {
+        "id": "bram_wait",
+        "npc": "bram",
+        "mission": "quiet_money",
+        "entry": "bram_wait__start"
+      },
+      {
+        "id": "bram_paid",
+        "npc": "bram",
+        "mission": "quiet_money",
+        "entry": "bram_paid__start"
+      },
+      {
+        "id": "bram_brawl",
+        "npc": "bram",
+        "mission": "hard_way",
+        "entry": "bram_brawl__start"
+      },
+      {
+        "id": "bram_beaten",
+        "npc": "bram",
+        "mission": "hard_way",
+        "entry": "bram_beaten__start"
+      },
+      {
+        "id": "odile_meet",
+        "npc": "odile",
+        "mission": "inside_man",
+        "entry": "odile_meet__start"
+      },
+      {
+        "id": "odile_wait",
+        "npc": "odile",
+        "mission": "inside_man",
+        "entry": "odile_wait__start"
+      },
+      {
+        "id": "odile_pass",
+        "npc": "odile",
+        "mission": "inside_man",
+        "entry": "odile_pass__start"
+      },
+      {
+        "id": "teo_brief",
+        "npc": "teo",
+        "mission": "regatta",
+        "entry": "teo_brief__start"
+      },
+      {
+        "id": "teo_heist",
+        "npc": "teo",
+        "mission": "regatta",
+        "entry": "teo_heist__start"
+      },
+      {
+        "id": "pell_heist",
+        "npc": "pell",
+        "mission": "regatta",
+        "entry": "pell_heist__start"
+      },
+      {
+        "id": "teo_after",
+        "npc": "teo",
+        "mission": "regatta",
+        "entry": "teo_after__start"
+      },
+      {
+        "id": "crane_offer",
+        "npc": "crane",
+        "mission": "ledger_weight",
+        "entry": "crane_offer__start"
+      },
+      {
+        "id": "mika_epilogue",
+        "npc": "mika",
+        "mission": "low_tide",
+        "entry": "mika_epilogue__start"
+      }
+    ]
+  },
+  "world": {
+    "setting": "Harrowgate, a tidal port of container cranes, flooded lower streets and neon fish markets, run by one shipping magnate.",
+    "facts": [
+      "Harrowgate floods at spring tide; the lower districts live on stilts and gangways.",
+      "Augustin Crane owns the container terminal, the tug fleet and three judges.",
+      "Debt markers are written on blue paper; owing Crane is called \"wearing blue\".",
+      "The Lantern Regatta: once a year every boat carries a paper lantern; fireworks start at nine.",
+      "The Customs House vault predates electricity; its dial was made by Teo's old teacher."
+    ],
+    "locations": [
+      {
+        "id": "kettle_street",
+        "name": "Kettle Street",
+        "desc": "Noodle stalls under tarps, steam and rain.",
+        "hooks": [
+          "Ines's car parked under a broken awning, blanket on the back seat",
+          "Blue debt markers pinned to a stall's \"wall of shame\"",
+          "A noodle stall with two stools, one always kept for Teo"
+        ]
+      },
+      {
+        "id": "crane_yards",
+        "name": "Crane Yards",
+        "desc": "Container stacks, sodium lights, a yard office on stilts.",
+        "hooks": [
+          "Containers stencilled with Crane's heron logo",
+          "A guard rota chalked on a whiteboard",
+          "Tyre marks where the last debtor tried to drive away"
+        ]
+      },
+      {
+        "id": "relay_tower",
+        "name": "Saltline Relay",
+        "desc": "A rusting radio mast Pell has turned into a home.",
+        "hooks": [
+          "Cables strung like laundry",
+          "Pell's hand-painted sign: \"nothing here works (on purpose)\"",
+          "Relay chips glinting in puddles below the mast"
+        ]
+      },
+      {
+        "id": "customs_vault",
+        "name": "Customs House",
+        "desc": "A grand old customs hall, half archive, half fortress.",
+        "hooks": [
+          "Parcels stamped twice: once by customs, once by Crane",
+          "Odile's window with a child's drawing taped inside",
+          "Service door with fresh oil on its hinges"
+        ]
+      },
+      {
+        "id": "harbor_mouth",
+        "name": "Harbor Mouth",
+        "desc": "Where the lantern boats leave the harbor; the escape route.",
+        "hooks": [
+          "Lantern boats bumping hulls",
+          "A drawbridge operator asleep in his booth"
+        ]
+      },
+      {
+        "id": "crane_tower",
+        "name": "Crane Tower",
+        "desc": "Glass office above the terminal; Crane's view of everything he owns.",
+        "hooks": [
+          "A heron sculpture made of melted debt-marker pins",
+          "Floor-to-ceiling window overlooking the flooded districts"
+        ]
+      }
+    ]
+  }
+}

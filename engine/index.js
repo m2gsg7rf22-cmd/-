@@ -32,6 +32,7 @@ export { ThirdPersonCamera, ChaseCamera, CinematicCamera, CameraShake } from './
 export { BehaviorTree, bt, Sequence, Selector, Parallel, Condition, Action, Wait, Cooldown, StateMachine, Steering, NavGrid, Perception, SUCCESS, FAILURE, RUNNING } from './ai/behavior.js';
 export { Health, Stamina, meleeSweep, ComboSystem, ProjectileSystem, Inventory, Progression, Entities } from './gameplay/systems.js';
 export { Flags, QuestSystem, DialogueSystem, parseDialogue, Mission } from './gameplay/narrative.js';
+export { compileStory, analyzeStory, simulatePlaythrough, applyStoryToSpec, STORY_FORMAT } from './gameplay/story.js';
 export { AudioEngine, MusicSequencer, MOODS, SFX_NAMES } from './audio/audio.js';
 export { UI, DEFAULT_SETTINGS } from './ui/ui.js';
 export { Actor, NPC, Enemy, ENEMY_TYPES, AttackTokens, separateActors } from './gameplay/actors.js';
