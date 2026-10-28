@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge model review</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#1b1d22}#c{position:fixed;inset:0}
+.lbl{position:fixed;color:#cfd6e0;font:600 14px system-ui;background:#0008;padding:3px 8px;border-radius:4px}</style></head>
+<body><div id="c"></div>
+<script type="module">
+// Model review sheet: 4 synchronized views of a model script (front, right, 3/4, top) with a 1 m
+// grid and a 1.75 m human-scale silhouette. ?model=<url of *.model.js>&params=<json>&ref=0&t=<hour>
+import * as THREE from '../engine/vendor/three/three.module.js';
+import { createRenderer } from '../engine/render/renderer.js';
+import { Atmosphere } from '../engine/render/sky.js';
+import { K } from '../engine/modeling/index.js';
+const q = new URLSearchParams(location.search);
+const mod = await import(q.get('model'));
+const params = q.get('params') ? JSON.parse(q.get('params')) : {};
+const R = createRenderer({ container: document.getElementById('c') });
+const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 5000);
+R.setup(scene, camera);
+const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || 14.5), sunAzimuth: 150 });
+if (scene.fog) scene.fog = null;
+const obj = await mod.default(K, params);
+scene.add(obj); obj.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+obj.updateMatrixWorld(true);
+const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+const radius = Math.max(size.x, size.y, size.z, 0.05);
+// floor grid (1 m, or 10 cm for small objects)
+const cellSize = radius < 1.5 ? 0.1 : radius > 60 ? 10 : 1, ext = Math.ceil(radius * 3 / cellSize) * cellSize;
+const grid = new THREE.GridHelper(ext * 2, Math.round(ext * 2 / cellSize), 0x666a73, 0x3a3d44); grid.position.set(ctr.x, Math.min(0, box.min.y) - 0.001, ctr.z); scene.add(grid);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(ext * 2, ext * 2), new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 1 })); floor.rotation.x = -Math.PI / 2; floor.position.copy(grid.position).y -= 0.002; floor.receiveShadow = true; scene.add(floor);
+// 1.75 m human-scale reference
+if (q.get('ref') !== '0' && radius > 0.3 && radius < 80) {
+  const ref = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: 0x8a93a0, roughness: 0.8, transparent: true, opacity: 0.55 });
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 1.2, 4, 12), m); body.position.y = 0.77; ref.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), m); head.position.y = 1.64; ref.add(head);
+  ref.position.set(box.min.x - 0.35, Math.min(0, box.min.y), box.min.z - 0.35); scene.add(ref); // back-left corner: never occludes front/right views
+}
+atm.setFocus(ctr);
+const W = innerWidth, H = innerHeight, views = [
+  ['front', new THREE.Vector3(0, 0.15, 1)], ['right', new THREE.Vector3(1, 0.15, 0)], ['3/4', new THREE.Vector3(-0.8, 0.55, 0.9)], ['top', new THREE.Vector3(0.001, 1, 0.002)],
+];
+R.renderer.setScissorTest(true); R.renderer.autoClear = true;
+function draw() {
+  views.forEach(([name, dir], i) => {
+    const x = (i % 2) * W / 2, y = (i < 2 ? H / 2 : 0);
+    R.renderer.setViewport(x, y, W / 2, H / 2); R.renderer.setScissor(x, y, W / 2, H / 2);
+    camera.aspect = W / H; camera.updateProjectionMatrix();
+    const dist = radius * 0.62 / Math.tan((camera.fov * Math.PI) / 360) + radius * 0.6;
+    camera.position.copy(ctr).addScaledVector(dir.clone().normalize(), dist); camera.lookAt(ctr);
+    R.renderer.render(scene, camera);
+  });
+}
+['front', 'right', '3/4', 'top'].forEach((n, i) => { const d = document.createElement('div'); d.className = 'lbl'; d.textContent = n; d.style.left = (i % 2 ? W / 2 : 0) + 8 + 'px'; d.style.top = (i < 2 ? 0 : H / 2) + 8 + 'px'; document.body.appendChild(d); });
+const info = document.createElement('div'); info.className = 'lbl'; info.style.right = '8px'; info.style.bottom = '8px';
+info.textContent = `${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m · grid ${cellSize} m`; document.body.appendChild(info);
+let frames = 0; function loop() { if (window.__pause) return; draw(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
+</script></body></html>

@@ -171,6 +171,7 @@ async function cmdShot(dir) {
 
 const main = {
   async doctor() { await cmdDoctor(); },
+  async model() { const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), glb: flag('glb') }); if (!m.ok) process.exitCode = 1; },
   async new() { await cmdNew(); },
   async gdd() { const d = path.resolve(positional[0] || '.'); fs.writeFileSync(path.join(d, 'GDD.md'), generateGDD(await loadSpec(d))); console.log('  wrote GDD.md'); },
   async plan() { const d = path.resolve(positional[0] || '.'); const g = generateTasks(await loadSpec(d)); const v = validateTasks(g); fs.writeFileSync(path.join(d, 'tasks.json'), JSON.stringify(g, null, 2)); console.log(`  wrote tasks.json: ${g.tasks.length} tasks, ${g.waves} waves, valid=${v.ok}`); for (let w = 0; w < g.waves; w++) console.log(`   wave ${w}: ${g.tasks.filter((t) => t.wave === w).map((t) => `${t.id}(${t.role})`).join(', ')}`); if (!v.ok) { console.log(v.errors.join('\n')); process.exitCode = 1; } },

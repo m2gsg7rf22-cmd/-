@@ -8,7 +8,7 @@
 | Game Director | `game-director` | game.spec.js, GDD.md, tasks.json, README.md | every task done or explicitly blocked with reason |
 | Game Designer | `game-designer` | game.spec.js (design fields), GDD.md | spec validates |
 | Narrative Director | `narrative-director` | src/story.js | all dialogue paths reach end (walk them with DialogueSystem in node) |
-| 3D Artist | `3d-artist` | src/assets.js | validateObject ok for all assets |
+| 3D Artist | `3d-artist` | src/assets.js, assets/ | every asset has a review sheet that was inspected |
 | Material Artist | `material-artist` | src/materials.js | ≥4 distinct materials in gameplay frame |
 | World Builder | `world-builder` | src/world.js | player spawns grounded |
 | Character Director | `character-director` | src/characters.js | player distinguishable from all NPCs/enemies in screenshots |
@@ -56,12 +56,12 @@ Writes the story, characters, branching dialogue (GameForge dialogue script), qu
 - **Accept:** all dialogue paths reach end (walk them with DialogueSystem in node); quest chain completes in playtest; no copyrighted names/characters
 
 ## 3D Artist (`3d-artist`)
-Builds procedural meshes: hero props, signature landmarks, weapons, vehicles variants and set dressing using loft/lathe/tube/MeshBuilder; validates geometry.
+Creates any 3D asset the game needs as model scripts with the Modeling Kit (SDF sculpting, L-system/space-colonization branching, alpha cards, lathe/loft/tube, hard-surface) and proves quality with the gameforge model review loop — see references/modeling.md.
 
-- **Inputs:** Art direction, asset list in GDD §9.
-- **Outputs:** src/assets.js generators + placement; GLB exports on request.
-- **Owns:** src/assets.js
-- **Accept:** validateObject ok for all assets; hero assets visible in a screenshot; draw calls within budget
+- **Inputs:** Asset list with real-world sizes, style and budgets from the GDD.
+- **Outputs:** assets/<name>.model.js scripts + review/<name>.views.jpg sheets; src/assets.js wiring (instancing for repeats).
+- **Owns:** src/assets.js, assets/
+- **Accept:** every asset has a review sheet that was inspected; gameforge model checks pass (no FAIL); within triangle budget, ≤ 8 materials; recognisable silhouette at gameplay distance
 
 ## Material Artist (`material-artist`)
 Creates PBR materials, procedural textures and shaders (wind, emissive night lights, custom ShaderMaterial) that match the art direction.
