@@ -35,12 +35,22 @@ list.forEach((w, i) => {
   api.mixer = mixer; if (q.get('expr')) api.setExpression(q.get('expr')); if (q.get('exprs')) api.setExpression(q.get('exprs').split(',')[i] || 'neutral'); if (q.has('noblink')) api.face.nextBlink = 1e9;
 });
 function await_clip(n) { return CLIP_LIBRARY[n]; }
-camera.position.set(+(q.get('cx') || 0), +(q.get('cy') || 1.45), +(q.get('cz') || 6.5));
-camera.lookAt(+(q.get('lx') || 0), +(q.get('ly') || 1.0), 0);
+let cam = camera;
+if (q.has('ortho')) { // orthographic: no perspective distortion across a wide contact sheet
+  const halfW = (list.length * (+(q.get('gap') || 0.85))) / 2 + 0.4, halfH = halfW * innerHeight / innerWidth;
+  cam = new THREE.OrthographicCamera(-halfW, halfW, halfH, -halfH, 0.05, 200); R.setup(scene, cam);
+}
+cam.position.set(+(q.get('cx') || 0), +(q.get('cy') || 1.45), +(q.get('cz') || 6.5));
+cam.lookAt(+(q.get('lx') || 0), +(q.get('ly') || 1.0), 0);
+if (q.has('ortho')) { const h = (cam.top - cam.bottom) / 2, cy = +(q.get('ly') || 1.0); cam.position.y = cy; cam.lookAt(+(q.get('lx') || 0), cy, 0); cam.top = h + 0; cam.bottom = -h; cam.updateProjectionMatrix(); }
 atm.setFocus(new THREE.Vector3());
 if (q.has('nofog')) scene.fog = null; if (q.has('noenv')) { atm.pmrem = null; scene.environment = null; } if (q.has('nosky')) atm.sky.visible = false; if (q.has('nostars')) atm.stars.visible = false;
+const markers = []; const footNames = ['foot.L', 'foot.R', 'toe1-1.L', 'toe1-1.R'];
+if (q.has('contacts')) for (const p of people) for (const n of footNames) { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.004, 16), new THREE.MeshBasicMaterial({ color: 0x22ff66 })); m.visible = false; scene.add(m); markers.push({ p, n, m }); }
+const updateMarkers = () => { const v = new THREE.Vector3(); for (const k of markers) { const b = k.p.userData.bones[k.n]; if (!b) continue; v.setFromMatrixPosition(b.matrixWorld); k.m.position.set(v.x, 0.003, v.z); k.m.visible = v.y < 0.06; } };
+if (q.has('labels')) list.forEach((w, i) => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;bottom:6px;color:#fff;font:600 13px system-ui;background:#000a;padding:2px 6px;border-radius:3px;transform:translateX(-50%)'; d.textContent = q.has('phase') ? 'p=' + (i / list.length).toFixed(3) : w; document.body.appendChild(d); const v = people[i].position.clone().project(cam); d.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; });
 const clock = new THREE.Clock(); let frames = 0;
-function loop() { if (window.__pause) return; const dt = Math.min(clock.getDelta(), 0.05); for (const p of people) { p.userData.mixer.update(dt); p.userData.face.update(dt); } R.render(); window.__frames = ++frames; requestAnimationFrame(loop); }
+function loop() { if (window.__pause) return; const dt = Math.min(clock.getDelta(), 0.05); for (const p of people) { p.userData.mixer.update(dt); p.userData.face.update(dt); } scene.updateMatrixWorld(true); updateMarkers(); R.render(); window.__frames = ++frames; requestAnimationFrame(loop); }
 loop(); window.__stats = () => R.stats();
 </script>
 </body></html>

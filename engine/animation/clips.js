@@ -5,7 +5,7 @@ import * as THREE from '../vendor/three/three.module.js';
 import { BONES } from '../character/humanoid.js';
 
 const S = (x) => Math.sin(x * Math.PI * 2), C = (x) => Math.cos(x * Math.PI * 2);
-const ease = (t) => t * t * (3 - 2 * t);
+const ease = (t) => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); }; // clamped smoothstep
 const seg = (p, a, b) => Math.min(1, Math.max(0, (p - a) / (b - a))); // 0..1 over [a,b]
 const bell = (p, a, m, b) => (p < m ? ease(seg(p, a, m)) : 1 - ease(seg(p, m, b)));
 

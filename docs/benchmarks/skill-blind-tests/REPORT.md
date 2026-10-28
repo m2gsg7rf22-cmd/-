@@ -62,3 +62,27 @@ The agent produced `skills/gameforge/models/scifi-rifle.model.js` (kept as an ex
 - no weapon sizes or budget;
 - no polymer/rubber materials (`K.polymer`, `K.rubber`, `K.chrome`, `K.anodized`, `K.ceramic`);
 - `glass`/`emissive` signatures undocumented.
+
+## Test 3: zombie walk animation (2026-10-28)
+
+The agent produced `skills/gameforge/anims/zombie-walk.anim.js` (kept as an example, now with
+`groundFeet: true`).
+
+| Measure | Result |
+|---|---|
+| Review rounds | 5 (first pass → dragged-toe solver → side effects → posture/arms → limp buckle + footfall events) |
+| Final checks | all pass. With `groundFeet`: sink 0 cm, maximum float 1.2 cm (was 3.5 cm) |
+
+![zombie](zombie.side.jpg)
+
+**Gaps found → fixed:**
+- **Wrong documentation:** the `foot` sign (+ is toes down).
+- `ease` was unclamped (caused huge seam and knee failures);
+- the sheet phase sampling was mis-described;
+- `locomotion` units and `relaxed` signs were undocumented;
+- no foot-planting helper (`groundFeet`);
+- checks didn't say where a problem was (they now name the phase and foot, and the JSON has a
+  per-frame table);
+- grounding check too loose (now ≤ 3 cm every frame);
+- small figures and a misleading perspective camera (now orthographic, 1800 × 1000, phase
+  labels and contact discs).

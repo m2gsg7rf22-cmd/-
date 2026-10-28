@@ -102,7 +102,12 @@ export class Retargeter {
       }
       const rp = this.restHipsPos;
       hips.set([rp.x + (pose.hipsX || 0) * scale, rp.y + (pose.hipsY || 0) * scale, rp.z + (pose.hipsZ || 0) * scale], f * 3);
+      if (def.groundFeet) { // pin the lowest foot/toe to the rest floor level by adjusting hips height (no guessed leg lengths)
+        const dy = this._footLift(local, hips.subarray(f * 3, f * 3 + 3));
+        hips[f * 3 + 1] -= dy * (def.groundFeet === true ? 1 : def.groundFeet);
+      }
     }
+    if (def.groundFeet) this._restorePose();
     const kt = Object.entries(tracks).filter(([b, arr]) => !isConstantRest(arr, this.restLocal[b])).map(([b, arr]) => new THREE.QuaternionKeyframeTrack(`${b}.quaternion`, times, arr));
     if (!boneFilter || boneFilter.has(this.hipsBone)) kt.push(new THREE.VectorKeyframeTrack(`${this.hipsBone}.position`, times, hips));
     const clip = new THREE.AnimationClip(name + suffix, def.duration, kt);
@@ -110,6 +115,28 @@ export class Retargeter {
     return clip;
   }
 }
+// --- ground contact helpers (used by def.groundFeet) ---
+Retargeter.prototype._feetBones = function () {
+  if (this.__feet) return this.__feet;
+  const out = new Set();
+  for (const c of ['foot_L', 'foot_R']) for (const [bn] of this.map[c] || []) { const b = this.bones[bn]; if (b) b.traverse((o) => { if (o.isBone) out.add(o); }); }
+  let top = this.bones[this.hipsBone]; while (top.parent) top = top.parent;
+  this.__top = top; this.__feet = [...out]; top.updateMatrixWorld(true);
+  const v = new THREE.Vector3(); this.__restFootY = Math.min(...this.__feet.map((b) => v.setFromMatrixPosition(b.matrixWorld).y));
+  return this.__feet;
+};
+Retargeter.prototype._footLift = function (local, hipsPos) {
+  const feet = this._feetBones();
+  for (const [b, q] of Object.entries(local)) this.bones[b]?.quaternion.copy(q);
+  this.bones[this.hipsBone].position.set(hipsPos[0], hipsPos[1], hipsPos[2]);
+  this.__top.updateMatrixWorld(true);
+  const v = new THREE.Vector3(); const minY = Math.min(...feet.map((b) => v.setFromMatrixPosition(b.matrixWorld).y));
+  return minY - this.__restFootY; // >0: floating, <0: sinking
+};
+Retargeter.prototype._restorePose = function () {
+  for (const [b, q] of Object.entries(this.restLocal)) this.bones[b].quaternion.copy(q);
+  this.bones[this.hipsBone].position.copy(this.restHipsPos); this.__top?.updateMatrixWorld(true);
+};
 function isConstantRest(arr, rest) { for (let i = 0; i < arr.length; i += 4) if (Math.abs(arr[i] - rest.x) + Math.abs(arr[i + 1] - rest.y) + Math.abs(arr[i + 2] - rest.z) + Math.abs(arr[i + 3] - rest.w) > 1e-5) return false; return true; }
 
 // ---------------- BVH ----------------

@@ -1,12 +1,12 @@
 {
   "game": "Recipes Lab",
   "quality": "low",
-  "startedAt": "2026-10-28T18:55:52.907Z",
+  "startedAt": "2026-10-28T19:28:41.556Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3595 ms"
+      "detail": "3566 ms"
     },
     {
       "label": "lab boots with all recipe modules installed",
@@ -83,8 +83,8 @@
     "screenshots/lab.png"
   ],
   "metrics": {
-    "fps": 5.806077027288554,
-    "frameMs": 7,
+    "fps": 4,
+    "frameMs": 2.8999999994412065,
     "calls": 45,
     "triangles": 124176,
     "geometries": 46,
@@ -98,7 +98,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 3595,
-  "durationMs": 24535,
+  "loadMs": 3566,
+  "durationMs": 24347,
   "summary": "15/15 checks passed"
 }

@@ -1,12 +1,12 @@
 {
   "game": "Lantern Isle",
   "quality": "low",
-  "startedAt": "2026-10-28T18:53:33.009Z",
+  "startedAt": "2026-10-28T19:26:27.450Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "5584 ms"
+      "detail": "3502 ms"
     },
     {
       "label": "title menu on boot",
@@ -29,7 +29,7 @@
       "detail": {
         "mean": 122.2,
         "std": 39.4,
-        "colors": 122
+        "colors": 118
       }
     },
     {
@@ -151,8 +151,8 @@
     "../../../../../tmp/gf-dist-shots/lantern-isle/05-ending.png"
   ],
   "metrics": {
-    "fps": 4,
-    "frameMs": 6,
+    "fps": 5.807200929152164,
+    "frameMs": 11.400000000372529,
     "calls": 45,
     "triangles": 283769,
     "geometries": 169,
@@ -166,7 +166,7 @@
   "errors": [],
   "passed": true,
   "url": "file://lantern-isle.html",
-  "loadMs": 5584,
-  "durationMs": 52436,
+  "loadMs": 3502,
+  "durationMs": 47034,
   "summary": "27/27 checks passed"
 }

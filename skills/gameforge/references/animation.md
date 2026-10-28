@@ -20,8 +20,20 @@ To review a script:
 node $GF/tools/gameforge.mjs anim anims/overhead-slash.anim.js [--phases 8]
 ```
 
-The command prints checks and writes `review/<name>.side.jpg` and `review/<name>.front.jpg`: 8
-phases from p = 0 on the left to p = 1 on the right. **Open both images and critique them.**
+The command prints checks and writes `review/<name>.side.jpg` and `review/<name>.front.jpg`.
+Each sheet shows `--phases` N figures (default 8) at p = i/N, i.e. 0, 0.125, …, 0.875. p = 1
+equals p = 0 for loops. The sheets use an orthographic camera, so there is no perspective
+distortion: a forward reach really is a forward reach. Each figure is labelled with its p, and
+green discs mark feet within 6 cm of the floor. **Open both images and critique them.** The
+checks name the phase and foot of the worst value. The metrics JSON has a `frames` table (p,
+footL, footR, hipsY) for 61 samples, so you can find moments that fall between sheet phases.
+
+**`groundFeet: true`** pins the lowest foot or toe to the floor on every frame by adjusting the
+hips height automatically. Use it for walks, idles, stances and anything else that keeps a foot
+down. You no longer need to guess leg lengths to avoid floating or sinking. Leave it off for
+jumps and airborne moves (and set `airborne: true`). In-place locomotion makes a planted foot
+slide backward at walk speed; that is expected, because the character controller moves the
+body.
 
 To register the clip in a game, call `defineClip('overheadSlash', def)` from
 `engine/animation/clips.js`. After that, every `Animator` and every realistic human plays it
@@ -34,27 +46,29 @@ character's left, and all angles are degrees relative to the relaxed rest pose.
 
 | Joint key | x | y | z |
 |---|---|---|---|
-| `hips` (also `hipsX/Y/Z` offsets in metres) | pelvis tilt | turn | sway |
+| `hips` (also `hipsX/Y/Z` offsets in metres: **hipsY + raises the body**, hipsX + = towards the character's left) | pelvis tilt | turn | sway |
 | `spine`, `chest` | **+ = bend forward** | twist | side bend |
 | `neck`, `head` | + = nod down | **+ = turn** | tilt |
 | `upperLeg_L/R` | **− = leg forward (hip flexion)**, + = leg back | twist | `_L`: + = out (abduction); `_R`: − = out |
 | `lowerLeg_L/R` | **+ = knee flexion (only bend this way)** | — | — |
-| `foot_L/R` | + = toes up | — | — |
+| `foot_L/R` | **+ = toes DOWN (plantar flexion), − = toes up** (both feet) | — | — |
 | `shoulder_L/R` (clavicle) | shrug forward/back | — | raise |
 | `upperArm_L/R` | **− = arm forward / up in front**, + = arm back | twist | `_L`: + = raise sideways; `_R`: **− = raise sideways** |
 | `lowerArm_L/R` | **− = elbow flexion (only bend this way)** | forearm twist | — |
 | `hand_L/R` | wrist flex | — | wrist side |
+
+Clip options: `duration`, `loop`, `groundFeet`, `airborne`, `events: [{ t, name }]` (t in 0..1).
 
 Helpers (passed to your default export):
 
 | Helper | Meaning |
 |---|---|
 | `S(p)`, `C(p)` | sine / cosine of one full cycle per unit of p |
-| `ease(t)` | smoothstep |
+| `ease(t)` | smoothstep, clamped to 0..1 |
 | `seg(p, a, b)` | 0 → 1 over [a, b] |
 | `bell(p, a, m, b)` | 0 → 1 → 0 rising over [a, m] and falling over [m, b] |
-| `relaxed(o)` | natural arm hang merged with your overrides |
-| `locomotion(p, { stride, knee, arm, elbow, bob, lean, twist })` | a full walk/run cycle you can layer on |
+| `relaxed(o)` | natural arm hang merged with your overrides. It sets `upperArm_L` z −4 and `upperArm_R` z +4, which means slightly *lowered* toward the body |
+| `locomotion(p, { stride = 25, knee = 40, arm = 18, elbow = 12, bob = 0.03, lean = 4, twist = 6, kick = 0 })` | a full walk/run cycle you can layer on. All values are **degrees** except `bob`, which is metres |
 
 ## The method (how an animator works)
 
@@ -90,6 +104,14 @@ Helpers (passed to your default export):
 5. **Weight:** the hips dip on landings and impacts, and the torso counter-rotates on swings.
 6. **Gameplay:** the hit `events` happen at the visual contact frame, and recovery returns close
    to idle so blending looks clean.
+
+## Common pitfalls (found in blind tests)
+
+- Use `seg()`/`bell()` to build 0..1 ramps. Do not feed raw `p` arithmetic into easing.
+- For a planted or dragged foot, combine `groundFeet: true` with a fixed `foot` angle instead
+  of solving leg geometry yourself.
+- Check sign conventions with a one-joint probe clip, e.g.
+  `pose: () => ({ foot_R: [30, 0, 0] })` with `--phases 1`. Don't assume them.
 
 ## Motion capture
 

@@ -1,12 +1,12 @@
 {
   "game": "Ashen Vale",
   "quality": "low",
-  "startedAt": "2026-10-28T18:51:05.828Z",
+  "startedAt": "2026-10-28T19:24:08.325Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "5553 ms"
+      "detail": "5139 ms"
     },
     {
       "label": "title menu is shown on boot",
@@ -27,7 +27,7 @@
       "label": "gameplay frame is rendered (not blank)",
       "ok": true,
       "detail": {
-        "mean": 74.4,
+        "mean": 74.3,
         "std": 52.5,
         "colors": 122
       }
@@ -125,8 +125,8 @@
     "../../../../../tmp/gf-dist-shots/ashen-vale/04-victory.png"
   ],
   "metrics": {
-    "fps": 5.625351584473999,
-    "frameMs": 4.300000000279397,
+    "fps": 30.70053028188643,
+    "frameMs": 3.599999999627471,
     "calls": 73,
     "triangles": 472399,
     "geometries": 368,
@@ -140,7 +140,7 @@
   "errors": [],
   "passed": true,
   "url": "file://ashen-vale.html",
-  "loadMs": 5553,
-  "durationMs": 93551,
+  "loadMs": 5139,
+  "durationMs": 87646,
   "summary": "22/22 checks passed"
 }
