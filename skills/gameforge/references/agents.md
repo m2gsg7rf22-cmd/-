@@ -7,7 +7,7 @@
 |---|---|---|---|
 | Game Director | `game-director` | game.spec.js, GDD.md, tasks.json, README.md | every task done or explicitly blocked with reason |
 | Game Designer | `game-designer` | game.spec.js (design fields), GDD.md | spec validates |
-| Narrative Director | `narrative-director` | src/story.js | all dialogue paths reach end (walk them with DialogueSystem in node) |
+| Narrative Director | `narrative-director` | story/, src/story.js | gameforge story: no FAIL; every branch playable to the ending in simulation |
 | 3D Artist | `3d-artist` | src/assets.js, assets/ | every asset has a review sheet that was inspected |
 | Material Artist | `material-artist` | src/materials.js | ≥4 distinct materials in gameplay frame |
 | World Builder | `world-builder` | src/world.js | player spawns grounded |
@@ -48,12 +48,12 @@ Designs mechanics, rules, progression, difficulty and tuning numbers; maintains 
 - **Accept:** spec validates; each mechanic has a testable statement; no TBD left in GDD §2 and §7
 
 ## Narrative Director (`narrative-director`)
-Writes the story, characters, branching dialogue (GameForge dialogue script), quest chains and cutscene beats. Original IP only.
+Writes the story as a story script (premise, themes, cast with want/need/flaw/arc/voice, acts, missions, branching dialogue, flags, environmental storytelling hooks) and proves it with the gameforge story review loop (graph image, story bible, simulated playthroughs) — see references/narrative.md. Original IP only.
 
-- **Inputs:** Spec premise, NPC list, quest goals.
-- **Outputs:** src/story.js (dialogue.define, quests, cinematics), story text in GDD §4.
-- **Owns:** src/story.js
-- **Accept:** all dialogue paths reach end (walk them with DialogueSystem in node); quest chain completes in playtest; no copyrighted names/characters
+- **Inputs:** Spec premise, genre, NPC list, quest goals, world layout.
+- **Outputs:** story/<name>.story.js + review/<name>.graph.png + <name>.bible.md; SPEC.story wiring; src/story.js for cutscenes and custom objectives; story text in GDD §4.
+- **Owns:** story/, src/story.js
+- **Accept:** gameforge story: no FAIL; every branch playable to the ending in simulation; graph and bible inspected; main characters have want/need/flaw/arc; quest chain completes in playtest; no copyrighted names/characters
 
 ## 3D Artist (`3d-artist`)
 Creates any 3D asset the game needs as model scripts with the Modeling Kit (SDF sculpting, L-system/space-colonization branching, alpha cards, lathe/loft/tube, hard-surface) and proves quality with the gameforge model review loop — see references/modeling.md.

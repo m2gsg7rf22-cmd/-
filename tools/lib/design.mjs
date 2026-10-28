@@ -37,9 +37,9 @@ ${list(spec.landmarks, (l) => `  - ${l.id || l.kind} (${l.kind}) at ${l.at || `$
 ## 4. Story, characters and missions
 - **Premise:** ${spec.story?.premise || spec.pitch || 'TBD'}
 - **Characters:**
-${list(spec.npcs, (n) => `  - **${n.name}** (${n.id}) — ${n.role || 'NPC'}${n.dialogue ? ', has dialogue' : ''}`)}
+${list(spec.story?.characters || spec.npcs, (n) => `  - **${n.name}** (${n.id}) — ${n.role || 'NPC'}${n.want ? `; wants: ${n.want}` : ''}${n.dialogue ? ', has dialogue' : ''}`)}
 - **Quests / missions:**
-${list(spec.quests, (q) => `  - **${q.title}** — ${q.description || ''} Objectives: ${q.objectives.map((o) => o.text).join('; ')}`)}
+${spec.story ? `  - Story script: ${spec.story.title || spec.story.id} — review with \`gameforge story <file.story.js>\` (graph + story bible)\n` : ''}${list(spec.quests?.length ? spec.quests : (spec.story?.missions || (spec.story?.acts || []).flatMap((a) => (a.missions || []).filter((m) => typeof m === 'object'))), (q) => `  - **${q.title}** — ${q.description || q.summary || ''} Objectives: ${(q.objectives || []).map((o) => o.text).join('; ')}`)}
 
 ## 5. Art direction
 - **Style:** ${spec.art?.style || 'stylized-realistic PBR, readable silhouettes, procedural textures'}
@@ -88,7 +88,7 @@ ${(spec.acceptance || []).map((a) => `- [ ] ${a}`).join('\n')}
 export const ROLES = ['game-director', 'game-designer', 'narrative-director', '3d-artist', 'material-artist', 'world-builder', 'character-director', 'animation-director', 'gameplay-engineer', 'graphics-engineer', 'physics-engineer', 'ai-engineer', 'audio-director', 'ui-ux-designer', 'qa-engineer', 'performance-engineer', 'integration-engineer'];
 
 export function generateTasks(spec) {
-  const hasStory = (spec.npcs?.length || 0) + (spec.quests?.length || 0) > 0;
+  const hasStory = (spec.npcs?.length || 0) + (spec.quests?.length || 0) > 0 || !!spec.story;
   const hasEnemies = (spec.enemies?.length || 0) > 0;
   const vehicle = spec.player?.mode === 'vehicle' || spec.world?.type === 'city';
   const T = [];
@@ -99,7 +99,7 @@ export function generateTasks(spec) {
   add('assets', '3d-artist', 'Hero props and signature landmark meshes', { deps: ['architecture'], owns: ['src/assets.js'], accept: ['gameforge validate reports no invalid geometry', 'screenshot shows hero assets'], wave: 2 });
   add('graphics', 'graphics-engineer', 'Lighting, sky, post-processing and quality tiers', { deps: ['architecture'], owns: ['src/graphics.js'], accept: ['canvas check passes', 'no blown-out or black frames in screenshots'], wave: 2 });
   add('animation', 'animation-director', 'Custom animation clips and animation event hooks', { deps: ['architecture'], owns: ['src/animation.js'], accept: ['new clips play without errors'], wave: 2 });
-  if (hasStory) add('story', 'narrative-director', 'Dialogue scripts, quest chain, cutscenes', { deps: ['architecture'], owns: ['src/story.js'], accept: ['every dialogue node reachable', 'quest chain completes in playtest'], wave: 2 });
+  if (hasStory) add('story', 'narrative-director', 'Story script (story/*.story.js), branching dialogue, quest chain, cutscenes', { deps: ['architecture'], owns: ['src/story.js', 'story/'], accept: ['gameforge story: no FAIL (every dialogue node reachable, every branch playable to the ending)', 'quest chain completes in playtest'], wave: 2 });
   if (hasEnemies) add('ai', 'ai-engineer', 'Enemy archetypes, behaviour trees, encounter pacing', { deps: ['architecture'], owns: ['src/ai.js'], accept: ['enemies perceive, pursue and attack in playtest', 'enemies can be defeated'], wave: 2 });
   add('audio', 'audio-director', 'Music moods per state, SFX hooks, ambience', { deps: ['architecture'], owns: ['src/audio.js'], accept: ['audioEvents > 0 in playtest metrics'], wave: 2 });
   add('hud', 'ui-ux-designer', 'HUD widgets, menus, accessibility options', { deps: ['architecture'], owns: ['src/hud.js'], accept: ['menu → play → pause → resume works', 'text scale and subtitles settings work'], wave: 2 });

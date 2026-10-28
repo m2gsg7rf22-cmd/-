@@ -46,18 +46,19 @@ export class QuestSystem {
   completed() { return Object.keys(this.state).filter((id) => this.state[id].status === 'complete'); }
   // Report a world event; advances matching objectives of all active quests.
   report(type, target, amount = 1) {
-    let changed = false;
+    let changed = false; const doneNow = [];
     for (const q of this.activeQuests()) {
       const st = this.state[q.id];
       for (const o of this.currentObjectives(q.id)) {
         if (o.type !== type || (o.target && o.target !== target && !(Array.isArray(o.target) && o.target.includes(target)))) continue;
         if (st.done[o.id]) continue;
         st.progress[o.id] = Math.min(o.count || 1, st.progress[o.id] + amount);
-        if (st.progress[o.id] >= (o.count || 1)) { st.done[o.id] = true; this._emit('objective:complete', { quest: q.id, objective: o }); }
+        if (st.progress[o.id] >= (o.count || 1)) { st.done[o.id] = true; doneNow.push(`quest:${q.id}:${o.id}`); this._emit('objective:complete', { quest: q.id, objective: o }); }
         changed = true;
       }
       if (changed) this._tryComplete(q.id);
     }
+    for (const k of doneNow) this.flags.set(k, true); // `quest:<id>:<objective>` is readable in dialogue conditions
     if (changed) this.onUpdate?.();
     return changed;
   }

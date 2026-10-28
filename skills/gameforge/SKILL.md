@@ -41,6 +41,9 @@ needs something specific. Motion works the same way: write `anims/<name>.anim.js
 `node $GF/tools/gameforge.mjs anim <script>` (checks + side/front contact sheets), see `references/animation.md`.
 Sounds: `sounds/<name>.sfx.js` reviewed with `gameforge sound` (spectrogram + checks), see `references/audio.md`.
 Whole scenes: `gameforge scene <file.scene.js>` (aerial + eye-level shots + budgets).
+Story: `story/<name>.story.js` (premise, cast, acts/missions, branching dialogue) reviewed with
+`gameforge story` (graph image, story bible, simulated playthroughs, checks); set `SPEC.story`
+to use it. See `references/narrative.md`.
 
 ## 1. Pipeline (never skip a stage, never confuse design with implementation)
 
@@ -128,6 +131,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 - `references/modeling.md` — **how to create any 3D asset yourself**: model scripts with the Modeling Kit (SDF sculpting, branching, cards, lathe/loft/hard-surface), the `gameforge model` review loop and checklist
 - `references/animation.md` — **authoring any motion yourself**: joint conventions, anim scripts, `gameforge anim` checks + contact sheets, animator's method
 - `references/audio.md` — **designing any sound yourself**: synth voices, layering method, `gameforge sound` (WAV + spectrogram sheet + checks)
+- `references/narrative.md` — **writing story, cast, missions and branching dialogue yourself**: story scripts, `gameforge story` (graph + bible + playthrough simulation + checks), premise→theme→characters→structure→beats→branching→dialogue→quests method, checklist
 - `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/recipes.md` — code recipes: new enemy, boss, vehicle, cutscene, quest, minigame, traversal

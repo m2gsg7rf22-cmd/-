@@ -22,12 +22,13 @@
 | 4 | World Generation | `engine/world/*`, `K.world`, **`gameforge scene`** (מבט־על + 3 צילומים בגובה עיניים + תקציבים), דוגמה `skills/gameforge/scenes/` | playtests + review | ממומש. פערים: שיטת עבודה מפורטת לעולם פתוח, חזיתות מבנים |
 | 5 | Rendering & Materials | `engine/render/*` | canvas checks | ממומש. פערים: SSAO, אמת מידה ויזואלית לסביבה |
 | 6 | Physics & Gameplay | `engine/physics/*`, `engine/gameplay/*` | unit + playtests | ממומש |
-| 7 | Narrative & Quest | `engine/gameplay/narrative.js`, `tools/lib/design.mjs` | unit + playtests | ממומש (פורמט דיאלוג/משימות). פער: מחולל עלילה מתוך spec |
+| 7 | Narrative & Quest | `engine/gameplay/narrative.js`, **`engine/gameplay/story.js`** (מהדר + בודק סיפור), **`tools/story.mjs`** (`gameforge story`: גרף PNG, story bible, סימולציית playthroughs, בדיקות), `references/narrative.md`, דוגמה `skills/gameforge/stories/heist.story.js`, `spec.story` ב־composer | `story.test.mjs` (7) + playtest עשן | **Claude כותב סיפור, דמויות, משימות ודיאלוג מסתעף בעצמו ומאמת אותם**. פער: שיפוט איכות הכתיבה עצמה, cutscenes מתוך הסקריפט |
 | 8 | NPC Intelligence | `engine/ai/behavior.js` | unit | ממומש. פערים: navmesh, לוחות זמנים יומיים |
 | 9 | Audio Generation | `engine/audio/audio.js` (+FM, pluck, defineSfx, רינדור offline), **`gameforge sound`** (WAV + ספקטרוגרמה + בדיקות), `references/audio.md`, דוגמאות ב־`skills/gameforge/sounds/` | review checks | **Claude מעצב צלילים בעצמו** (שיפוט לפי ניתוח, לא שמיעה) |
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | — | ממומש. פער: השוואת פיקסלים מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.3.4**: יכולת נרטיב: פורמט `*.story.js`, מהדר ל־quests + dialogue, `gameforge story` (בדיקות גרף/דגלים/משימות/ענפים/דמויות/קצב/מקוריות + סימולציה), מסמך שיטה ודוגמת שוד מקורית (3 מערכות, 9 משימות, 3 סופים).
 - **v0.3.3**: 3 בדיקות עיוורות עברו (ערבה, רובה, הליכת זומבי), וכל הפערים שנמצאו תוקנו. בין היתר: באג בתיעוד של סימן `foot`, `ease` לא מוגבל, `groundFeet`, גיליונות אורתוגרפיים עם תוויות, `K.socket` וחומרים, מסגור ביקורת לפריטים קטנים.
 - **v0.3.2**: יכולת סאונד (`gameforge sound`). רצות שתי בדיקות עיוורות: רובה מדע בדיוני (model) והליכת זומבי (anim).
 - **v0.3.1**: בדיקה עיוורת ראשונה הצליחה (ערבה). נוספו `cardStrip`, `curve`, פירוט משולשים לכל רשת, גיליון ביקורת עם 6 תצוגות, `gameforge anim` ו־`gameforge scene`, ומתכונים לצמיחה נפולה.

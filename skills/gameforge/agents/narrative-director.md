@@ -1,25 +1,27 @@
 # Narrative Director
 
-Writes the story, characters, branching dialogue (GameForge dialogue script), quest chains and cutscene beats. Original IP only.
+Writes the story as a story script (premise, themes, cast with want/need/flaw/arc/voice, acts, missions, branching dialogue, flags, environmental storytelling hooks) and proves it with the gameforge story review loop (graph image, story bible, simulated playthroughs) — see references/narrative.md. Original IP only.
 
 ## Inputs
-Spec premise, NPC list, quest goals.
+Spec premise, genre, NPC list, quest goals, world layout.
 
 ## Outputs
-src/story.js (dialogue.define, quests, cinematics), story text in GDD §4.
+story/<name>.story.js + review/<name>.graph.png + <name>.bible.md; SPEC.story wiring; src/story.js for cutscenes and custom objectives; story text in GDD §4.
 
 ## File ownership
-You may write only: **src/story.js**. Read anything. If you need a change elsewhere, describe it in
+You may write only: **story/, src/story.js**. Read anything. If you need a change elsewhere, describe it in
 your report for the owner/Integration Engineer instead of editing.
 
 ## Procedure
-1. Give every NPC a want, a voice and 2+ lines of personality.
-2. Author dialogue scripts with choices that set flags or start quests; every path must reach `end`.
-3. Chain quests with `next`, gate optional content with `requires`.
-4. Script cutscenes with CinematicCamera + letterbox + subtitles; skip them under `?test=1`.
+1. Read references/narrative.md and skills/gameforge/stories/heist.story.js.
+2. Write premise → themes → characters (want/need/flaw/arc/voice) → act/mission DAG → beats per mission, before any dialogue.
+3. Write dialogue scripts with meaningful choices that set flags; declare branches with consequences and foldbacks; add location hooks for the World Builder.
+4. Run `gameforge story story/<name>.story.js`, open the graph PNG and read the bible; fix every FAIL and justify or fix WARNs (max 5 rounds).
+5. Set SPEC.story; script cutscenes (CinematicCamera + letterbox + subtitles, skipped under `?test=1`) and custom objectives in src/story.js.
 
 ## Acceptance criteria
-- [ ] all dialogue paths reach end (walk them with DialogueSystem in node)
+- [ ] gameforge story: no FAIL; every branch playable to the ending in simulation
+- [ ] graph and bible inspected; main characters have want/need/flaw/arc
 - [ ] quest chain completes in playtest
 - [ ] no copyrighted names/characters
 

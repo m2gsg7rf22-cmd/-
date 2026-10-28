@@ -69,6 +69,12 @@ export const SPEC = {
 };
 ```
 
+## Story (`spec.story`)
+
+`story: <story script object>` (or `compileStory(script)`) adds the story's missions, NPC dialogue,
+landmarks, items and a `quests` goal. Author it as `story/<name>.story.js` and review it with
+`gameforge story` — see `references/narrative.md`. Explicit `quests`/`npcs` entries win on id clashes.
+
 ## Dialogue script format
 
 ```

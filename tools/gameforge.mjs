@@ -10,6 +10,7 @@
 //   build <dir>                 bundle to dist/<id>.html (single file) + dist/web/
 //   shot <dir> [--quality high] capture screenshots (title + gameplay)
 //   export <asset> [--out f.glb] [--params json]       export a procedural asset to GLB/OBJ
+//   story <file.story.js> [--out dir]   compile + review a story script (graph, bible, checks)
 //   status <dir>                print task/test status
 import fs from 'node:fs';
 import path from 'node:path';
@@ -174,6 +175,7 @@ const main = {
   async scene() { const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), scene: true }); if (!m.ok) process.exitCode = 1; },
   async sound() { const { reviewSound } = await import('./sound.mjs'); const m = await reviewSound(positional[0], { out: opt('out') }); if (!m.ok) process.exitCode = 1; },
   async anim() { const { reviewAnim } = await import('./anim.mjs'); const m = await reviewAnim(positional[0], { out: opt('out'), phases: +opt('phases', 8), render: !flag('no-render') }); if (!m.ok) process.exitCode = 1; },
+  async story() { const { reviewStory } = await import('./story.mjs'); const r = await reviewStory(positional[0], { out: opt('out'), render: !flag('no-render') }); if (!r.ok) process.exitCode = 1; },
   async model() { const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), glb: flag('glb'), ref: !flag('no-ref'), yaw: +opt('yaw', 0) }); if (!m.ok) process.exitCode = 1; },
   async new() { await cmdNew(); },
   async gdd() { const d = path.resolve(positional[0] || '.'); fs.writeFileSync(path.join(d, 'GDD.md'), generateGDD(await loadSpec(d))); console.log('  wrote GDD.md'); },
@@ -195,5 +197,5 @@ const main = {
   async export() { await cmdExport(); },
   async status() { const d = path.resolve(positional[0] || '.'); const t = JSON.parse(fs.readFileSync(path.join(d, 'tasks.json'), 'utf8')); for (const x of t.tasks) console.log(`  [${x.status}] w${x.wave} ${x.id} (${x.role})`); const r = path.join(d, 'test-results.json'); if (fs.existsSync(r)) { const j = JSON.parse(fs.readFileSync(r, 'utf8')); console.log(`  playtest: ${j.summary} at ${j.startedAt}`); } },
 };
-if (!main[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 14).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
+if (!main[cmd]) { console.log(fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n').slice(1, 15).map((l) => l.replace(/^\/\/ ?/, '')).join('\n')); process.exit(cmd ? 1 : 0); }
 main[cmd]().catch((e) => { console.error('gameforge: ' + e.message); process.exit(1); });
