@@ -24,10 +24,11 @@
 | 6 | Physics & Gameplay | `engine/physics/*`, `engine/gameplay/*` | unit + playtests | ממומש |
 | 7 | Narrative & Quest | `engine/gameplay/narrative.js`, `tools/lib/design.mjs` | unit + playtests | ממומש (פורמט דיאלוג/משימות). פער: מחולל עלילה מתוך spec |
 | 8 | NPC Intelligence | `engine/ai/behavior.js` | unit | ממומש. פערים: navmesh, לוחות זמנים יומיים |
-| 9 | Audio Generation | `engine/audio/audio.js` | metric audioEvents | ממומש (סינתזה) |
+| 9 | Audio Generation | `engine/audio/audio.js` (+FM, pluck, defineSfx, רינדור offline), **`gameforge sound`** (WAV + ספקטרוגרמה + בדיקות), `references/audio.md`, דוגמאות ב־`skills/gameforge/sounds/` | review checks | **Claude מעצב צלילים בעצמו** (שיפוט לפי ניתוח, לא שמיעה) |
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | — | ממומש. פער: השוואת פיקסלים מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.3.2**: יכולת סאונד (`gameforge sound`). רצות שתי בדיקות עיוורות: רובה מדע בדיוני (model) והליכת זומבי (anim).
 - **v0.3.1**: בדיקה עיוורת ראשונה הצליחה (ערבה). נוספו `cardStrip`, `curve`, פירוט משולשים לכל רשת, גיליון ביקורת עם 6 תצוגות, `gameforge anim` ו־`gameforge scene`, ומתכונים לצמיחה נפולה.
 - **v0.3**: כיוון מתוקן לפי המשתמש: לא מודלים מוכנים, אלא יכולת. Modeling Kit, `gameforge model` (רינדור ביקורת ומדדים), מסמך שיטה ו־checklist, 4 סקריפטים לדוגמה, תדריך 3D Artist מעודכן. (מחולל העצים `geometry/trees.js` נשאר כמימוש ברירת מחדל ל־populate.)
 - **v0.2**: בני אדם ריאליסטיים (MakeHuman CC0), עור, עיניים, שיער, בגדים ונעליים פרוצדורליות, retargeting ו־BVH, שילוב ב־Player/NPC/Enemy ובתבנית. benchmark לדמויות. רכבים v2 (9 סוגים) ו־benchmark לרכבים. ההדגמות הועברו ל־`examples/`. התקנה בפקודה אחת (`install.sh`, נבדקה ב־HOME נקי). תיעוד: characters.md, ARCHITECTURE, CAPABILITIES, LIMITATIONS, ROADMAP, THIRD_PARTY (MakeHuman CC0).
