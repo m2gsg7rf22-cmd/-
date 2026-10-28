@@ -16,7 +16,7 @@ const R = createRenderer({ container: document.getElementById('c') });
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 5000);
 R.setup(scene, camera);
 const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || 14.5), sunAzimuth: 150 });
-if (scene.fog) scene.fog = null;
+if (scene.fog && q.get('mode') !== 'scene') scene.fog = null;
 const obj = await mod.default(K, params);
 scene.add(obj); obj.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
 obj.updateMatrixWorld(true);
@@ -24,32 +24,56 @@ const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Ve
 const radius = Math.max(size.x, size.y, size.z, 0.05);
 // floor grid (1 m, or 10 cm for small objects)
 const cellSize = radius < 1.5 ? 0.1 : radius > 60 ? 10 : 1, ext = Math.ceil(radius * 3 / cellSize) * cellSize;
-const grid = new THREE.GridHelper(ext * 2, Math.round(ext * 2 / cellSize), 0x666a73, 0x3a3d44); grid.position.set(ctr.x, Math.min(0, box.min.y) - 0.001, ctr.z); scene.add(grid);
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(ext * 2, ext * 2), new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 1 })); floor.rotation.x = -Math.PI / 2; floor.position.copy(grid.position).y -= 0.002; floor.receiveShadow = true; scene.add(floor);
+const grid = q.get('mode') === 'scene' ? new THREE.Group() : new THREE.GridHelper(ext * 2, Math.round(ext * 2 / cellSize), 0x666a73, 0x3a3d44); grid.position.set(ctr.x, Math.min(0, box.min.y) - 0.001, ctr.z); scene.add(grid);
+const floor = q.get('mode') === 'scene' ? new THREE.Group() : new THREE.Mesh(new THREE.PlaneGeometry(ext * 2, ext * 2), new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 1 })); if (floor.isMesh) { floor.rotation.x = -Math.PI / 2; floor.position.copy(grid.position).y -= 0.002; floor.receiveShadow = true; } scene.add(floor);
 // 1.75 m human-scale reference
-if (q.get('ref') !== '0' && radius > 0.3 && radius < 80) {
+if (q.get('ref') !== '0' && q.get('mode') !== 'scene' && radius > 0.3 && radius < 80) {
   const ref = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: 0x8a93a0, roughness: 0.8, transparent: true, opacity: 0.55 });
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 1.2, 4, 12), m); body.position.y = 0.77; ref.add(body);
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), m); head.position.y = 1.64; ref.add(head);
-  ref.position.set(box.min.x - 0.35, Math.min(0, box.min.y), box.min.z - 0.35); scene.add(ref); // back-left corner: never occludes front/right views
+  ref.position.set(box.min.x - 0.35, Math.min(0, box.min.y), box.max.z + 0.35); scene.add(ref); // front-left corner, outside the bounds: visible in front/3/4/detail, never occludes
 }
 atm.setFocus(ctr);
-const W = innerWidth, H = innerHeight, views = [
-  ['front', new THREE.Vector3(0, 0.15, 1)], ['right', new THREE.Vector3(1, 0.15, 0)], ['3/4', new THREE.Vector3(-0.8, 0.55, 0.9)], ['top', new THREE.Vector3(0.001, 1, 0.002)],
+const W = innerWidth, H = innerHeight, sceneMode = q.get('mode') === 'scene';
+let views = [
+  ['front', new THREE.Vector3(0, 0.15, 1)], ['right', new THREE.Vector3(1, 0.15, 0)], ['3/4', new THREE.Vector3(-0.8, 0.55, 0.9)],
+  ['back', new THREE.Vector3(0.3, 0.2, -1)], ['top', new THREE.Vector3(0.001, 1, 0.002)], ['detail (eye level)', null],
 ];
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a3428, 0.6)); // lifts top/back views so colour and coverage can be judged
+// scene mode: aerial overview + three eye-level (1.7 m) shots standing on the ground, looking inward
+const eyeShots = [];
+if (sceneMode) {
+  const ray = new THREE.Raycaster(), groundAt = (x, z) => { ray.set(new THREE.Vector3(x, box.max.y + 50, z), new THREE.Vector3(0, -1, 0)); const h = ray.intersectObject(obj, true)[0]; return h ? h.point.y : 0; };
+  // eye positions: try many candidates, keep ones with clear space (no obstacle within 4 m ahead / 1 m around)
+  const clear = (p, dir) => { ray.set(p, dir); ray.far = 4; const h = ray.intersectObject(obj, true)[0]; ray.far = Infinity; return !h; };
+  for (const a0 of [0.3, 2.4, 4.4]) for (let k = 0; k < 24; k++) {
+    const a = a0 + k * 0.37, r = Math.max(size.x, size.z) * (0.18 + 0.04 * (k % 5)), x = ctr.x + Math.cos(a) * r, z = ctr.z + Math.sin(a) * r, y = groundAt(x, z) + 1.7;
+    const pos = new THREE.Vector3(x, y, z), look = new THREE.Vector3(ctr.x, y - 0.3, ctr.z), dir = look.clone().sub(pos).normalize();
+    const side = new THREE.Vector3(-dir.z, 0, dir.x);
+    if (clear(pos, dir) && clear(pos, side) && clear(pos, side.clone().negate()) && clear(pos, new THREE.Vector3(0, 1, 0))) { eyeShots.push({ pos, look }); break; }
+    if (k === 23) eyeShots.push({ pos, look });
+  }
+  views = [['overview', new THREE.Vector3(0.55, 0.75, 0.6)], ['eye 1'], ['eye 2'], ['eye 3']];
+  camera.fov = 55; camera.far = 20000;
+}
 R.renderer.setScissorTest(true); R.renderer.autoClear = true;
 function draw() {
   views.forEach(([name, dir], i) => {
-    const x = (i % 2) * W / 2, y = (i < 2 ? H / 2 : 0);
-    R.renderer.setViewport(x, y, W / 2, H / 2); R.renderer.setScissor(x, y, W / 2, H / 2);
-    camera.aspect = W / H; camera.updateProjectionMatrix();
-    const dist = radius * 0.62 / Math.tan((camera.fov * Math.PI) / 360) + radius * 0.6;
+    const cols = views.length > 4 ? 3 : 2, cw = W / cols, ch = H / 2, x = (i % cols) * cw, y = i < cols ? ch : 0;
+    R.renderer.setViewport(x, y, cw, ch); R.renderer.setScissor(x, y, cw, ch);
+    camera.aspect = cw / ch; camera.updateProjectionMatrix();
+    if (sceneMode && i > 0) { const e = eyeShots[i - 1]; camera.position.copy(e.pos); camera.lookAt(e.look); R.renderer.render(scene, camera); return; }
+    if (!dir) { // detail: eye level (1.6 m, or mid-height for small objects), close to the front
+      const eyeY = Math.min(1.6, box.min.y + size.y * 0.6), d = Math.max(size.z / 2 + Math.min(3, radius * 0.6), radius * 0.35);
+      camera.position.set(ctr.x + d * 0.35, eyeY, ctr.z + d); camera.lookAt(ctr.x, Math.min(eyeY, ctr.y), ctr.z); R.renderer.render(scene, camera); return;
+    }
+    const dist = (sceneMode ? 0.75 : 1) * radius * 0.62 / Math.tan((camera.fov * Math.PI) / 360) + radius * (sceneMode ? 0.15 : 0.6);
     camera.position.copy(ctr).addScaledVector(dir.clone().normalize(), dist); camera.lookAt(ctr);
     R.renderer.render(scene, camera);
   });
 }
-['front', 'right', '3/4', 'top'].forEach((n, i) => { const d = document.createElement('div'); d.className = 'lbl'; d.textContent = n; d.style.left = (i % 2 ? W / 2 : 0) + 8 + 'px'; d.style.top = (i < 2 ? 0 : H / 2) + 8 + 'px'; document.body.appendChild(d); });
+views.map((v) => v[0]).forEach((n, i) => { const cols = views.length > 4 ? 3 : 2; const d = document.createElement('div'); d.className = 'lbl'; d.textContent = n; d.style.left = (i % cols) * (W / cols) + 8 + 'px'; d.style.top = (i < cols ? 0 : H / 2) + 8 + 'px'; document.body.appendChild(d); });
 const info = document.createElement('div'); info.className = 'lbl'; info.style.right = '8px'; info.style.bottom = '8px';
-info.textContent = `${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)} m · grid ${cellSize} m`; document.body.appendChild(info);
+info.textContent = `W ${size.x.toFixed(2)} × H ${size.y.toFixed(2)} × D ${size.z.toFixed(2)} m · grid ${cellSize} m · figure 1.75 m`; document.body.appendChild(info);
 let frames = 0; function loop() { if (window.__pause) return; draw(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
 </script></body></html>

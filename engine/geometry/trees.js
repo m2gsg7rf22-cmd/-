@@ -137,7 +137,7 @@ export function generateTree({ species = 'oak', seed = 1, height, detail = 'high
           const p = pts[0].clone().addScaledVector(dir, 0.15), q = pts[pts.length - 1], bd = q.clone().sub(p).normalize(), L = q.distanceTo(p) * 1.12;
           const flatSide = new THREE.Vector3().crossVectors(bd, new THREE.Vector3(0, 1, 0)).normalize(), tilted = flatSide.clone().applyAxisAngle(bd, rng.range(0.9, 1.3));
           const w = Math.min(1.8, L * 0.7 + 0.3) * sp.leafSize;
-          cards.push({ pos: p, dir: bd, side: flatSide, w, h: L }); if (hi) cards.push({ pos: p, dir: bd, side: tilted, w: w * 0.8, h: L });
+          cards.push({ pos: p, dir: bd, side: flatSide, w, h: L }, { pos: p, dir: bd, side: tilted, w: w * 0.8, h: L });
         }
       }
     }
@@ -170,7 +170,7 @@ export function generateTree({ species = 'oak', seed = 1, height, detail = 'high
       const rEnd = level === 0 ? r0 * 0.55 : r0 * 0.25;
       const radii = pts.map((_, k) => THREE.MathUtils.lerp(r0, rEnd, k / (pts.length - 1)) + (level === 0 && k === 0 ? r0 * 0.4 : 0));
       addTube(bark, pts, radii, radialFor(r0), level === 0 ? 0.6 : 1);
-      const nChild = level < sp.levels ? Math.round((sp.children[level] ?? 3) * (hi ? 1 : 0.6)) : 0;
+      const nChild = level < sp.levels ? Math.round((sp.children[level] ?? 3) * (hi ? 1 : 0.75)) : 0;
       for (let c = 0; c < nChild; c++) {
         const t = level === 0 ? THREE.MathUtils.lerp(sp.trunkFrac * 0.7, 0.98, c / Math.max(1, nChild - 1)) / (level === 0 ? 1 : 1) : rng.range(0.25, 0.95);
         const tt = level === 0 ? THREE.MathUtils.clamp((t * H - 0) / len, 0.35, 1) : t;
@@ -183,11 +183,11 @@ export function generateTree({ species = 'oak', seed = 1, height, detail = 'high
         grow(at, cd, len * sp.lenRatio[level] * rng.range(0.8, 1.15) * (level === 0 ? (1.15 - tt * 0.5) : 1), childR, level + 1);
       }
       if (leafKind && level >= sp.levels - 1) {
-        const n = Math.round(sp.leafDensity * (hi ? 1 : 0.55) * (level === sp.levels ? 1 : 0.5));
+        const n = Math.round(sp.leafDensity * (hi ? 1 : 0.8) * (level === sp.levels ? 1 : 0.5));
         for (let k = 0; k < n; k++) {
           const t = rng.range(0.3, 1), idx = Math.min(pts.length - 2, Math.floor(t * (pts.length - 1))), at = pts[idx].clone().lerp(pts[idx + 1], 0.5);
           const pd = pts[idx + 1].clone().sub(pts[idx]).normalize(), out = randomPerp(pd), d = pd.clone().lerp(out, 0.7).add(new THREE.Vector3(0, 0.25, 0)).normalize();
-          cards.push({ pos: at, dir: d, side: new THREE.Vector3().crossVectors(d, randomPerp(d)).normalize(), w: sp.leafSize * rng.range(0.8, 1.2), h: sp.leafSize * rng.range(0.9, 1.3) });
+          const big = hi ? 1 : 1.55; cards.push({ pos: at, dir: d, side: new THREE.Vector3().crossVectors(d, randomPerp(d)).normalize(), w: sp.leafSize * big * rng.range(0.8, 1.2), h: sp.leafSize * big * rng.range(0.9, 1.3) }); // low detail: fewer but larger cards keep crown coverage
         }
       }
     };

@@ -66,3 +66,11 @@ test('anim review: good example passes, broken example is caught', async () => {
   const failed = bad.checks.filter((c) => !c.pass).map((c) => c.name).join('|');
   for (const w of ['sink', 'pops', 'knees', 'seamless']) assert.ok(failed.includes(w), 'expected failure: ' + w + ' in ' + failed);
 });
+
+test('curve + cardStrip build a tiling ribbon; tubes are marked open', () => {
+  const c = K.curve([[0, 3, 0], [0.3, 1.5, 0], [0, 0.2, 0]], { samples: 12, radius: [0.04, 0.01] });
+  assert.equal(c.points.length, 13);
+  const strip = K.cardStrip(c.points, { width: 0.4, tile: 0.5 });
+  const uv = strip.attributes.uv.array; assert.ok(uv[uv.length - 1] > 4, 'v accumulates distance/tile');
+  assert.ok(strip.userData.open && K.skinBranches([c]).userData.open);
+});

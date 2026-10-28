@@ -24,6 +24,13 @@ The command:
 - writes `review/<name>.views.jpg`, a sheet with front, right, 3/4 and top views, a 1 m (or
   10 cm) grid, and a 1.75 m human silhouette for scale.
 
+For a whole scene (terrain, vegetation, buildings, props) use
+`node $GF/tools/gameforge.mjs scene <file.scene.js>`. It renders an aerial overview plus three
+eye-level shots taken at 1.7 m from clear standing spots, and checks the scene budgets
+(triangles, draw calls, lights). Scene scripts get `K.world` (Heightfield, terrainMesh,
+populate, instanceProp, createWater, generateCity), `K.PROPS`, `K.BUILDINGS`, `K.car` and
+`K.generateTree`. See `skills/gameforge/scenes/forest-clearing.scene.js`.
+
 **Always open the image and critique it before using the asset.** In a game, load the script
 the same way: `import build from './assets/lantern.model.js'; scene.add(build(K, {...}))`.
 
@@ -112,6 +119,75 @@ or a lofted hull with hard-surface fittings.
 8. **Budget:** within the triangle budget and with 8 materials or fewer.
 9. **Variation:** if it will be repeated, do `seed` and params produce visibly different
    instances?
+
+## Kit reference details (read before your first script)
+
+- **Sizes** print as `W × H × D` = x (width) × y (height, up) × z (depth, the model's forward
+  axis is +Z). The metrics JSON has a `perMesh` triangle/material breakdown.
+- **The review sheet** has six views: front, right, 3/4, back, top and detail (eye level,
+  close). The 1.75 m figure stands at the front-left corner, outside the bounds.
+- **`K.pbr(kind, opts)`** options:
+  - **Shared:** `repeat` (number or [u,v]), `normalScale`, `tint`, `envMapIntensity`,
+    `emissiveIntensity`, `physical`, `side`, `transparent`, `opacity`, `size` (texture px),
+    `seed`.
+  - **Recipe options**, passed through to the texture recipe: `color`, `color2` (secondary
+    tone), plus per-kind keys:
+    - `brick`: `mortar`, `mortarColor`, `rows`/`cols`;
+    - `planks`: `planks`;
+    - `tiles`: `tiles`;
+    - `facade`: `panels`, `windowW`, `windowH`, `frameColor`, `glass`, `litRatio`;
+    - `paintedMetal`: `rust`;
+    - `fabric`: `weave`, `stripe`;
+    - `cobble`/`rock`: `moss`;
+    - `asphalt`: `lanes`.
+
+  Unknown keys are ignored. The kinds are listed in `K.TEXTURE_KINDS`.
+- **`K.RNG(seed)`** (always seed everything):
+  - `next()`, `range(a, b)`, `int(a, b)` (inclusive), `chance(p)`, `pick(arr)`, `sign()`;
+  - `gaussian(mean, sd)`, `shuffle(arr)`, `weighted([[value, weight], …])`, `fork(salt)`
+    (an independent stream per feature).
+
+  `K.Noise(seed).noise3(x, y, z)` returns values in −1…1.
+- **Curves:** `K.curve(controlPoints, { samples, radius: [r0, r1] })` returns
+  `{ points, radii }`, a smooth Catmull-Rom path. Feed it to
+  `skinBranches([{ points, radii }])`, `cardStrip(points)` or `tube(points, r)`.
+- **Card UVs:**
+  - `paint()` uses pixel coordinates with v = 0 at the top row of the image.
+  - `cards()` puts v = 1 at the card base (`pos`) and v = 0 at its tip, so paint stems at the
+    bottom of the texture. This holds for hanging cards too (base at the branch), so no flip is
+    needed.
+- **Strips:** `cardStrip(points, { width, tile, taper, twist, side })` builds a continuous
+  ribbon along a path. v accumulates `distance / tile`, so build its material with
+  `cardMaterial(tex, { repeat: true })` (that sets RepeatWrapping). Use it for vines, weeping
+  strands, hair locks, kelp, banners, moss, tails and chains.
+- **Open meshes:** tubes from `skinBranches`/`cardStrip` and alpha cards are intentionally open
+  and are skipped by the closed-mesh check. Mark your own intentionally open geometry with
+  `geo.userData.open = true`.
+- **Fine detail is a texture, not geometry.** Twigs, needles, leaf veins, fur, rivets and
+  stitching go into the card texture or the material. Keep geometry for silhouette-relevant
+  forms (trunk, limbs, main masses). When you hit the budget, reduce tube sides
+  (`radialFor`: 6 for thick limbs, 3–4 for thin ones) before cutting foliage coverage.
+
+## Recipes for common hard cases
+
+- **Pendulous / weeping growth** (willow, wisteria, vines, hanging moss, tentacles):
+  - **Structure:** build ascending limbs first. Limb rise should be inversely proportional to
+    reach, so steep central limbs and wide low ones make a dome.
+  - **Strands:** hang them from points along the outer secondaries with
+    `curve([attach, attach + outward·0.3 + down·L/2, attach + down·L])`, with
+    `L = clamp(heightAboveGround − 0.3, 1, 6)`, so outer strands nearly reach the ground and
+    inner ones are shorter.
+  - **Skinning:** draw each strand with `cardStrip` (0.3–0.5 m wide, tiling whip texture,
+    `taper: [1, 0.6]`).
+  - **Crown cover:** add a few flat cards over the crown top so it doesn't look hollow from
+    above.
+- **Crown shape from limb reach:** decide the silhouette (dome, column, vase, umbrella) as an
+  envelope function `r(y)`. Set each limb's length so its tip lands on the envelope, or use
+  `spaceColonization` with attractors sampled inside the envelope.
+- **Faces / bilateral things:** sculpt the right half and apply `mirrorX`. Break symmetry
+  afterwards with small displacements; perfect symmetry reads as CG.
+- **Worn hard-surface:** use `roundedBox` bevels, then `displace` with a low amount on the large
+  panels, then a pbr kind with `rust`/`moss`/`color2` variation.
 
 ## Triangle budgets (per asset, desktop WebGL)
 

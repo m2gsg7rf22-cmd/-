@@ -134,5 +134,17 @@ export function skinBranches(branches, { radial = 8, minRadius = 0.004, smooth =
     const W = R + 1; for (let k = 0; k < pts.length - 1; k++) for (let j = 0; j < R; j++) { const a = base + k * W + j; IDX.push(a, a + W, a + 1, a + 1, a + W, a + W + 1); }
   }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setIndex(IDX); g.computeBoundingSphere();
+  g.userData.open = true; // tube ends/junctions are intentionally open (review skips the closed-mesh check)
   return g;
+}
+
+/**
+ * curve(controlPoints, { samples, radius: r | [r0, r1], tension }) -> { points, radii } for skinBranches,
+ * cardStrip or tube. Smooth Catmull-Rom through the control points; radius tapers linearly.
+ */
+export function curve(control, { samples = 16, radius = 0.05, tension = 0.5 } = {}) {
+  const c = new THREE.CatmullRomCurve3(control.map((p) => (p.isVector3 ? p : new THREE.Vector3(...p))), false, 'catmullrom', tension);
+  const [r0, r1] = Array.isArray(radius) ? radius : [radius, radius], points = [], radii = [];
+  for (let i = 0; i <= samples; i++) { const t = i / samples; points.push(c.getPoint(t)); radii.push(r0 + (r1 - r0) * t); }
+  return { points, radii };
 }

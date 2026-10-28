@@ -1,12 +1,12 @@
 {
   "game": "Neon Circuit",
   "quality": "low",
-  "startedAt": "2026-10-28T18:28:06.377Z",
+  "startedAt": "2026-10-28T18:54:25.566Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3356 ms"
+      "detail": "3561 ms"
     },
     {
       "label": "title menu on boot",
@@ -105,9 +105,9 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 6.400000000139698,
+    "frameMs": 4,
     "calls": 239,
-    "triangles": 154754,
+    "triangles": 161522,
     "geometries": 673,
     "textures": 215,
     "tier": "low",
@@ -119,7 +119,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 3356,
-  "durationMs": 41488,
+  "loadMs": 3561,
+  "durationMs": 44098,
   "summary": "18/18 checks passed"
 }

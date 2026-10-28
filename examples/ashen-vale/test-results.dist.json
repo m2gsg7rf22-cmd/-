@@ -1,12 +1,12 @@
 {
   "game": "Ashen Vale",
   "quality": "low",
-  "startedAt": "2026-10-28T18:25:20.172Z",
+  "startedAt": "2026-10-28T18:51:05.828Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "4889 ms"
+      "detail": "5553 ms"
     },
     {
       "label": "title menu is shown on boot",
@@ -27,8 +27,8 @@
       "label": "gameplay frame is rendered (not blank)",
       "ok": true,
       "detail": {
-        "mean": 77.6,
-        "std": 54.5,
+        "mean": 74.4,
+        "std": 52.5,
         "colors": 122
       }
     },
@@ -65,7 +65,7 @@
     {
       "label": "melee combo damages enemies",
       "ok": true,
-      "detail": 180
+      "detail": 204
     },
     {
       "label": "enemies can be killed",
@@ -80,7 +80,7 @@
     {
       "label": "shockwave ability works",
       "ok": true,
-      "detail": 244.39999999999998
+      "detail": 268.4
     },
     {
       "label": "clearing a wave starts the next",
@@ -125,10 +125,10 @@
     "../../../../../tmp/gf-dist-shots/ashen-vale/04-victory.png"
   ],
   "metrics": {
-    "fps": 7.1418368804456644,
-    "frameMs": 5.600000000093132,
+    "fps": 5.625351584473999,
+    "frameMs": 4.300000000279397,
     "calls": 73,
-    "triangles": 333075,
+    "triangles": 472399,
     "geometries": 368,
     "textures": 178,
     "tier": "low",
@@ -140,7 +140,7 @@
   "errors": [],
   "passed": true,
   "url": "file://ashen-vale.html",
-  "loadMs": 4889,
-  "durationMs": 73393,
+  "loadMs": 5553,
+  "durationMs": 93551,
   "summary": "22/22 checks passed"
 }

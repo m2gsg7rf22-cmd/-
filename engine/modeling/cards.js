@@ -9,7 +9,10 @@ import { RNG } from '../core/rng.js';
  * paint(size, draw, { srgb }) -> DataTexture. draw(p) receives a painter:
  *   p.fill(r,g,b,a) · p.px(x,y,r,g,b,a) · p.line(x0,y0,x1,y1,width,[r,g,b]) · p.ellipse(cx,cy,rx,ry,angle,[r,g,b])
  *   p.leaf(cx,cy,length,width,angle,shade) (pointed blade with midrib + veins) · p.rng · p.size
- * Coordinates are pixels, origin top-left; v=0 is the top row (cards put v=1 at their base).
+ * Coordinates are pixels, origin top-left. UV convention: u=0 left, v=0 = TOP row of the image.
+ * cards() maps v=1 to the card base (`pos`) and v=0 to its tip, so paint stems at the bottom, tips at the top.
+ * For hanging foliage (dir pointing down) the base is at the branch: that is still v=1 — no flip needed.
+ * Textures default to ClampToEdge; for tiling along strips use cardMaterial(map, { repeat: true }).
  */
 export function paint(size, draw, { srgb = true, seed = 1 } = {}) {
   const S = size, d = new Uint8Array(S * S * 4), rng = new RNG(seed);
@@ -80,8 +83,31 @@ export function cards(list, { centre = null, normalBlend = 0.65 } = {}) {
   return g;
 }
 
+/**
+ * cardStrip(points, { width, tile, side, color, twist }) -> BufferGeometry: a continuous ribbon of
+ * cards following a polyline (vines, willow strands, hair locks, kelp, banners, moss, tails).
+ * v runs from 0 at points[0] and accumulates `distance / tile`, so set map.wrapT = RepeatWrapping
+ * (cardMaterial(..., { repeat: true }) does it). `side` = fixed width axis or null (auto, faces up/out).
+ */
+export function cardStrip(points, { width = 0.3, tile = 1, side = null, color = 0xffffff, twist = 0, taper = [1, 1] } = {}) {
+  const P = [], N = [], UV = [], C = [], I = [], col = new THREE.Color(color); let v = 0;
+  for (let k = 0; k < points.length; k++) {
+    const p = points[k], T = points[Math.min(k + 1, points.length - 1)].clone().sub(points[Math.max(k - 1, 0)]).normalize();
+    let sd = side ? side.clone() : new THREE.Vector3().crossVectors(T, Math.abs(T.y) > 0.95 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0)).normalize();
+    if (twist) sd.applyAxisAngle(T, twist * (k / (points.length - 1)));
+    const t = k / (points.length - 1), w = width * (taper[0] + (taper[1] - taper[0]) * t) / 2;
+    if (k) v += p.distanceTo(points[k - 1]) / tile;
+    const n = new THREE.Vector3().crossVectors(sd, T).normalize();
+    for (const s of [-1, 1]) { const q = p.clone().addScaledVector(sd, s * w); P.push(q.x, q.y, q.z); N.push(n.x, n.y, n.z); UV.push(s < 0 ? 0 : 1, v); C.push(col.r, col.g, col.b); }
+    if (k) { const a = (k - 1) * 2; I.push(a, a + 1, a + 3, a, a + 3, a + 2); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setIndex(I); g.computeBoundingSphere(); g.userData.open = true;
+  return g;
+}
+
 /** Double-sided alpha-tested material for cards (wind-ready: userData.wind = true). */
-export function cardMaterial(map, { alphaTest = 0.45, roughness = 0.75, wind = true, color = 0xffffff } = {}) {
+export function cardMaterial(map, { alphaTest = 0.45, roughness = 0.75, wind = true, color = 0xffffff, repeat = false } = {}) {
+  if (repeat) { map.wrapS = map.wrapT = THREE.RepeatWrapping; map.needsUpdate = true; }
   const m = new THREE.MeshStandardMaterial({ map, color, vertexColors: true, alphaTest, side: THREE.DoubleSide, roughness, metalness: 0 });
   m.name = 'gf:cards'; m.userData.wind = wind; return m;
 }

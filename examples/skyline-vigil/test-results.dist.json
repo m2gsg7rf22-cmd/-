@@ -1,12 +1,12 @@
 {
   "game": "Skyline Vigil",
   "quality": "low",
-  "startedAt": "2026-10-28T18:31:38.572Z",
+  "startedAt": "2026-10-28T18:58:06.277Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3712 ms"
+      "detail": "4598 ms"
     },
     {
       "label": "title menu on boot",
@@ -144,9 +144,9 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 16.399999999906868,
+    "frameMs": 14.899999999906868,
     "calls": 340,
-    "triangles": 203788,
+    "triangles": 219016,
     "geometries": 674,
     "textures": 247,
     "tier": "low",
@@ -158,7 +158,7 @@
   "errors": [],
   "passed": true,
   "url": "file://skyline-vigil.html",
-  "loadMs": 3712,
-  "durationMs": 77783,
+  "loadMs": 4598,
+  "durationMs": 85067,
   "summary": "25/25 checks passed"
 }

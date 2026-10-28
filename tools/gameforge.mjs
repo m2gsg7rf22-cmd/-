@@ -171,6 +171,7 @@ async function cmdShot(dir) {
 
 const main = {
   async doctor() { await cmdDoctor(); },
+  async scene() { const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), scene: true }); if (!m.ok) process.exitCode = 1; },
   async anim() { const { reviewAnim } = await import('./anim.mjs'); const m = await reviewAnim(positional[0], { out: opt('out'), phases: +opt('phases', 8), render: !flag('no-render') }); if (!m.ok) process.exitCode = 1; },
   async model() { const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), glb: flag('glb') }); if (!m.ok) process.exitCode = 1; },
   async new() { await cmdNew(); },

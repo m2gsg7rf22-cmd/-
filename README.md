@@ -49,7 +49,10 @@ playtests (`npm i -g playwright && npx playwright install chromium`); `doctor` d
 | System | Modules | Evidence |
 |---|---|---|
 | Character generation | `engine/humans.js`, `engine/character/*` | Realistic parametric humans built from **CC0 MakeHuman data**: body/face morphs, exact stature, 163-bone rig, baked skin + SSS, eyes, expressions, hair, garments, shoes, archetypes. Verified by [character benchmark](docs/benchmarks/characters/REPORT.md) and `tests/unit/humans.test.mjs` |
-| 3D modelling | `engine/geometry/*` | Loft/lathe/tube builders, props, buildings and [vehicles v2](docs/benchmarks/vehicles/REPORT.md) (9 types), GLB/OBJ export |
+| **Modelling capability** | `engine/modeling/*`, `tools/model.mjs` | The agent **writes its own models** (SDF sculpting, L-system/space-colonization branching, alpha cards/strips, lathe/loft/hard-surface) and reviews them with `gameforge model` (metrics + 6-view sheet with scale figure). A blind test of a weeping willow made by a fresh agent from the docs alone is in [skill-blind-tests](docs/benchmarks/skill-blind-tests/REPORT.md) |
+| **Animation capability** | `tools/anim.mjs`, `references/animation.md` | The agent writes clips as pose scripts; `gameforge anim` checks foot penetration, pops, hinge direction and loop seams, and renders phase sheets |
+| **Scene capability** | `gameforge scene` | Scene scripts reviewed with an aerial view, eye-level shots and budget checks |
+| 3D asset library | `engine/geometry/*` | Loft/lathe/tube builders, props, buildings and [vehicles v2](docs/benchmarks/vehicles/REPORT.md) (9 types), GLB/OBJ export |
 | Animation & rigging | `engine/animation/*` | Procedural clip library, layered animator, retargeting onto any rig, BVH mocap import |
 | World generation | `engine/world/*` | Heightfield terrain, roads, vegetation, water, procedural city with traffic |
 | Rendering & materials | `engine/render/*` | PBR, procedural seamless textures, physical sky, day/night cycle, post-processing, light pool, quality tiers |
@@ -79,6 +82,9 @@ npm test                                   # unit tests
 node tools/report.mjs                      # all example playtests (source + dist) -> TEST_RESULTS.md
 node tools/bench-characters.mjs            # human quality metrics + inspection sheets
 node tools/bench-vehicles.mjs              # vehicle metrics + renders
+node tools/gameforge.mjs model skills/gameforge/models/creature.model.js   # model review loop
+node tools/gameforge.mjs anim  skills/gameforge/anims/wave.anim.js        # animation review loop
+node tools/gameforge.mjs scene skills/gameforge/scenes/forest-clearing.scene.js
 ```
 
 For visual inspection, open `sandbox/humans.html?who=knight:3,civilian:8` and
