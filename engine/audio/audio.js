@@ -81,6 +81,21 @@ export class AudioEngine {
     if (slide) f.frequency.exponentialRampToValueAtTime(slide, t + dur);
     this._env(g, t, a, dur, gain); s.connect(f).connect(g).connect(dest); s.start(t, Math.random()); s.stop(t + dur + 0.1);
   }
+  // FM voice: carrier modulated by an oscillator (bells, metal, sci-fi, growls). index = mod depth in Hz.
+  _fm(freq, ratio, index, t, dur, dest, { gain = 0.3, a = 0.003, indexDecay = 0.5, type = 'sine', slide = null } = {}) {
+    const c = this.ctx, car = c.createOscillator(), mod = c.createOscillator(), mg = c.createGain(), g = c.createGain();
+    car.type = type; car.frequency.setValueAtTime(freq, t); if (slide) car.frequency.exponentialRampToValueAtTime(Math.max(20, slide), t + dur);
+    mod.frequency.setValueAtTime(freq * ratio, t); mg.gain.setValueAtTime(index, t); mg.gain.exponentialRampToValueAtTime(Math.max(0.01, index * indexDecay), t + dur);
+    mod.connect(mg).connect(car.frequency); this._env(g, t, a, dur, gain); car.connect(g).connect(dest);
+    car.start(t); mod.start(t); car.stop(t + a + dur + 0.05); mod.stop(t + a + dur + 0.05);
+  }
+  // Plucked string (Karplus-Strong rendered into a buffer): guitars, harps, plinks, bowstrings.
+  _pluck(freq, t, dur, dest, { gain = 0.4, damping = 0.996, brightness = 0.5 } = {}) {
+    const c = this.ctx, n = Math.ceil(c.sampleRate * dur), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0), period = Math.max(2, Math.round(c.sampleRate / freq));
+    const ring = new Float32Array(period); for (let i = 0; i < period; i++) ring[i] = Math.random() * 2 - 1;
+    let prev = 0; for (let i = 0; i < n; i++) { const k = i % period, v = ring[k]; d[i] = v; const nv = damping * (brightness * v + (1 - brightness) * (v + prev) * 0.5); prev = v; ring[k] = nv; }
+    const s = c.createBufferSource(), g = c.createGain(); s.buffer = b; g.gain.value = gain; s.connect(g).connect(dest); s.start(t);
+  }
   // Play a named SFX preset. opts: { pos, pitch, volume }
   play(name, opts = {}) {
     this.played++;
@@ -180,6 +195,23 @@ const SFX = {
   thwip: (e, t, d, p) => { e._noiseBurst(t, 0.08, d, { gain: 0.3, type: 'highpass', freq: 3000 * p }); e._osc('sine', 1400 * p, t, 0.08, d, { gain: 0.08, slide: 600 }); },
 };
 export const SFX_NAMES = Object.keys(SFX);
+/** Register a custom SFX recipe (e, t, dest, pitch) => void; then audio.play(name) works everywhere. */
+export function defineSfx(name, recipe) { SFX[name] = recipe; if (!SFX_NAMES.includes(name)) SFX_NAMES.push(name); return recipe; }
+
+/**
+ * Render a recipe offline (browser only): returns a Promise<AudioBuffer>. Used by `gameforge sound`.
+ * The recipe receives an engine-like object with ctx, noiseBuf and the helpers (_osc, _noiseBurst,
+ * _fm, _pluck, _env, _noise, _impulse) — any raw WebAudio node from e.ctx is allowed too.
+ */
+export async function renderSfxOffline(recipe, { duration = 1.5, pitch = 1, sampleRate = 44100, reverb = 0 } = {}) {
+  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const ctx = new OAC(2, Math.ceil(duration * sampleRate), sampleRate);
+  const e = Object.create(AudioEngine.prototype); e.ctx = ctx; e.noiseBuf = e._noise(2);
+  const out = ctx.createGain(); out.connect(ctx.destination);
+  if (reverb > 0) { const r = ctx.createConvolver(); r.buffer = e._impulse(2.2, 2.5); const s = ctx.createGain(); s.gain.value = reverb; out.connect(s).connect(r).connect(ctx.destination); }
+  recipe(e, 0.01, out, pitch);
+  return ctx.startRendering();
+}
 
 // Adaptive music: chord progression, bass, pad, arpeggio/lead and drum patterns
 // scheduled with a lookahead timer. intensity (0..1) adds/removes layers.

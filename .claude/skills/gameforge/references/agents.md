@@ -17,7 +17,7 @@
 | Graphics Engineer | `graphics-engineer` | src/graphics.js | no blown sky or black frames |
 | Physics Engineer | `physics-engineer` | src/physics.js | no tunnelling through buildings at top speed |
 | AI Engineer | `ai-engineer` | src/ai.js | enemies perceive, pursue, attack and die in playtest |
-| Audio Director | `audio-director` | src/audio.js | metrics.audioEvents > 0 during playtest |
+| Audio Director | `audio-director` | src/audio.js, sounds/ | gameforge sound: no FAIL for each recipe |
 | UI/UX Designer | `ui-ux-designer` | src/hud.js | menu→play→pause→resume→win/lose flow works in playtest |
 | QA Engineer | `qa-engineer` | playtest.json | coverage checklist complete |
 | Performance Engineer | `performance-engineer` | PERF.md | budgets in GDD §10 met on high or documented as a limitation |
@@ -128,12 +128,12 @@ Builds enemy and NPC behaviour: behaviour trees, perception, attack tokens, enco
 - **Accept:** enemies perceive, pursue, attack and die in playtest; no enemy stuck in geometry in screenshots
 
 ## Audio Director (`audio-director`)
-Designs music moods per game state, SFX mapping for every action, ambience beds and mix levels using the procedural audio engine.
+Designs every sound the game needs as synth recipes (layered transient/body/tail with osc, noise, FM, pluck voices), verifies them with the gameforge sound review (spectrogram + checks), maps SFX to actions and music moods to game states — see references/audio.md.
 
-- **Inputs:** Mood board, event list.
-- **Outputs:** src/audio.js
-- **Owns:** src/audio.js
-- **Accept:** metrics.audioEvents > 0 during playtest; no clipping (master compressor in place)
+- **Inputs:** Action list, materials, spaces and mood board from the GDD.
+- **Outputs:** sounds/<name>.sfx.js + review sheets; src/audio.js registering them with defineSfx and wiring play() calls, music moods and ambience.
+- **Owns:** src/audio.js, sounds/
+- **Accept:** gameforge sound: no FAIL for each recipe; every player action and impact has a sound (audioEvents > 0 in playtests); no clipping
 
 ## UI/UX Designer (`ui-ux-designer`)
 Designs HUD, menus, prompts, onboarding hints, accessibility (text scale, subtitles, contrast, colour filters, reduced motion, remapping) and touch controls.

@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge sound review</title>
+<style>html,body{margin:0;background:#15171c;color:#cfd6e0;font:13px system-ui}canvas{display:block}#m{position:fixed;right:10px;top:8px;white-space:pre;font:12px ui-monospace,monospace;background:#0009;padding:6px 8px;border-radius:4px}</style></head>
+<body><canvas id="c" width="1600" height="900"></canvas><div id="m"></div>
+<script type="module">
+// Sound review: renders a *.sfx.js recipe offline at 3 pitches, draws waveform + log spectrogram
+// + loudness envelope, and computes metrics. ?sfx=<url>
+import { renderSfxOffline, SFX_NAMES } from '../engine/audio/audio.js';
+const q = new URLSearchParams(location.search);
+const mod = await import(q.get('sfx'));
+const def = mod.default; const recipe = def.recipe || def;
+const duration = def.duration ?? 1.5, reverb = def.reverb ?? 0;
+const buf = await renderSfxOffline(recipe, { duration, pitch: 1, reverb });
+const L = buf.getChannelData(0), R = buf.getChannelData(1), sr = buf.sampleRate, n = L.length;
+const mono = new Float32Array(n); for (let i = 0; i < n; i++) mono[i] = (L[i] + R[i]) / 2;
+// ---- metrics
+let peak = 0, sum = 0, clip = 0, dc = 0; for (let i = 0; i < n; i++) { const a = Math.max(Math.abs(L[i]), Math.abs(R[i])); peak = Math.max(peak, a); sum += mono[i] * mono[i]; if (a >= 0.999) clip++; dc += mono[i]; }
+const db = (x) => 20 * Math.log10(Math.max(1e-9, x));
+const win = Math.round(sr * 0.01), env = []; for (let i = 0; i < n; i += win) { let s = 0; for (let k = i; k < Math.min(n, i + win); k++) s += mono[k] * mono[k]; env.push(Math.sqrt(s / win)); }
+const envMax = Math.max(...env), onset = env.findIndex((v) => v > envMax * 0.1) * 0.01;
+let lastAudible = 0; env.forEach((v, i) => { if (db(v) > db(envMax) - 50) lastAudible = i; });
+const tailAbs = Math.max(...Array.from(mono.slice(n - Math.round(sr * 0.005))).map(Math.abs));
+// spectrum (radix-2 FFT on Hann windows)
+function fft(re, im) { const N = re.length; for (let i = 1, j = 0; i < N; i++) { let bit = N >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } } for (let len = 2; len <= N; len <<= 1) { const a = -2 * Math.PI / len, wr = Math.cos(a), wi = Math.sin(a); for (let i = 0; i < N; i += len) { let cr = 1, ci = 0; for (let j = 0; j < len / 2; j++) { const ur = re[i + j], ui = im[i + j], vr = re[i + j + len / 2] * cr - im[i + j + len / 2] * ci, vi = re[i + j + len / 2] * ci + im[i + j + len / 2] * cr; re[i + j] = ur + vr; im[i + j] = ui + vi; re[i + j + len / 2] = ur - vr; im[i + j + len / 2] = ui - vi; const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t; } } } }
+const F = 2048, hop = 256, frames = Math.max(1, Math.floor((n - F) / hop)), spec = []; let cNum = 0, cDen = 0;
+for (let f = 0; f < frames; f++) { const re = new Float32Array(F), im = new Float32Array(F); for (let i = 0; i < F; i++) re[i] = mono[f * hop + i] * (0.5 - 0.5 * Math.cos(2 * Math.PI * i / F)); fft(re, im); const mag = new Float32Array(F / 2); for (let k = 0; k < F / 2; k++) { mag[k] = Math.hypot(re[k], im[k]); cNum += mag[k] * k * sr / F; cDen += mag[k]; } spec.push(mag); }
+const metrics = { duration, sampleRate: sr, peakDbfs: +db(peak).toFixed(1), rmsDbfs: +db(Math.sqrt(sum / n)).toFixed(1), clippedSamples: clip, dcOffset: +(dc / n).toFixed(4), onsetS: +onset.toFixed(3), audibleUntilS: +(lastAudible * 0.01).toFixed(2), tailPeak: +tailAbs.toFixed(4), spectralCentroidHz: Math.round(cNum / Math.max(1e-9, cDen)), builtins: SFX_NAMES.length };
+// ---- drawing: waveform (top), spectrogram (middle, log freq 40 Hz–16 kHz), envelope dB (bottom)
+const cv = document.getElementById('c'), g = cv.getContext('2d'), W = cv.width;
+g.fillStyle = '#15171c'; g.fillRect(0, 0, W, 900);
+const lane = (y, h, label) => { g.fillStyle = '#1d2027'; g.fillRect(40, y, W - 60, h); g.fillStyle = '#8a93a0'; g.fillText(label, 44, y + 14); };
+lane(10, 200, 'waveform (L+R)'); g.strokeStyle = '#6ad0ff'; g.beginPath(); for (let x = 0; x < W - 60; x++) { const a = Math.floor(x / (W - 60) * n), b = Math.floor((x + 1) / (W - 60) * n); let mn = 0, mx = 0; for (let i = a; i < b; i++) { mn = Math.min(mn, mono[i]); mx = Math.max(mx, mono[i]); } g.moveTo(40 + x, 110 - mx * 95); g.lineTo(40 + x, 110 - mn * 95); } g.stroke();
+lane(220, 480, 'spectrogram (log frequency, dB)');
+const fLo = Math.log(40), fHi = Math.log(16000), img = g.createImageData(W - 60, 480), maxMag = Math.max(...spec.map((m) => Math.max(...m)));
+for (let x = 0; x < W - 60; x++) { const m = spec[Math.min(spec.length - 1, Math.floor(x / (W - 60) * spec.length))]; for (let y = 0; y < 480; y++) { const fr = Math.exp(fHi - (y / 480) * (fHi - fLo)), k = Math.min(F / 2 - 1, Math.round(fr * F / sr)); const v = Math.max(0, Math.min(1, (db(m[k] / maxMag) + 80) / 80)); const o = (y * (W - 60) + x) * 4; img.data[o] = 255 * Math.pow(v, 1.5); img.data[o + 1] = 255 * Math.pow(v, 3) * 0.9 + 40 * v; img.data[o + 2] = 90 * v + 40 * (1 - v); img.data[o + 3] = 255; } }
+g.putImageData(img, 40, 220);
+g.fillStyle = '#cfd6e0'; for (const f of [100, 500, 1000, 5000, 10000]) { const y = 220 + (fHi - Math.log(f)) / (fHi - fLo) * 480; g.fillText(f >= 1000 ? f / 1000 + 'k' : f, 6, y + 4); g.fillRect(36, y, 4, 1); }
+lane(710, 180, 'loudness envelope (dB, 10 ms)'); g.strokeStyle = '#ffb347'; g.beginPath(); env.forEach((v, i) => { const x = 40 + i / env.length * (W - 60), y = 710 + 170 * (1 - Math.max(0, db(v) + 60) / 60); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
+for (let s = 0; s <= duration; s += 0.25) { const x = 40 + s / duration * (W - 60); g.fillStyle = '#555c66'; g.fillRect(x, 892, 1, 6); g.fillStyle = '#8a93a0'; g.fillText(s.toFixed(2) + 's', x + 2, 899); }
+document.getElementById('m').textContent = Object.entries(metrics).map(([k, v]) => `${k}: ${v}`).join('\n');
+// ---- WAV for listening (16-bit stereo)
+const wav = new DataView(new ArrayBuffer(44 + n * 4)), w = (o, s) => { for (let i = 0; i < s.length; i++) wav.setUint8(o + i, s.charCodeAt(i)); };
+w(0, 'RIFF'); wav.setUint32(4, 36 + n * 4, true); w(8, 'WAVEfmt '); wav.setUint32(16, 16, true); wav.setUint16(20, 1, true); wav.setUint16(22, 2, true); wav.setUint32(24, sr, true); wav.setUint32(28, sr * 4, true); wav.setUint16(32, 4, true); wav.setUint16(34, 16, true); w(36, 'data'); wav.setUint32(40, n * 4, true);
+for (let i = 0; i < n; i++) { wav.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i])) * 32767, true); wav.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i])) * 32767, true); }
+let bin = ''; const bytes = new Uint8Array(wav.buffer); for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+window.__result = { metrics, wav: btoa(bin) };
+</script></body></html>
