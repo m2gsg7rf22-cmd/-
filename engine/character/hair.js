@@ -50,6 +50,50 @@ function strandTexture() {
   flowTex.generateMipmaps = true; flowTex.minFilter = THREE.LinearMipmapLinearFilter; flowTex.magFilter = THREE.LinearFilter; flowTex.anisotropy = 4; flowTex.needsUpdate = true;
   return flowTex;
 }
+let clumpTex = null;
+function clumpTexture() { // a clump of ~40 strands along v (root v=0 → tip v=1), tapered tips with ragged lengths
+  if (clumpTex) return clumpTex;
+  const W = 128, H = 512, d = new Uint8Array(W * H * 4), rng = new RNG(9);
+  for (let k = 0; k < 46; k++) {
+    const x0 = rng.range(10, W - 10), len = rng.range(0.7, 1) * H, wob = rng.range(-6, 6), lum = rng.range(0.55, 1), wdt = rng.range(0.8, 1.8);
+    for (let y = 0; y < len; y++) {
+      const t = y / H, cx = x0 + wob * t * t + (W / 2 - x0) * 0.35 * t, taper = 1 - Math.pow(y / len, 3);
+      for (let dx = -2; dx <= 2; dx++) { const x = Math.round(cx + dx); if (x < 0 || x >= W) continue; const cov = Math.max(0, wdt * taper - Math.abs(dx) * 0.6); if (cov <= 0) continue; const i = (y * W + x) * 4; const v = Math.round((70 + 185 * lum) * (0.85 + 0.15 * Math.sin(y * 0.3 + k))); d[i] = d[i + 1] = d[i + 2] = Math.max(d[i], v); d[i + 3] = Math.max(d[i + 3], Math.round(255 * Math.min(1, cov))); }
+    }
+  }
+  clumpTex = new THREE.DataTexture(d, W, H, THREE.RGBAFormat); clumpTex.wrapS = THREE.ClampToEdgeWrapping; clumpTex.wrapT = THREE.ClampToEdgeWrapping;
+  clumpTex.generateMipmaps = true; clumpTex.minFilter = THREE.LinearMipmapLinearFilter; clumpTex.magFilter = THREE.LinearFilter; clumpTex.anisotropy = 4; clumpTex.needsUpdate = true;
+  return clumpTex;
+}
+function strandClumps(cols, st, color, F, { HEAD, NECK, SPINE, seed = 3, count } = {}) {
+  const rng = new RNG(seed * 31 + 7), P = [], N = [], UV = [], SI = [], SW = [], I = [];
+  const long = st.len > 0.05, n = count ?? (long ? 150 : 110), out = new THREE.Vector3(), T = new THREE.Vector3(), side = new THREE.Vector3();
+  for (let k = 0; k < n; k++) {
+    const col = cols[Math.floor(rng.next() * cols.length)], ncap = col.capEnd ? col.indexOf(col.capEnd) : col.length - 1;
+    const r0 = Math.floor(rng.range(0.05, long ? 0.5 : 0.35) * ncap), r1 = long ? col.length - 1 - Math.floor(rng.range(0, 3)) : Math.max(r0 + 3, ncap - Math.floor(rng.range(0, 2)));
+    const pts = []; for (let r = r0; r <= r1; r++) pts.push(col[r].p0.clone());
+    if (pts.length < 3) continue;
+    const lift = st.vol * 0.25 + rng.range(0.001, 0.004), w = (long ? rng.range(0.02, 0.04) : rng.range(0.012, 0.022)), twist = rng.range(-0.4, 0.4), base = P.length / 3;
+    let acc = 0; const total = pts.reduce((a, p, i) => a + (i ? p.distanceTo(pts[i - 1]) : 0), 0);
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i]; T.copy(pts[Math.min(i + 1, pts.length - 1)]).sub(pts[Math.max(i - 1, 0)]).normalize();
+      out.copy(p).sub(F.c).normalize(); side.crossVectors(T, out).normalize().applyAxisAngle(T, twist * (i / pts.length));
+      if (i) acc += p.distanceTo(pts[i - 1]);
+      const t = acc / total, ww = w * (1 - 0.35 * t), q = p.clone().addScaledVector(out, lift * (1 - 0.5 * t));
+      const nrm = out.clone();
+      for (const sgn of [-1, 1]) {
+        const v = q.clone().addScaledVector(side, sgn * ww / 2); P.push(v.x, v.y, v.z); N.push(nrm.x, nrm.y, nrm.z); UV.push(sgn < 0 ? 0 : 1, t);
+        const below = THREE.MathUtils.clamp((F.c.y - F.r.y * 0.4 - v.y) / 0.25, 0, 1); SI.push(HEAD, NECK, SPINE, 0); SW.push(1 - below, below * 0.55, below * 0.45, 0);
+      }
+      if (i) { const a = base + (i - 1) * 2; I.push(a, a + 1, a + 3, a, a + 3, a + 2); }
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2));
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4)); g.setIndex(I);
+  const m = hairMaterial(color, st, 1); m.map = clumpTexture(); m.alphaTest = 0.4; m.name = 'gf:hair-clumps';
+  return { geo: g, mat: m };
+}
 function hairMaterial(color, st, repeatU = 6) {
   const map = strandTexture().clone(); map.repeat.set(repeatU, 1); map.needsUpdate = true;
   const c = new THREE.Color(color);
@@ -171,6 +215,9 @@ export function addHair(human, opts = {}) {
     return finish(addBuzz());
   }
   meshes.push(skinned(g, capMat));
+  // ---- strand clumps: ribbons that follow the shell's flow lines, lifted slightly off it.
+  // They break the silhouette and give tapered, separated ends (the shell alone reads as a helmet).
+  if (style !== 'buzz' && opts.clumps !== false) { const sc = strandClumps(cols, st, color, F, { HEAD, NECK, SPINE, seed: opts.seed ?? 3, count: opts.clumpCount }); meshes.push(skinned(sc.geo, sc.mat)); }
   // ---- extras
   const back = F.c.clone().add(new THREE.Vector3(0, -F.r.y * 0.05, -F.r.z * 0.98));
   if (st.tail) meshes.push(tubeHair(back.clone().add(new THREE.Vector3(0, F.r.y * 0.3, -0.01)), [[0, 0, -0.04], [0, -0.06, -0.08], [0, -st.tail * 0.5, -0.07], [0, -st.tail, -0.03]], 0.028, 0.012, color, st, true));
