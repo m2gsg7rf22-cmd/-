@@ -1,0 +1,71 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge cinematic storyboard</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#111}#c{position:fixed;inset:0}
+.lbl{position:fixed;color:#e8edf3;font:600 12px system-ui;background:#000b;padding:2px 6px;border-radius:3px}
+.sub{position:fixed;color:#fff;font:500 13px system-ui;text-align:center;text-shadow:0 1px 3px #000;transform:translateX(-50%)}</style></head>
+<body><div id="c"></div>
+<script type="module">
+// Storyboard review of a *.cine.js script: one frame per shot (at its midpoint) in a grid, with the
+// shot label, active subtitle, and per-frame checks (subject in frame, not occluded, camera above ground).
+import * as THREE from '../engine/vendor/three/three.module.js';
+import { createRenderer } from '../engine/render/renderer.js';
+import { Atmosphere } from '../engine/render/sky.js';
+import { K } from '../engine/modeling/index.js';
+import * as H from '../engine/humans.js';
+import { CLIP_LIBRARY } from '../engine/animation/clips.js';
+import { shotCamera, lintCinematic, cinematicLights } from '../engine/gameplay/cinematic.js';
+const q = new URLSearchParams(location.search);
+const mod = await import(q.get('cine'));
+const humanData = await H.loadHumanData();
+const built = await mod.default({ K, H, humanData, THREE });
+const { set, actors, cinematic: def } = built;
+const R = createRenderer({ container: document.getElementById('c') });
+const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(40, 1, 0.02, 3000); R.setup(scene, camera);
+const env = mod.env || {}; const atm = new Atmosphere(scene, R.renderer, { timeOfDay: env.timeOfDay ?? 15, sunAzimuth: env.sunAzimuth ?? 160 });
+scene.add(set); for (const a of Object.values(actors)) scene.add(a);
+scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+const lint = lintCinematic(def, actors);
+const rig = def.lighting === false ? null : cinematicLights(def.lighting || {}); if (rig) scene.add(rig.group);
+const shots = [...def.shots].sort((a, b) => a.t - b.t).slice(0, 12);
+const events = [...(def.events || [])].sort((a, b) => a.t - b.t);
+const base = Object.fromEntries(Object.entries(actors).map(([k, a]) => [k, { p: a.position.clone(), ry: a.rotation.y }]));
+const mixers = {};
+function poseAt(t) { // apply events up to time t (positions, facing, expressions, clips)
+  for (const [k, a] of Object.entries(actors)) { a.position.copy(base[k].p); a.rotation.y = base[k].ry; a.userData.setExpression?.('neutral');
+    if (a.userData.retargeter && CLIP_LIBRARY.idle) { const m = mixers[k] ||= new THREE.AnimationMixer(a); m.stopAllAction(); const act = m.clipAction(a.userData.retargeter.clipFromPoseFn('idle', CLIP_LIBRARY.idle)); act.play(); act.time = t % CLIP_LIBRARY.idle.duration; m.update(0); } }
+  for (const e of events) {
+    if (e.t > t) break; const a = actors[e.actor]; if (!a) continue;
+    if (e.moveTo) { const u = Math.min(1, (t - e.t) / (e.dur ?? 1)), to = new THREE.Vector3(...e.moveTo); a.position.lerp(to, u * u * (3 - 2 * u)); }
+    if (e.face) { const tgt = Array.isArray(e.face) ? new THREE.Vector3(...e.face) : actors[e.face]?.position; if (tgt) a.rotation.y = Math.atan2(tgt.x - a.position.x, tgt.z - a.position.z); }
+    if (e.expression) a.userData.setExpression?.(e.expression, e.weight ?? 1);
+    if (e.play && a.userData.retargeter && CLIP_LIBRARY[e.play]) { const m = mixers[e.actor] ||= new THREE.AnimationMixer(a); m.stopAllAction(); const act = m.clipAction(a.userData.retargeter.clipFromPoseFn(e.play, CLIP_LIBRARY[e.play])); act.play(); act.time = Math.max(0, t - e.t); m.update(0); }
+  }
+  for (const a of Object.values(actors)) { a.userData.face?.update?.(1); a.updateMatrixWorld(true); }
+}
+const W = innerWidth, Hh = innerHeight, cols = shots.length > 6 ? 4 : shots.length > 4 ? 3 : 2, rows = Math.ceil(shots.length / cols), cw = W / cols, ch = Hh / rows;
+const ray = new THREE.Raycaster(), frames = [];
+R.renderer.setScissorTest(true);
+shots.forEach((s, i) => {
+  const t = s.t + s.dur * 0.5; poseAt(t);
+  const c = shotCamera(s, actors, 0.5); rig?.update(c, actors[s.subject]); camera.position.copy(c.pos); camera.lookAt(c.look); camera.fov = c.fov; camera.aspect = cw / ch; camera.updateProjectionMatrix(); camera.updateMatrixWorld();
+  const x = (i % cols) * cw, y = Hh - (Math.floor(i / cols) + 1) * ch;
+  R.renderer.setViewport(x, y, cw, ch); R.renderer.setScissor(x, y, cw, ch); R.renderer.render(scene, camera);
+  // checks: subject head in frame + line of sight; camera above ground
+  const res = { shot: s.name || 'shot' + i, t: +t.toFixed(2), size: s.size || 'custom' };
+  const subj = actors[s.subject];
+  if (subj) {
+    const box = new THREE.Box3().setFromObject(subj), head = new THREE.Vector3(box.getCenter(new THREE.Vector3()).x, box.min.y + (box.max.y - box.min.y) * 0.9, box.getCenter(new THREE.Vector3()).z);
+    const ndc = head.clone().project(camera); res.subjectInFrame = Math.abs(ndc.x) < 0.95 && Math.abs(ndc.y) < 0.95 && ndc.z < 1;
+    ray.set(camera.position, head.clone().sub(camera.position).normalize()); const dist = camera.position.distanceTo(head);
+    const hit = ray.intersectObjects(scene.children, true).find((h) => h.distance < dist - 0.15 && !(h.object.material && h.object.material.transparent));
+    let owner = hit?.object; while (owner && !Object.values(actors).includes(owner)) owner = owner.parent; res.occluded = !!hit && owner !== subj;
+  }
+  ray.set(camera.position.clone().add(new THREE.Vector3(0, 200, 0)), new THREE.Vector3(0, -1, 0)); const g = ray.intersectObject(set, true)[0]; res.cameraAboveGround = !g || camera.position.y > g.point.y + 0.1;
+  frames.push(res);
+  const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.style.left = x + 6 + 'px'; lbl.style.top = (Hh - y - ch) + 6 + 'px';
+  lbl.textContent = `#${i + 1} ${res.shot} · ${res.size}${s.move && s.move !== 'static' ? ' · ' + s.move : ''} · ${s.t.toFixed(1)}–${(s.t + s.dur).toFixed(1)}s${res.subjectInFrame === false ? ' · ⚠ subject out of frame' : ''}${res.occluded ? ' · ⚠ occluded' : ''}`;
+  document.body.appendChild(lbl);
+  const sub = events.filter((e) => e.subtitle && e.t <= t && t <= e.t + (e.dur ?? Math.max(1.2, e.subtitle.length / 15))).pop();
+  if (sub) { const d = document.createElement('div'); d.className = 'sub'; d.style.left = x + cw / 2 + 'px'; d.style.top = (Hh - y) - 28 + 'px'; d.style.width = cw * 0.9 + 'px'; d.textContent = (sub.speaker ? sub.speaker + ': ' : '') + sub.subtitle; document.body.appendChild(d); }
+});
+window.__result = { lint, frames, shots: def.shots.length, duration: def.duration };
+</script></body></html>

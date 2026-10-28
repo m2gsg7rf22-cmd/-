@@ -136,6 +136,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 - `references/modeling.md` — **how to create any 3D asset yourself**: model scripts with the Modeling Kit (SDF sculpting, branching, cards, lathe/loft/hard-surface), the `gameforge model` review loop and checklist
 - `references/animation.md` — **authoring any motion yourself**: joint conventions, anim scripts, `gameforge anim` checks + contact sheets, animator's method
 - `references/audio.md` — **designing any sound yourself**: synth voices, layering method, `gameforge sound` (WAV + spectrogram sheet + checks)
+- `references/cinematics.md` — **cutscenes**: shot grammar (sizes, moves, 180° rule), event timeline, character lighting, `gameforge cinematic` storyboard review, `playCinematic`
 - `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/recipes.md` — code recipes: new enemy, boss, vehicle, cutscene, quest, minigame, traversal

@@ -39,3 +39,7 @@ export { Player } from './gameplay/player.js';
 export { composeGame, normalizeSpec, BIOMES } from './compose/composer.js';
 export { Traversal } from './gameplay/traversal.js';
 export { LightPool } from './render/lightpool.js';
+
+// ---- cinematics
+export { playCinematic, shotCamera, lintCinematic, cinematicLights, SHOT_SIZES } from './gameplay/cinematic.js';
+export { place, foundation, pathStrip, scatter, groundAudit } from './world/placement.js';

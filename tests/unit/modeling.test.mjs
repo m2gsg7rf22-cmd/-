@@ -86,3 +86,14 @@ test('placement: place/foundation/pathStrip/groundAudit on a heightfield', () =>
   const root = new K.THREE.Group(); const floater = box.clone(); floater.position.y += 3; root.add(box, floater);
   const a = K.groundAudit(root, hf); assert.equal(a.floating.length, 1); assert.equal(a.buried.length, 0);
 });
+
+test('cinematics: shotCamera frames the subject; lint catches grammar errors', async () => {
+  const { shotCamera, lintCinematic } = await import('../../engine/gameplay/cinematic.js');
+  const mk = (x) => { const g = new K.THREE.Mesh(new K.THREE.BoxGeometry(0.5, 1.8, 0.3).translate(0, 0.9, 0)); g.position.x = x; return g; };
+  const actors = { a: mk(-1), b: mk(1) }; actors.a.rotation.y = Math.PI / 2; actors.b.rotation.y = -Math.PI / 2;
+  const c = shotCamera({ size: 'closeup', subject: 'a' }, actors, 0);
+  assert.ok(c.pos.distanceTo(new K.THREE.Vector3(-1, 1.6, 0)) < 2, 'close-up is close to the face');
+  const bad = lintCinematic({ duration: 10, shots: [{ name: 's1', t: 0, dur: 0.5, size: 'medium', subject: 'a' }, { name: 's2', t: 0.5, dur: 15, size: 'medium', subject: 'a' }], events: [{ t: 1, subtitle: 'This line is far too long to be read in the short time it stays on screen', dur: 1 }] }, actors);
+  const msgs = bad.issues.map((i) => i.msg).join(' | ');
+  for (const w of ['flash', 'drags', 'jump cut', 'needs']) assert.ok(msgs.includes(w), 'expected: ' + w);
+});

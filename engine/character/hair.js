@@ -50,6 +50,26 @@ function strandTexture() {
   flowTex.generateMipmaps = true; flowTex.minFilter = THREE.LinearMipmapLinearFilter; flowTex.magFilter = THREE.LinearFilter; flowTex.anisotropy = 4; flowTex.needsUpdate = true;
   return flowTex;
 }
+// Mohawk crest: tapered fin of hair along the midline; tall in the middle, low at front and nape.
+function crestFin(mid, F, height, color, st, { HEAD, NECK, SPINE }) {
+  const n = mid.length, P = [], N = [], UV = [], SI = [], SW = [], I = [], rng = new RNG(5);
+  const len = mid.reduce((a, p, i) => a + (i ? p.distanceTo(mid[i - 1]) : 0), 0); let acc = 0;
+  for (let i = 0; i < n; i++) {
+    const p = mid[i]; if (i) acc += p.distanceTo(mid[i - 1]); const t = acc / Math.max(1e-6, len);
+    const out = p.clone().sub(F.c).normalize(), h = height * 0.75 * (0.35 + 0.65 * Math.sin(Math.PI * Math.min(1, t * 1.05))) * (0.9 + 0.2 * rng.next());
+    const T = mid[Math.min(i + 1, n - 1)].clone().sub(mid[Math.max(i - 1, 0)]).normalize(), side = new THREE.Vector3().crossVectors(T, out).normalize();
+    const lean = T.clone().multiplyScalar(-0.25 * h); // tips sweep back slightly
+    for (const [k, w] of [[0, -1], [1, 1]]) { // two faces of the fin (slightly thick at the base)
+      const b = p.clone().addScaledVector(side, w * 0.012), top = p.clone().addScaledVector(out, h).add(lean).addScaledVector(side, w * 0.003);
+      for (const [q, v] of [[b, 0], [top, 1]]) { P.push(q.x, q.y, q.z); const nn = side.clone().multiplyScalar(w); N.push(nn.x, nn.y, nn.z); UV.push(acc * 3 + k * 0.5, v * 0.92); /* v=0 roots at the scalp */ SI.push(HEAD, NECK, SPINE, 0); SW.push(1, 0, 0, 0); }
+    }
+    if (i) { const a = (i - 1) * 4; I.push(a, a + 4, a + 1, a + 1, a + 4, a + 5, a + 2, a + 3, a + 6, a + 3, a + 7, a + 6); }
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(UV, 2));
+  g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(SW, 4)); g.setIndex(I);
+  const m = hairMaterial(color, st, 1); m.map = clumpTexture().clone(); m.map.wrapS = THREE.RepeatWrapping; m.map.needsUpdate = true; m.alphaTest = 0.35; m.name = 'gf:hair-crest';
+  return [g, m];
+}
 let clumpTex = null;
 function clumpTexture() { // a clump of ~40 strands along v (root v=0 → tip v=1), tapered tips with ragged lengths
   if (clumpTex) return clumpTex;
@@ -199,20 +219,17 @@ export function addHair(human, opts = {}) {
   }
   const W = NV + 1;
   for (let iu = 0; iu < NU; iu++) for (let iv = 0; iv < NV; iv++) { const a = iu * W + iv, b = a + W; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-  // mohawk: keep only a central strip and raise it
-  if (st.mohawk) {
-    for (let iu = 0; iu <= NU; iu++) { const az = (iu / NU) * Math.PI * 2 - Math.PI; const strip = Math.abs(Math.sin(az)) < 0.16 || Math.abs(Math.abs(az) - Math.PI) < 0.16; for (let iv = 0; iv <= NV; iv++) { const k = (iu * W + iv) * 3; if (strip) { const dir = new THREE.Vector3(pos[k] - F.c.x, pos[k + 1] - F.c.y, pos[k + 2] - F.c.z).normalize(); const h = st.mohawk * Math.max(0, dir.y) * (0.8 + 0.4 * Math.abs(noise.noise2(iv * 0.9, 2))); pos[k] += dir.x * h; pos[k + 1] += dir.y * h; pos[k + 2] += dir.z * h; } } }
-  }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); g.computeTangents?.();
   g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
   const capMat = hairMaterial(color, st, style === 'buzz' ? 24 : 10);
   if (style === 'buzz') { capMat.alphaTest = 0; capMat.map.repeat.set(30, 4); capMat.color.multiplyScalar(0.9); }
-  if (style === 'mohawk') { // shaved sides: only render the strip via alpha
-    const strip = new Float32Array(pos.length / 3); for (let iu = 0; iu <= NU; iu++) { const az = (iu / NU) * Math.PI * 2 - Math.PI; const on = Math.abs(Math.sin(az)) < 0.16 || Math.abs(Math.abs(az) - Math.PI) < 0.16; for (let iv = 0; iv <= NV; iv++) strip[iu * W + iv] = on ? 1 : 0; }
-    const keep = []; for (let t = 0; t < idx.length; t += 3) if (strip[idx[t]] && strip[idx[t + 1]] && strip[idx[t + 2]]) keep.push(idx[t], idx[t + 1], idx[t + 2]); g.setIndex(keep);
-    meshes.push(skinned(g, capMat));
-    return finish(addBuzz());
+  if (style === 'mohawk') { // shaved sides (buzz) + a crest fin along the sagittal midline
+    const front = cols[Math.round(NU / 2)], back = cols[0];
+    const mid = [...front.slice(0, front.capEnd ? front.indexOf(front.capEnd) + 1 : front.length).reverse(), ...back.slice(1, back.capEnd ? back.indexOf(back.capEnd) + 1 : back.length)].map((c) => c.p0);
+    meshes.push(skinned(...crestFin(mid, F, st.mohawk, color, st, { HEAD, NECK, SPINE })));
+    const bz = addBuzz(); bz.material.color.multiplyScalar(0.45); bz.material.roughness = 0.85; // shaved sides read darker/matte
+    return finish(bz);
   }
   meshes.push(skinned(g, capMat));
   // ---- strand clumps: ribbons that follow the shell's flow lines, lifted slightly off it.
