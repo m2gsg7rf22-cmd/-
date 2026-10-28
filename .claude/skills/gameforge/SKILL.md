@@ -29,6 +29,13 @@ node $GF/tools/gameforge.mjs doctor      # node, Playwright/Chromium, WebGL, git
 If Playwright is missing, everything still works except automated playtests: say so, and verify by
 running `build` + `validate` and asking the user to open the HTML.
 
+## 0.4 Reference games ("like GTA / Spider-Man / Souls")
+
+When the request names existing games, read `references/aaa-blueprints.md` first: decompose the
+reference into fantasy, loops, camera, world, systems and presentation, map every system to
+GameForge modules (build missing ones as reusable engine modules with tests), scope an honest
+vertical slice, and never copy names, characters, maps, music or code.
+
 ## 0.5 Creating assets: write them, review them, never settle for primitives
 
 Every bespoke asset — a tree species, a creature, a weapon, a building, a vehicle variant — is a
@@ -125,6 +132,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 
 - `references/spec-reference.md` — every `game.spec.js` field, with examples per genre
 - `references/engine-api.md` — engine modules and the most useful calls
+- `references/aaa-blueprints.md` — decomposing a reference AAA game into systems, genre blueprints, production plan, honest quality bar
 - `references/modeling.md` — **how to create any 3D asset yourself**: model scripts with the Modeling Kit (SDF sculpting, branching, cards, lathe/loft/hard-surface), the `gameforge model` review loop and checklist
 - `references/animation.md` — **authoring any motion yourself**: joint conventions, anim scripts, `gameforge anim` checks + contact sheets, animator's method
 - `references/audio.md` — **designing any sound yourself**: synth voices, layering method, `gameforge sound` (WAV + spectrogram sheet + checks)
