@@ -1,5 +1,7 @@
 # AGENTS.md — instructions for coding agents (Codex and others)
 
+**Language rule (mandatory):** communicate with the user in **Hebrew only** (progress, decisions, test reports, blockers). Code and technical terms may stay in English. Resume point: `PROGRESS.md`. Do not develop the demo games in `examples/`; the product is the skill + reusable technology.
+
 This repository is **GameForge AAA**: a skill + zero-install toolkit for building playable 3D
 browser games. If you are asked to make a game, follow `skills/gameforge/SKILL.md` exactly (it
 is runner-agnostic). Runtime directory `GF` = this repository root.

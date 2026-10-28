@@ -18,7 +18,9 @@ vendored three.js). Generated games are plain static files.
 │ lib/design.mjs (GDD, task graph + conflict/cycle validation,         │
 │                 playtest generation)                                 │
 │ playtest.mjs (Playwright driver over window.__GF) · report.mjs       │
-│ serve.mjs · vendor-three.mjs · build-skill.mjs                       │
+│ serve.mjs · vendor-three.mjs · build-skill.mjs · install.sh          │
+│ bench-characters.mjs · bench-vehicles.mjs (metrics + inspection)     │
+│ assets/compile-human.mjs (MakeHuman CC0 data → compact dataset)      │
 └───────────────┬─────────────────────────────────────────────────────┘
                 │ copies / references
 ┌───────────────▼───────────── Runtime engine (engine/) ──────────────┐
@@ -28,8 +30,12 @@ vendored three.js). Generated games are plain static files.
 │           material library, particles, light pool                    │
 │ geometry/ loft/lathe/tube builders, props, buildings, vehicles,      │
 │           GLB/OBJ export, validation                                 │
-│ character/ procedural skinned humanoid · animation/ clips, animator, │
-│           tweens                                                     │
+│ character/ realistic humans: human-data (CC0 MakeHuman decode),     │
+│           human (morphs, skeleton fit, eyes, sockets, FaceRig),      │
+│           skin (UV bake + SSS), hair, clothing (garments, shoes),    │
+│           archetypes · stylized humanoid (opt-out)                   │
+│ animation/ clips, animator, tweens, retarget (canonical deltas, BVH) │
+│ humans.js separate entry (6 MB dataset only ships when imported)     │
 │ world/    heightfield terrain, vegetation, water, city + traffic     │
 │ physics/  world (colliders, raycasts, bodies, triggers), character   │
 │           controller, raycast vehicle                                │
@@ -49,7 +55,10 @@ vendored three.js). Generated games are plain static files.
 | Renderer | three.js r180, vendored, relative imports | MIT, mature WebGL2 PBR, no build step; Babylon/PlayCanvas heavier for an agent to drive; R3F needs React + JSX build |
 | Physics | in-house (kinematic character, raycast vehicle, sphere bodies, spatial hash) | deterministic, tiny, tailored to genres; Rapier is 1.6 MB WASM, cannon-es unmaintained since 2022 |
 | AI | in-house BT/FSM/steering/A* | small, testable in Node, no dependency |
-| Assets | 100 % procedural at load time | zero install, no paid generators, no licensing risk |
+| Assets | procedural at load time + one bundled CC0 dataset (MakeHuman) | zero install, no paid generators, no licensing risk; humans need real anatomy data that procedural primitives could not reach |
+| Humans | MakeHuman CC0 base mesh + targets, own runtime (no AGPL code) | best freely licensed parametric human with a production skeleton; compiled to 6 MB gzip/base64 |
+| Retargeting | canonical world-space deltas + rest-pose canonicalisation | one clip library drives the mannequin, the 163-bone rig and BVH mocap |
+| Vehicles | profile curves → one classified body grid | continuous smooth shells with crisp material borders and cut arches, cheap to vary per type |
 | Audio | Web Audio synthesis + sequencer | no audio files, adaptive music |
 | Packaging | custom bundler → single HTML (works from `file://`) | no esbuild/npm; games open with a double-click |
 | Determinism | fixed 60 Hz step, simulation-time timers, seeded RNG | reproducible automated playtests |
@@ -79,3 +88,23 @@ my-game/ index.html main.js game.spec.js GDD.md tasks.json playtest.json README.
          engine/ tools/   (copied, or referenced with --shared inside this repo)
          dist/<id>.html   (gameforge build)
 ```
+
+## Human character pipeline
+
+```
+loadHumanData() ─ base64 → DecompressionStream(gzip) → typed views (positions, UVs, groups,
+                  skin weights, delta-coded targets, skeleton joints, eye proxy, BVH)
+buildHuman(data, params)
+  macro targets (sex/age/muscle/weight × ethnicity, height/proportions) + detail modifiers
+  → feet on floor → exact stature (heightCm) → skeleton fitted to joint vertex groups
+  → skinned mesh (body/teeth/tongue) + eyes (vertex-coloured iris) + sockets + FaceRig morphs
+assembleHuman(data, spec)
+  computeSkinMasks → bakeSkinTextures (UV rasterizer) → skin material (wrap SSS patch)
+  → dress(outfit): garment shells (region rules, hem planes, drape, offset, hem thickness,
+    body culling with eroded mask) + procedural shoes + skirt shells
+  → addHair (envelope + curtain + tails/buns/braids) → addBeard → Retargeter
+Animator: clips (pose functions) → Retargeter.clipFromPoseFn → AnimationMixer on the 163 bones
+```
+
+Quality is verified by `tools/bench-characters.mjs` (metrics + inspection sheets) and
+`tests/unit/humans.test.mjs`; vehicles by `tools/bench-vehicles.mjs`.

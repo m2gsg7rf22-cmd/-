@@ -4,19 +4,47 @@ GameForge produces real, playable, tested browser games, but it is **not** a rep
 AAA studio or engine. Concretely:
 
 ## Visual fidelity
-- All content is procedural and stylized. Characters are built from lofted/lathed primitives
-  with ~4–6k triangles and rigid-ish joint skinning: no sculpted detail, no facial animation,
-  no hair simulation, no cloth simulation (capes are skinned to the torso).
-- Textures are procedurally synthesized (256² default); no photogrammetry, no hand-painted
-  hero textures. Visual results are far from GTA VI / Spider-Man 2 / RDR2 / Cyberpunk 2077.
-- No real-time GI, SSR, SSAO or volumetrics are enabled by default (bloom, FXAA, grading,
-  shadows and image-based lighting are). Night scenes rely on a light pool + fill light.
-- Low-quality tier (auto-selected on software WebGL) disables post-processing, so headless
-  screenshots look flatter than on a GPU.
+- **Humans** (default in new projects) are built from the CC0 MakeHuman base mesh and morph
+  targets. They have anatomically proportioned and individually varied bodies and faces (checked
+  against anthropometric norms by `tools/bench-characters.mjs`), a 163-bone skeleton, facial
+  expressions, baked skin textures, garments and hair. They are **not photorealistic**:
+  - **Hair** is a textured shell or tube geometry, not strands. Short styles can look
+    helmet-like up close.
+  - **Garments** are body-offset shells with Laplacian draping, not cloth simulation. Loose
+    clothing (skirts, robes) does not swing.
+  - **Skin** is a procedurally baked albedo/roughness at 512–1024 px plus a wrap-lighting
+    subsurface approximation. There are no scanned textures, pore-level normal maps or
+    real-time SSS.
+  - **Shoes** are rigid procedural lasts that do not bend at the toes.
+  - **Children** are not supported, because the dataset is adult only.
+  - **Cost:** about 38–41k triangles and about 0.5 s CPU build time per dressed human. Crowds
+    of more than about 20 humans need reduced texture size or the stylized mannequin.
+- **The stylized mannequin** (`SPEC.characters = 'stylized'`) remains available. It is
+  low-poly with no facial animation.
+- **Vehicles** have smooth profile-driven bodies with flush glass, seams, lamps, arches,
+  interiors and detailed wheels (`tools/bench-vehicles.mjs`). They read as car classes, not as
+  specific production models: there is no sculpted surfacing beyond the profile curves, lamps
+  are emissive patches, there are no damage models, and doors do not open.
+- **Environment textures** are procedurally synthesized at 256–512 px. There is no
+  photogrammetry. Buildings are block massing with facade textures; there are no modelled
+  interiors. Terrain, foliage and water are stylized. Overall fidelity is far below GTA VI,
+  Spider-Man 2, RDR2 or Cyberpunk 2077.
+- **Post-processing:** no real-time GI, SSR, SSAO or volumetrics are enabled. Enabled effects
+  are bloom, FXAA, grading, shadows and image-based lighting. Night scenes rely on a light pool
+  plus a fill light.
+- **Low tier:** the low-quality tier (auto-selected on software WebGL) disables post-processing,
+  so headless screenshots look flatter than they would on a GPU.
 
 ## Animation
-- Animations are procedural pose functions sampled to keyframes: readable but not
-  motion-captured. No foot IK, no root motion, no ragdolls, no animation retargeting.
+- **Clip sources:**
+  - Engine clips are procedural pose functions, retargeted at load time onto the realistic
+    rig.
+  - BVH motion capture (CMU, Mixamo-style or MakeHuman naming) can be imported with
+    `clipFromBVHCanonical`. Only four CC0 BVH clips are bundled; the rest must be supplied by
+    the user.
+- **Missing systems:** there is no foot IK, root motion, ragdolls or motion matching. Fingers
+  are posed procedurally (grip curl). Lip sync uses random visemes while speaking and is not
+  driven by audio.
 
 ## Simulation
 - Physics is a deliberately simple in-house system: kinematic characters, sphere-proxy dynamic
@@ -27,7 +55,8 @@ AAA studio or engine. Concretely:
 
 ## Scale
 - Worlds are single-scene (≈ 400 m terrain or a 5×5-block city). No streaming, no LOD system
-  beyond instancing/merging, no multiplayer, no networking.
+  beyond instancing/merging and the vehicle `detail:'low'` option, no multiplayer, no networking.
+- Single-file builds that use realistic humans are ~9 MB (6 MB CC0 human dataset).
 
 ## Performance evidence
 - All automated measurements in this repository were taken on **software WebGL (SwiftShader)**

@@ -80,7 +80,7 @@ function packageTo(dest) {
   const out = path.join(dest, 'gameforge');
   fs.rmSync(out, { recursive: true, force: true });
   fs.cpSync(SKILL, out, { recursive: true });
-  for (const d of ['engine', 'tools', 'templates']) fs.cpSync(path.join(ROOT, d), path.join(out, 'runtime', d), { recursive: true });
+  for (const d of ['engine', 'tools', 'templates', 'sandbox']) fs.cpSync(path.join(ROOT, d), path.join(out, 'runtime', d), { recursive: true });
   fs.copyFileSync(path.join(ROOT, 'LICENSE'), path.join(out, 'LICENSE'));
   fs.copyFileSync(path.join(ROOT, 'THIRD_PARTY_NOTICES.md'), path.join(out, 'THIRD_PARTY_NOTICES.md'));
   console.log('packaged skill -> ' + out);
@@ -89,6 +89,12 @@ function packageTo(dest) {
 if (opt('package')) packageTo(path.resolve(opt('package')));
 const inst = opt('install');
 if (inst) {
-  if (inst === 'claude' || inst === 'both') packageTo(path.join(os.homedir(), '.claude/skills'));
+  if (inst === 'claude' || inst === 'both') {
+    packageTo(path.join(os.homedir(), '.claude/skills'));
+    // the 17 specialist subagents, so the Director can run waves in parallel
+    const agentsDir = path.join(os.homedir(), '.claude/agents'); fs.mkdirSync(agentsDir, { recursive: true });
+    for (const f of fs.readdirSync(path.join(ROOT, '.claude/agents'))) fs.copyFileSync(path.join(ROOT, '.claude/agents', f), path.join(agentsDir, f));
+    console.log('installed subagents -> ' + agentsDir);
+  }
   if (inst === 'codex' || inst === 'both') packageTo(path.join(os.homedir(), '.agents/skills'));
 }

@@ -69,7 +69,7 @@ game.quests.report('custom', 'cat');
 ```
 
 ## ✔ Checkpoint race (gameplay.js, city or terrain)
-See `games/neon-circuit/main.js`: gates from a list of points, `Math.hypot(car - gate) < 8`
+See `examples/neon-circuit/main.js`: gates from a list of points, `Math.hypot(car - gate) < 8`
 advances `nextGate`, timer in simulation time, best time via `app.save`.
 
 ## ✔ Traversal: swing / glide / air dash (gameplay.js)

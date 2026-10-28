@@ -16,8 +16,19 @@ Priorities are ordered by impact on "describe any game → get a good playable g
 - [x] Skill (SKILL.md + references) + 17 agents; Claude Code and portable package
 - [x] 4 demo games + recipes lab, all with automated playtests and dist builds
 
+## Done (v0.2 — course correction: the Skill and reusable technology first)
+- [x] Realistic parametric humans on CC0 MakeHuman data (body/face morphs, exact stature, 163-bone rig)
+- [x] Skin bake + SSS, anatomical eyes, expressions/visemes, hair styles, beards, garments, procedural shoes, archetypes
+- [x] Retargeting of the clip library + BVH mocap import; humans wired into Player/NPC/Enemy and templates
+- [x] Character and vehicle benchmarks (metrics + inspection sheets); unit tests for the human system
+- [x] Vehicles v2: profile-driven continuous bodies, 9 types, detailed wheels, LOD
+- [x] Demos moved to examples/; one-command install (install.sh)
+
 ## Next
-- [ ] Foot IK and look-at IK for humanoids; procedural ragdoll on death
+- [ ] Foot IK and look-at IK for humans; procedural ragdoll on death
+- [ ] Human LOD (decimated mesh + 256 px skin for crowds), strand-card hair, cloth simulation for loose garments
+- [ ] More CC0 mocap (locomotion set, combat) and motion matching
+- [ ] Environment v2: sculpted building facades/interiors, higher-fidelity trees (L-system + leaf cards), terrain detail textures
 - [ ] Ranged combat kit (aiming camera, hitscan, cover) and a shooter template
 - [ ] Platformer template (precise collision, moving platforms) and racing template on terrain tracks
 - [ ] Navmesh (recast-style) or hierarchical grid for large worlds; NPC daily schedules
