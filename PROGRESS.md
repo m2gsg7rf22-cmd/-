@@ -17,7 +17,7 @@
 | # | מערכת | קוד | בדיקות | מצב |
 |---|---|---|---|---|
 | 1 | Character Generation Engine | `engine/humans.js`, `engine/character/{human,human-data,skin,hair,clothing,archetypes}.js` | `tests/unit/humans.test.mjs`, `tools/bench-characters.mjs` (11/11) | ממומש ונבדק. פערים: LOD לקהל, שיער סיבים, סימולציית בד |
-| 2 | Procedural 3D Modeling Engine | `engine/geometry/{builders,props,buildings,vehicles,export}.js` | `content.test.mjs`, `tools/bench-vehicles.mjs` (7/7) | רכבים v2 נבדקו. פערים: מבנים, עצים, נכסי סביבה |
+| 2 | Procedural 3D Modeling Engine | **`engine/modeling/`** (SDF + Surface Nets, L-system/turtle, space colonization, cards/paint, K), `tools/model.mjs` (לולאת ביקורת: מדדים + גיליון 4 זוויות + GLB), `references/modeling.md`, דוגמאות ב־`skills/gameforge/models/`; `engine/geometry/*` | `modeling.test.mjs` (6), `bench-vehicles` (7/7) | ממומש. **Claude יוצר מודלים בעצמו** דרך סקריפטים ולולאת ביקורת. בבדיקה: סוכן עיוור יוצר ערבה בוכייה |
 | 3 | Animation & Rigging | `engine/animation/{clips,animator,retarget,tween}.js` | unit, גיליונות walk/run/BVH | ממומש. פערים: foot IK, ragdoll, root motion |
 | 4 | World Generation | `engine/world/{terrain,vegetation,water,city}.js` | unit + playtests | בסיסי. **הבא בתור לשדרוג** |
 | 5 | Rendering & Materials | `engine/render/*` | canvas checks | ממומש. פערים: SSAO, אמת מידה ויזואלית לסביבה |
@@ -28,6 +28,7 @@
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | — | ממומש. פער: השוואת פיקסלים מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.3**: כיוון מתוקן לפי המשתמש: לא מודלים מוכנים, אלא יכולת. Modeling Kit, `gameforge model` (רינדור ביקורת ומדדים), מסמך שיטה ו־checklist, 4 סקריפטים לדוגמה, תדריך 3D Artist מעודכן. (מחולל העצים `geometry/trees.js` נשאר כמימוש ברירת מחדל ל־populate.)
 - **v0.2**: בני אדם ריאליסטיים (MakeHuman CC0), עור, עיניים, שיער, בגדים ונעליים פרוצדורליות, retargeting ו־BVH, שילוב ב־Player/NPC/Enemy ובתבנית. benchmark לדמויות. רכבים v2 (9 סוגים) ו־benchmark לרכבים. ההדגמות הועברו ל־`examples/`. התקנה בפקודה אחת (`install.sh`, נבדקה ב־HOME נקי). תיעוד: characters.md, ARCHITECTURE, CAPABILITIES, LIMITATIONS, ROADMAP, THIRD_PARTY (MakeHuman CC0).
 - **v0.1**: מנוע, כלים, Skill, 17 סוכנים, 4 הדגמות ו־recipes-lab, כולם עם playtests.
 
@@ -35,8 +36,9 @@
 unit 33/33 · כל ה־playtests ב־examples עברו (source + dist) · bench-characters 11/11 · bench-vehicles 7/7.
 
 ## הצעד הבא
-1. README מלא (התקנה, מבנה, מערכות, הוכחות).
-2. World Generation v2: עצים איכותיים (ענפים עם L-system וכרטיסי עלים), חזיתות מבנים, טקסטורת פרטים לשטח. benchmark ויזואלי לסביבה (`tools/bench-world.mjs`).
-3. Narrative generator: מחולל עלילה, דמויות ומשימות מתוך spec, כמודול כללי עם בדיקות.
-4. LOD לבני אדם (קהל).
-5. QA: השוואת פיקסלים מול baseline.
+1. לשפר את ה־Skill לפי המשוב מהבדיקה העיוורת (ערבה). להוסיף בדיקות עיוורות נוספות (רהיט, נשק, מבנה).
+2. אותו עיקרון ("יכולת, לא תוצרים") לשאר התחומים: סביבה/עולם, אנימציה (כתיבת clips + גיליון ביקורת), חומרים/שיידרים, סאונד.
+3. World: כלי ביקורת לסצנה שלמה (`gameforge scene`) + שיטת עבודה לבניית עולם, חזיתות מבנים, טקסטורת פרטים לשטח.
+4. Narrative generator: מחולל עלילה, דמויות ומשימות מתוך spec, כמודול כללי עם בדיקות.
+5. LOD לבני אדם (קהל).
+6. QA: השוואת פיקסלים מול baseline.
