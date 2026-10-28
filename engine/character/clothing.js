@@ -155,7 +155,7 @@ function skirtMesh(api, f, spec) {
   geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
   const mat = (MATERIALS[spec.material] || MATERIALS.cotton)(spec.color ?? 0x556677); const m2 = mat.clone(); m2.side = THREE.DoubleSide;
   const mesh = new THREE.SkinnedMesh(geo, m2); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.bind(api.skeleton, api.mesh.bindMatrix);
-  mesh.name = 'garment:skirt'; return mesh;
+  mesh.name = 'garment:skirt'; mesh.userData.colors = [spec.color ?? 0x556677]; mesh.userData.layer = spec.layer ?? 2; return mesh;
 }
 
 export function dress(human, items = []) {
@@ -280,6 +280,7 @@ function buildGarment(api, tris, spec, f) {
   const mesh = new THREE.SkinnedMesh(geo, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
   mesh.bind(api.skeleton, api.mesh.bindMatrix);
   mesh.renderOrder = spec.layer;
+  mesh.userData.colors = [spec.color ?? 0x556677]; mesh.userData.layer = spec.layer ?? 0; // flat colours for crowd merges
   // polygon offset per layer avoids z-fighting between stacked garments
   m.polygonOffset = true; m.polygonOffsetFactor = -spec.layer; m.polygonOffsetUnits = -spec.layer;
   return mesh;
@@ -365,7 +366,7 @@ function shoeMesh(api, f, spec, side) {
   const upper = (MATERIALS[spec.material] || MATERIALS.leather)(spec.color ?? 0x2a1a10); const um = upper.clone ? upper.clone() : upper;
   if (um.normalScale) um.normalScale.multiplyScalar(0.4);
   const soleMat = new THREE.MeshStandardMaterial({ color: spec.soleColor ?? (spec.material === 'canvas' ? 0xeeeae2 : 0x15120f), roughness: 0.8 }); soleMat.name = 'gf:sole';
-  const mesh = new THREE.SkinnedMesh(geo, [um, soleMat]); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
+  const mesh = new THREE.SkinnedMesh(geo, [um, soleMat]); mesh.userData.colors = [spec.color ?? 0x2a1a10, soleMat.color.getHex()]; mesh.userData.layer = spec.layer ?? 3; mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false;
   mesh.bind(api.skeleton, api.mesh.bindMatrix);
   return mesh;
 }

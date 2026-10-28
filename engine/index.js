@@ -39,3 +39,11 @@ export { Player } from './gameplay/player.js';
 export { composeGame, normalizeSpec, BIOMES } from './compose/composer.js';
 export { Traversal } from './gameplay/traversal.js';
 export { LightPool } from './render/lightpool.js';
+
+// ---------- Open-world systems (streaming, NPC daily life, wanted/heat, crowds) ----------
+// See skills/gameforge/references/open-world.md. Crowd uses realistic humans only when the game
+// set app.useHumans(H, data); otherwise mannequins (the 6 MB dataset stays optional).
+export { ChunkManager, LODGroup, selectLOD, createImpostor, streamObjects, bucketByCell, cellDistance, chunkKey, parseChunkKey } from './world/streaming.js';
+export { ScheduleAgent, ScheduleSystem, PlaceRegistry, ACTIVITIES, SCHEDULE_TEMPLATES, makeSchedule, activityAt, jitterSchedule, inSpan, hoursBetween, straightPlanner, navGridPlanner, attachSchedules } from './ai/schedules.js';
+export { WantedSystem, CRIMES, WANTED_LEVELS, levelForHeat, assignPursuit, lineOfSight, wantedHUD } from './gameplay/wanted.js';
+export { Crowd, CrowdAnimator, sidewalkNetwork, placesFromCity, pedestrianLook } from './world/crowd.js';

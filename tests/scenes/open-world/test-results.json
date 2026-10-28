@@ -1,0 +1,195 @@
+{
+  "game": "Open World Systems (integration scene)",
+  "quality": "low",
+  "startedAt": "2026-10-28T23:25:44.166Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "9148 ms"
+    },
+    {
+      "label": "scene boots into play",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "chunks around the player are resident",
+      "ok": true,
+      "detail": 16
+    },
+    {
+      "label": "only nearby buildings are streamed in",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "30+ scheduled pedestrians",
+      "ok": true,
+      "detail": 36
+    },
+    {
+      "label": "realistic crowd templates built (crowd LOD)",
+      "ok": true,
+      "detail": 3
+    },
+    {
+      "label": "mid-range pedestrians use mannequins",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "realistic tier capped at maxNear",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "city frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 110.9,
+        "std": 55.9,
+        "colors": 114
+      }
+    },
+    {
+      "label": "moving across the city streams new chunks in",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "chunks left behind are unloaded",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "streaming queue drains within budget",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "time jump to 3 am: most pedestrians sleep",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "night streets are nearly empty",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "after the jump agents are at their schedule places",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "time jump to lunch: pedestrians go to eat",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "time jump to 10 am: workers at work",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "schedule positions consistent at 10 am",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "pedestrians walk in real time",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "no wanted level before a crime",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "player walks up to a pedestrian",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "crimes raise the wanted level",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "label": "nearby pedestrians flee the crime",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "pursuers spawn for the level",
+      "ok": true,
+      "detail": 3
+    },
+    {
+      "label": "HUD stars show the level",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "pursuers have pursuit goals",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "pedestrians resume their schedules after the scare",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "breaking line of sight starts the search cooldown",
+      "ok": true,
+      "detail": "search"
+    },
+    {
+      "label": "wanted level decays to zero after hiding",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "pursuers despawn when clear",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "frame within budget (< 900 draw calls, < 2.5 M triangles)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-street.png",
+    "screenshots/02-pursuit.png",
+    "screenshots/03-calm.png"
+  ],
+  "metrics": {
+    "fps": 21.33617815708757,
+    "frameMs": 9.099999999976717,
+    "calls": 191,
+    "triangles": 130384,
+    "geometries": 1054,
+    "textures": 238,
+    "tier": "low",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 0,
+    "particles": 0
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 9148,
+  "durationMs": 69020,
+  "summary": "32/32 checks passed"
+}

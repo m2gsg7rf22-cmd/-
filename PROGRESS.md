@@ -23,11 +23,12 @@
 | 5 | Rendering & Materials | `engine/render/*` | canvas checks | ממומש. פערים: SSAO, אמת מידה ויזואלית לסביבה |
 | 6 | Physics & Gameplay | `engine/physics/*`, `engine/gameplay/*` | unit + playtests | ממומש |
 | 7 | Narrative & Quest | `engine/gameplay/narrative.js`, `tools/lib/design.mjs` | unit + playtests | ממומש (פורמט דיאלוג/משימות). פער: מחולל עלילה מתוך spec |
-| 8 | NPC Intelligence | `engine/ai/behavior.js` | unit | ממומש. פערים: navmesh, לוחות זמנים יומיים |
+| 8 | NPC Intelligence | `engine/ai/behavior.js`, `engine/ai/schedules.js` | unit + open-world scene | ממומש (כולל לוחות זמנים יומיים). פער: navmesh |
 | 9 | Audio Generation | `engine/audio/audio.js` (+FM, pluck, defineSfx, רינדור offline), **`gameforge sound`** (WAV + ספקטרוגרמה + בדיקות), `references/audio.md`, דוגמאות ב־`skills/gameforge/sounds/` | review checks | **Claude מעצב צלילים בעצמו** (שיפוט לפי ניתוח, לא שמיעה) |
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | — | ממומש. פער: השוואת פיקסלים מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.4 (open world)**: מערכות עולם פתוח כמודולים כלליים: `world/streaming.js` (ChunkManager, LODGroup, impostor), `ai/schedules.js` (לוחות זמנים יומיים, בריחה וחזרה, קפיצות זמן), `gameplay/wanted.js` (heat 0–5, רודפים, קו ראייה, cooldown, כוכבים ב־HUD דרך `ui.stars`), `world/crowd.js` (הולכי רגל על מדרכות עם LOD: אדם ריאליסטי ← בובה ← מוסתר). נוסף ל־humans.js נתיב `lod:'crowd'`, וגם `cloneHuman` ו־`mergeGarments`. בדיקות: `openworld.test.mjs` (7), סצנה `tests/scenes/open-world` (32/32), `tools/bench-crowd.mjs`. תיעוד: `references/open-world.md`.
 - **v0.3.3**: 3 בדיקות עיוורות עברו (ערבה, רובה, הליכת זומבי), וכל הפערים שנמצאו תוקנו. בין היתר: באג בתיעוד של סימן `foot`, `ease` לא מוגבל, `groundFeet`, גיליונות אורתוגרפיים עם תוויות, `K.socket` וחומרים, מסגור ביקורת לפריטים קטנים.
 - **v0.3.2**: יכולת סאונד (`gameforge sound`). רצות שתי בדיקות עיוורות: רובה מדע בדיוני (model) והליכת זומבי (anim).
 - **v0.3.1**: בדיקה עיוורת ראשונה הצליחה (ערבה). נוספו `cardStrip`, `curve`, פירוט משולשים לכל רשת, גיליון ביקורת עם 6 תצוגות, `gameforge anim` ו־`gameforge scene`, ומתכונים לצמיחה נפולה.
@@ -43,5 +44,5 @@ unit 33/33 · כל ה־playtests ב־examples עברו (source + dist) · bench-
 2. אותו עיקרון ("יכולת, לא תוצרים") לשאר התחומים: סביבה/עולם, אנימציה (כתיבת clips + גיליון ביקורת), חומרים/שיידרים, סאונד.
 3. World: כלי ביקורת לסצנה שלמה (`gameforge scene`) + שיטת עבודה לבניית עולם, חזיתות מבנים, טקסטורת פרטים לשטח.
 4. Narrative generator: מחולל עלילה, דמויות ומשימות מתוך spec, כמודול כללי עם בדיקות.
-5. LOD לבני אדם (קהל).
+5. LOD לבני אדם: נתיב crowd מומש. הפער שנותר הוא decimation של הגוף (35k משולשים).
 6. QA: השוואת פיקסלים מול baseline.

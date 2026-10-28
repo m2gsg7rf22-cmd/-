@@ -1,0 +1,46 @@
+{
+  "date": "2026-10-28T23:28:00.570Z",
+  "quality": "low",
+  "count": 50,
+  "modes": {
+    "realistic": {
+      "mode": "realistic",
+      "pedestrians": 50,
+      "near": 50,
+      "mid": 0,
+      "hidden": 0,
+      "calls": 434,
+      "triangles": 3688976,
+      "shadowsIncluded": true,
+      "lodSwitchMs": 2311,
+      "stepMs": 8.64,
+      "errors": 0
+    },
+    "mannequin": {
+      "mode": "mannequin",
+      "pedestrians": 50,
+      "near": 0,
+      "mid": 50,
+      "hidden": 0,
+      "calls": 50,
+      "triangles": 236020,
+      "shadowsIncluded": true,
+      "lodSwitchMs": 1591,
+      "stepMs": 1.77,
+      "errors": 0
+    },
+    "lod": {
+      "mode": "lod",
+      "pedestrians": 50,
+      "near": 6,
+      "mid": 34,
+      "hidden": 10,
+      "calls": 86,
+      "triangles": 602756,
+      "shadowsIncluded": true,
+      "lodSwitchMs": 1965,
+      "stepMs": 3.35,
+      "errors": 0
+    }
+  }
+}

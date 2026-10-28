@@ -15,13 +15,15 @@ your report for the owner/Integration Engineer instead of editing.
 ## Procedure
 1. Lay out a critical path from spawn to each objective; flatten/carve where structures stand.
 2. Populate distance bands (near props, mid vegetation, far landmarks).
-3. Ensure every objective is reachable (no blocked roads, no water gaps without swimming).
-4. Add colliders for every solid object.
+3. Open worlds: follow references/open-world.md — set density per district, stream content with ChunkManager/streamObjects (loadRadius < fog, unloadRadius = load + half a cell, 1-2 loads per frame), LODGroup/impostors for far objects, and a Crowd on the sidewalks; verify with chunk + metrics playtest checks.
+4. Ensure every objective is reachable (no blocked roads, no water gaps without swimming).
+5. Add colliders for every solid object.
 
 ## Acceptance criteria
 - [ ] player spawns grounded
 - [ ] all objectives reachable in playtest
 - [ ] no empty plains in screenshots
+- [ ] open worlds: chunks load/unload as the player moves and frame metrics stay within budget
 
 ## Studio rules
 - GameForge runtime: `node <GF>/tools/gameforge.mjs` (validate, playtest, build, shot). Engine API: skills/gameforge/references/engine-api.md.

@@ -54,6 +54,14 @@ three.js r180. Everything is procedural and runs without network or build step.
 | `GF.terrainMesh(hf, { palette })`, `GF.createWater({ level, heightfield })`, `GF.populate(hf, {...})` | splat terrain, water, instanced vegetation |
 | `GF.generateCity({ seed, blocks, style })` → `{ group, colliders, dynamicProps, graph, roadCenters, isRoad }`; `new GF.TrafficSystem(scene, city)` | city + traffic |
 
+## Open world (see `open-world.md`)
+| API | Notes |
+|---|---|
+| `new GF.ChunkManager({ cellSize, loadRadius, unloadRadius, maxLoadsPerUpdate, build, dispose })` `.update(focus, dt)`; `GF.streamObjects(parent, objs, opts)`; `GF.LODGroup`, `GF.selectLOD`, `GF.createImpostor` | streaming + LOD with hysteresis; `generateCity({ mergeBuildings: false })` for streamable buildings |
+| `new GF.ScheduleSystem()` + `new GF.ScheduleAgent({ schedule: 'worker', registry, planner })`; `GF.attachSchedules(app, sys)` | NPC daily life driven by `atmosphere.timeOfDay`; `.alarm(pos)` flee + resume |
+| `new GF.WantedSystem({ spawn, despawn, canSee: GF.lineOfSight(app.physics) })` `.commit(crime, { position, witnessed })` `.update(dt, player)`; `GF.wantedHUD(app.ui, w)`; `app.ui.stars(id, { max })` | heat 0-5, pursuers, cooldown |
+| `new GF.Crowd(app, city, { count, maxNear })`, `await crowd.prepare()`, `crowd.update(dt, camPos)`; `H.assembleHuman(data, { lod: 'crowd' })`, `H.cloneHuman(t)`, `H.mergeGarments(h)` | pedestrians: realistic near / mannequin mid / hidden far |
+
 ## Physics
 | API | Notes |
 |---|---|
