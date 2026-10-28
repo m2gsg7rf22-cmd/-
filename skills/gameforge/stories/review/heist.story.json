@@ -1,6 +1,6 @@
 {
   "name": "heist",
-  "file": "/home/user/-/.claude/worktrees/agent-a8330c48b9c2dff83/skills/gameforge/stories/heist.story.js",
+  "file": "/home/user/-/skills/gameforge/stories/heist.story.js",
   "ok": true,
   "metrics": {
     "title": "The Blue Ledger",
@@ -2532,8 +2532,7 @@
       "problems": []
     }
   ],
-  "graphSvg": "/home/user/-/.claude/worktrees/agent-a8330c48b9c2dff83/skills/gameforge/stories/review/heist.graph.svg",
-  "graph": "/home/user/-/.claude/worktrees/agent-a8330c48b9c2dff83/skills/gameforge/stories/review/heist.graph.png",
-  "compiled": "/home/user/-/.claude/worktrees/agent-a8330c48b9c2dff83/skills/gameforge/stories/review/heist.compiled.json",
-  "bible": "/home/user/-/.claude/worktrees/agent-a8330c48b9c2dff83/skills/gameforge/stories/review/heist.bible.md"
+  "graphSvg": "/home/user/-/skills/gameforge/stories/review/heist.graph.svg",
+  "compiled": "/home/user/-/skills/gameforge/stories/review/heist.compiled.json",
+  "bible": "/home/user/-/skills/gameforge/stories/review/heist.bible.md"
 }
