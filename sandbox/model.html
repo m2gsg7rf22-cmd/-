@@ -15,7 +15,8 @@ const params = q.get('params') ? JSON.parse(q.get('params')) : {};
 const R = createRenderer({ container: document.getElementById('c') });
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 5000);
 R.setup(scene, camera);
-const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || 14.5), sunAzimuth: 150 });
+const env = mod.env || {};
+const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || env.timeOfDay || 14.5), sunAzimuth: +(q.get('az') || env.sunAzimuth || 150) });
 if (scene.fog && q.get('mode') !== 'scene') scene.fog = null;
 const obj = await mod.default(K, params);
 const yaw = +(q.get('yaw') || 0) * Math.PI / 180, root = new THREE.Group(); root.add(obj); root.rotation.y = yaw; // review-only rotation
@@ -47,14 +48,20 @@ if (sceneMode) {
   const ray = new THREE.Raycaster(), groundAt = (x, z) => { ray.set(new THREE.Vector3(x, box.max.y + 50, z), new THREE.Vector3(0, -1, 0)); const h = ray.intersectObject(obj, true)[0]; return h ? h.point.y : 0; };
   // eye positions: try many candidates, keep ones with clear space (no obstacle within 4 m ahead / 1 m around)
   const clear = (p, dir) => { ray.set(p, dir); ray.far = 4; const h = ray.intersectObject(obj, true)[0]; ray.far = Infinity; return !h; };
-  for (const a0 of [0.3, 2.4, 4.4]) for (let k = 0; k < 24; k++) {
-    const a = a0 + k * 0.37, r = Math.max(size.x, size.z) * (0.18 + 0.04 * (k % 5)), x = ctr.x + Math.cos(a) * r, z = ctr.z + Math.sin(a) * r, y = groundAt(x, z) + 1.7;
-    const pos = new THREE.Vector3(x, y, z), look = new THREE.Vector3(ctr.x, y - 0.3, ctr.z), dir = look.clone().sub(pos).normalize();
-    const side = new THREE.Vector3(-dir.z, 0, dir.x);
-    if (clear(pos, dir) && clear(pos, side) && clear(pos, side.clone().negate()) && clear(pos, new THREE.Vector3(0, 1, 0))) { eyeShots.push({ pos, look }); break; }
-    if (k === 23) eyeShots.push({ pos, look });
+  const rv = obj.userData.review || {}, focus = rv.focus ? new THREE.Vector3(...rv.focus) : ctr.clone();
+  if (rv.cameras) for (const c of rv.cameras.slice(0, 3)) eyeShots.push({ pos: new THREE.Vector3(...c.pos), look: new THREE.Vector3(...(c.look || rv.focus || ctr.toArray())) });
+  for (const a0 of [0.3, 2.4, 4.4]) { if (eyeShots.length >= 3) break; let best = null, bestScore = -1;
+    for (let k = 0; k < 40; k++) {
+      const a = a0 + k * 0.37, r = Math.max(size.x, size.z) * (0.12 + 0.04 * (k % 6)), x = focus.x + Math.cos(a) * r, z = focus.z + Math.sin(a) * r, y = groundAt(x, z) + 1.7;
+      const pos = new THREE.Vector3(x, y, z), look = new THREE.Vector3(focus.x, Math.max(y - 0.4, groundAt(focus.x, focus.z) + 1.2), focus.z), dir = look.clone().sub(pos).normalize();
+      const side = new THREE.Vector3(-dir.z, 0, dir.x);
+      const score = [dir, side, side.clone().negate(), new THREE.Vector3(0, 1, 0), dir.clone().add(new THREE.Vector3(0, 0.4, 0)).normalize()].filter((d) => clear(pos, d)).length;
+      if (score > bestScore) { bestScore = score; best = { pos, look }; } if (score === 5) break;
+    }
+    eyeShots.push(best);
   }
   views = [['overview', new THREE.Vector3(0.55, 0.75, 0.6)], ['eye 1'], ['eye 2'], ['eye 3']];
+  if (rv.focus) ctr.copy(focus);
   camera.fov = 55; camera.far = 20000;
 }
 R.renderer.setScissorTest(true); R.renderer.autoClear = true;

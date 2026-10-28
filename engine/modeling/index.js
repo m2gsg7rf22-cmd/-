@@ -18,6 +18,7 @@ import { PROPS } from '../geometry/props.js';
 import { BUILDINGS } from '../geometry/buildings.js';
 import { car, VEHICLE_TYPES } from '../geometry/vehicles.js';
 import { generateTree, TREE_SPECIES } from '../geometry/trees.js';
+import { place, foundation, pathStrip, scatter, groundAudit } from '../world/placement.js';
 
 const V = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
 
@@ -73,7 +74,8 @@ export const K = {
   pbr, solid, emissive, glass, carPaint, textureSet, applyWind, MaterialLibrary, generateTexture, TEXTURE_KINDS,
   RNG, Noise,
   // scene composition (scene scripts reviewed with `gameforge scene`)
-  world: { Heightfield, terrainMesh, terrainMaterial, populate, instanceProp, scatterPoints, grassField, createWater, generateCity },
+  world: { Heightfield, terrainMesh, terrainMaterial, populate, instanceProp, scatterPoints, grassField, createWater, generateCity, place, foundation, pathStrip, scatter, groundAudit },
+  place, foundation, pathStrip, scatter, groundAudit,
   PROPS, BUILDINGS, car, VEHICLE_TYPES, generateTree, TREE_SPECIES,
 };
 export default K;

@@ -104,3 +104,30 @@ as examples in `skills/gameforge/sounds/`.
 - CLI crashed on `--help`;
 - the tail message was misleading;
 - no peak or centroid targets per category.
+
+## Test 5: scene composition, coastal fishing village (2026-10-28)
+
+The agent composed a full village in 5 rounds:
+- terrain sloping to the sea, a beach and water;
+- 10 houses on levelled pads along paths;
+- a T-shaped pier and 7 boats (modelled with `smoothLoft`);
+- a market square, lamps, net racks and a forest edge.
+
+| Measure | Result |
+|---|---|
+| Final metrics | 301k triangles, 241 meshes |
+| Checks | all pass |
+| Kept as example | `skills/gameforge/scenes/fishing-village.scene.js` |
+
+![village](village.views.jpg)
+
+**Gaps found → fixed:**
+- **World API undocumented** (Heightfield options/methods, scatter rules, `exclude` forms,
+  terrainMaterial, water sizing, PROPS/BUILDINGS) → exact signatures added to modeling.md.
+- **No placement helpers** → `K.place` (with slope alignment), `K.foundation`, `K.pathStrip`
+  (visible paths), `K.scatter` (instancing any prop), `K.groundAudit`.
+- **No time of day in review** → `export const env` and `--time` / `--sun-azimuth`.
+- **Cameras fixed on the bbox centre and stuck in foliage** → `userData.review.focus` and
+  `cameras`, and the clearest of 40 candidates is chosen.
+- **No material budget or floating/buried check** → both added to scene review.
+- **Doc bug:** `K.RNG(seed)` needs `new`.

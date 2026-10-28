@@ -10,7 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-export async function reviewModel(file, { params = {}, out, render = true, glb = false, quiet = false, scene = false, ref = true, yaw = 0 } = {}) {
+export async function reviewModel(file, { params = {}, out, render = true, glb = false, quiet = false, scene = false, ref = true, yaw = 0, time = null, azimuth = null } = {}) {
   file = path.resolve(file);
   const name = path.basename(file).replace(/\.model\.m?js$|\.m?js$/, '');
   out = path.resolve(out || path.join(path.dirname(file), 'review'));
@@ -58,6 +58,11 @@ export async function reviewModel(file, { params = {}, out, render = true, glb =
     chk('scene triangle budget ≤ 2.5M (desktop)', tris <= 2.5e6, `${(tris / 1e6).toFixed(2)}M`, 'warn');
     chk('draw calls ≤ 500 (merge/instance repeats)', meshes <= 500, `${meshes} meshes`, 'warn');
     chk('real lights ≤ 8 (use emissive + light pool)', lights <= 8, `${lights}`, 'warn');
+    chk('materials ≤ 60 (share materials; each costs shader/state changes)', mats.size <= 60, `${mats.size}`, 'warn');
+    const hf = obj.userData.heightfield;
+    if (hf) { const { groundAudit } = await import(pathToFileURL(path.join(ROOT, 'engine/world/placement.js')).href); const a = groundAudit(obj, hf); metrics.groundAudit = a;
+      chk('no floating/buried assets (set root.userData.heightfield = hf)', !a.floating.length && !a.buried.length, `${a.checked} checked; floating ${a.floating.length}${a.floating.length ? ': ' + a.floating.slice(0, 4).join(', ') : ''}; buried ${a.buried.length}${a.buried.length ? ': ' + a.buried.slice(0, 4).join(', ') : ''}`, 'warn'); }
+    else chk('ground audit available', false, 'set root.userData.heightfield = hf to audit floating/buried assets', 'warn');
   } else {
     chk('rests on the ground (min.y ≈ 0) — pass params.floating for socket-origin assets', Math.abs(box.min.y) < 0.05 || params.floating, `min.y = ${box.min.y.toFixed(3)}`, 'warn');
     chk('few degenerate triangles (< 1 %)', degenerate <= tris * 0.01, `${degenerate}`, 'warn');
@@ -70,7 +75,7 @@ export async function reviewModel(file, { params = {}, out, render = true, glb =
     const { launchBrowser } = await import('./lib/playwright.mjs'); const { serve } = await import('./serve.mjs');
     const server = await serve(ROOT, 0, { quiet: true, aliases: { '/__model/': path.dirname(file) } });
     const br = await launchBrowser(); const page = await br.newPage({ viewport: { width: 1600, height: 1000 } }); const errs = []; page.on('pageerror', (e) => errs.push(e.message));
-    const url = `http://127.0.0.1:${server.address().port}/sandbox/model.html?model=${encodeURIComponent('/__model/' + path.basename(file))}&params=${encodeURIComponent(JSON.stringify(params))}&quality=medium${scene ? '&mode=scene' : ''}${ref ? '' : '&ref=0'}${yaw ? '&yaw=' + yaw : ''}`;
+    const url = `http://127.0.0.1:${server.address().port}/sandbox/model.html?model=${encodeURIComponent('/__model/' + path.basename(file))}&params=${encodeURIComponent(JSON.stringify(params))}&quality=medium${scene ? '&mode=scene' : ''}${ref ? '' : '&ref=0'}${yaw ? '&yaw=' + yaw : ''}${time !== null ? '&t=' + time : ''}${azimuth !== null ? '&az=' + azimuth : ''}`;
     await page.goto(url);
     try { await page.waitForFunction(() => window.__frames > 4, null, { timeout: 180000 }); await page.evaluate(() => { window.__pause = true; }); metrics.views = path.join(out, name + '.views.jpg'); await page.screenshot({ path: metrics.views, type: 'jpeg', quality: 88, timeout: 180000 }); }
     catch (e) { metrics.renderError = (errs[0] || e.message).split('\n')[0]; }

@@ -155,7 +155,7 @@ or a lofted hull with hard-surface fittings.
   - `K.emissive(color, intensity = 3)` for glow strips, screens and lamps.
   - `K.glass({ color, opacity = 0.35, roughness = 0.05 })` for lenses, windows and visors.
   - `K.carPaint(color, { metallic, flakes })`
-- **`K.RNG(seed)`** (always seed everything):
+- **`new K.RNG(seed)`** (a class: always `new`; always seed everything):
   - `next()`, `range(a, b)`, `int(a, b)` (inclusive), `chance(p)`, `pick(arr)`, `sign()`;
   - `gaussian(mean, sd)`, `shuffle(arr)`, `weighted([[value, weight], …])`, `fork(salt)`
     (an independent stream per feature).
@@ -216,6 +216,62 @@ or a lofted hull with hard-surface fittings.
     automatically and use a 10 cm grid.
   - `--yaw <deg>` rotates the asset for the review only.
   - The eye-level detail view looks at the broad side of long objects automatically.
+
+## World API for scene scripts (exact signatures)
+
+- **`new K.world.Heightfield({ size = 512, resolution = 256, seed, height = 40, type, waterLevel = 0, flatten, roads, island, base, generator })`**
+  - `type` is `'hills' | 'mountains' | 'dunes' | 'flat'`.
+  - `flatten` is a list of `[{ x, z, radius, height, falloff } | { x, z, rect: [w, d], height, falloff }]`.
+  - `roads` is a list of `[{ points: [[x, z], …], width, falloff }]`; this shapes the ground only.
+  - `generator(x, z, noise)` returns a height and overrides `type`; use it for coasts, valleys and
+    plateaus.
+  - Methods: `heightAt(x, z)`, `normalAt(x, z)`, `slopeAt(x, z)` (0 = flat … 1 = vertical),
+    `inBounds(x, z, margin)`, `flattenArea({ x, z, radius | rect, height, falloff })`,
+    `carveRoad({ points, width })`, `raycast(origin, dir)`.
+- **`K.world.terrainMesh(hf, { palette: { grass, grass2, rock, dirt, sand }, …terrainMaterial opts })`**
+  - Build it **after** every `flattenArea`/`foundation`.
+  - `terrainMaterial({ waterLevel, snowLine = 60, sandBand = 2.5, scale, palette })`. With a
+    custom `generator`, set `snowLine` high (e.g. 999) unless you want snow.
+- **`K.world.createWater({ size, level, color, deep, heightfield: hf })`**
+  - Set `size` ≈ `hf.size`; the default 2000 inflates the scene bounds.
+  - It assumes the heightfield is centred at (0, 0). Keep the terrain at the origin and move the
+    *composition*, not the terrain.
+- **`K.world.populate(hf, { seed, trees, rocks, bushes, grass, species, exclude, treeMaxHeight, palette, grassRadius })`**
+  returns `{ group, colliders }`. `species` comes from `K.TREE_SPECIES`.
+- **`K.world.scatterPoints(hf, rules, rng)`** with rules `{ count, minHeight, maxHeight, maxSlope = 0.35, exclude, density: (x, z) => 0..1, scale: [a, b], spacing, margin }`.
+  - `exclude` items are `{ x, z, r }` or `{ x, z, rect: [w, d], pad }`.
+  - `density` gives gradients: dense at the forest edge, open at the village centre.
+- **Placement helpers** (`engine/world/placement.js`):
+
+  | Helper | What it does |
+  |---|---|
+  | `K.place(obj, hf, x, z, { yaw, align = 0, sink = 0.05 })` | sets y on the ground; `align` 0.6–1 tilts rocks, boats and debris to the slope |
+  | `K.foundation(hf, x, z, w, d, { pad = 2, falloff = 4 })` | flattens a level pad at the highest corner and returns its height (call before `terrainMesh`) |
+  | `K.pathStrip(hf, [[x, z], …], { width, kind = 'dirt' \| 'cobble' \| 'asphalt', color })` | a visible path draped on the terrain; pair it with `roads`/`carveRoad` to shape the ground |
+  | `K.scatter(hf, prop, rules, { seed, align })` | instanced copies of any prop (lamps, fences, crates, rocks) |
+  | `K.groundAudit(root, hf)` | lists floating or buried tagged assets |
+
+- **`K.BUILDINGS`:**
+  - `house({ width = 7, depth = 6, seed, wallColor, roofColor, style = 'cottage' })`
+  - `shop({ width, depth, floors, seed, awning })`
+  - `tower({ width, depth, floors, seed, style = 'modern', night })`
+- **`K.PROPS`:**
+  - nature: `tree`, `rock`, `bush`;
+  - containers and furniture: `crate`, `barrel`, `chest`, `bench`, `stall`, `well`, `fence`;
+  - lights and structures: `lampPost({ withLight })`, `torch`, `pillar`, `stoneWall`;
+  - weapons and pickups: `sword`, `axe`, `shield`, `staff`, `pickup`;
+  - street items: `trafficCone`, `hydrant`, `trashBin`, `trafficLight`, `barrier`.
+
+  Prefer `withLight: false` with emissive lamps; the engine's light pool lights the nearest
+  anchors.
+- **Scene review options:**
+  - **Time of day:** `export const env = { timeOfDay: 18.6, sunAzimuth: 250 }` in the scene
+    script, or `gameforge scene … --time 18.6 --sun-azimuth 250`.
+  - **Cameras:** set `root.userData.review = { focus: [x, y, z], cameras: [{ pos, look }] }`
+    to choose the focus and up to three eye shots. Automatic eye shots pick the clearest of 40
+    candidates around the focus, avoiding foliage and walls.
+  - **Ground audit:** set `root.userData.heightfield = hf` to enable the floating/buried check.
+  - **Budget:** keep the material count at 60 or fewer by reusing materials.
 
 ## Recipes for common hard cases
 
