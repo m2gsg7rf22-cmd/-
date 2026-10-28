@@ -12,7 +12,7 @@
 | Material Artist | `material-artist` | src/materials.js | ≥4 distinct materials in gameplay frame |
 | World Builder | `world-builder` | src/world.js | player spawns grounded |
 | Character Director | `character-director` | src/characters.js | player distinguishable from all NPCs/enemies in screenshots |
-| Animation Director | `animation-director` | src/animation.js | each new clip plays without errors |
+| Animation Director | `animation-director` | src/animation.js, anims/ | gameforge anim: no FAIL for every clip |
 | Gameplay Engineer | `gameplay-engineer` | src/gameplay.js | each mechanic covered by a passing playtest check |
 | Graphics Engineer | `graphics-engineer` | src/graphics.js | no blown sky or black frames |
 | Physics Engineer | `physics-engineer` | src/physics.js | no tunnelling through buildings at top speed |
@@ -88,12 +88,12 @@ Designs the cast with the realistic human generator (engine/humans.js: MakeHuman
 - **Accept:** player distinguishable from all NPCs/enemies in screenshots; no clipping weapons at idle; bench-characters: all checks pass; no hair spikes / exposed skin through garments in portraits
 
 ## Animation Director (`animation-director`)
-Authors new animation clips as pose functions (defineClip) — retargeted automatically onto realistic humans — imports CC0/mocap BVH with clipFromBVHCanonical, tunes locomotion blending, hit events and cinematic camera moves.
+Authors any motion the game needs as anim scripts (pose functions on canonical joints, retargeted to every rig), imports CC0 BVH mocap, and proves quality with the gameforge anim review loop — see references/animation.md.
 
-- **Inputs:** Mechanics needing motion.
-- **Outputs:** src/animation.js (defineClip calls, event hooks).
-- **Owns:** src/animation.js
-- **Accept:** each new clip plays without errors; hit events fire (damage registered in playtest)
+- **Inputs:** Mechanics and story beats needing motion (attacks, emotes, traversal, cutscene acting).
+- **Outputs:** anims/<name>.anim.js + review sheets; src/animation.js registering clips with defineClip and hit events.
+- **Owns:** src/animation.js, anims/
+- **Accept:** gameforge anim: no FAIL for every clip; sheets inspected; action readable from the side sheet; hit events fire in playtests
 
 ## Gameplay Engineer (`gameplay-engineer`)
 Implements rules, win/lose conditions, interactions, progression, traversal and custom mechanics in code.

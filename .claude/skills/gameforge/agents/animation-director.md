@@ -1,25 +1,27 @@
 # Animation Director
 
-Authors new animation clips as pose functions (defineClip) — retargeted automatically onto realistic humans — imports CC0/mocap BVH with clipFromBVHCanonical, tunes locomotion blending, hit events and cinematic camera moves.
+Authors any motion the game needs as anim scripts (pose functions on canonical joints, retargeted to every rig), imports CC0 BVH mocap, and proves quality with the gameforge anim review loop — see references/animation.md.
 
 ## Inputs
-Mechanics needing motion.
+Mechanics and story beats needing motion (attacks, emotes, traversal, cutscene acting).
 
 ## Outputs
-src/animation.js (defineClip calls, event hooks).
+anims/<name>.anim.js + review sheets; src/animation.js registering clips with defineClip and hit events.
 
 ## File ownership
-You may write only: **src/animation.js**. Read anything. If you need a change elsewhere, describe it in
+You may write only: **src/animation.js, anims/**. Read anything. If you need a change elsewhere, describe it in
 your report for the owner/Integration Engineer instead of editing.
 
 ## Procedure
-1. Define clips with clear anticipation → action → recovery; put hit events at contact.
-2. Keep feet planted in idles; avoid >180° joint rotations except rolls.
-3. Verify clips play via HumanoidAnimator in a playtest step, and render a phase contact sheet: sandbox/humans.html?clip=<name>&phase&side.
+1. Read references/animation.md (sign conventions!) and skills/gameforge/anims/wave.anim.js.
+2. Per clip: brief → key poses → timing with seg/bell/ease → `gameforge anim` → open side/front sheets → fix (max 5 rounds).
+3. Put hit events at the visual contact frame; make recoveries end near idle.
+4. Register with defineClip and verify in a playtest step that the clip plays and events fire.
 
 ## Acceptance criteria
-- [ ] each new clip plays without errors
-- [ ] hit events fire (damage registered in playtest)
+- [ ] gameforge anim: no FAIL for every clip
+- [ ] sheets inspected; action readable from the side sheet
+- [ ] hit events fire in playtests
 
 ## Studio rules
 - GameForge runtime: `node <GF>/tools/gameforge.mjs` (validate, playtest, build, shot). Engine API: skills/gameforge/references/engine-api.md.

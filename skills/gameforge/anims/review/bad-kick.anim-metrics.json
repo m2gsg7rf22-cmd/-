@@ -1,0 +1,51 @@
+{
+  "name": "bad-kick",
+  "file": "/home/user/-/skills/gameforge/anims/bad-kick.anim.js",
+  "duration": 1,
+  "loop": true,
+  "minFootOffset": -0.172,
+  "lowestFootMaxHeight": -0.172,
+  "maxDegPerFrame30": 164.3,
+  "maxStepBone": "upperarm01.L",
+  "kneeHyperextensionDeg": 60,
+  "elbowHyperextensionDeg": 0,
+  "loopSeamDeg": 170,
+  "checks": [
+    {
+      "name": "feet do not sink into the ground (> −3 cm)",
+      "pass": false,
+      "detail": "-17.2 cm",
+      "level": "error"
+    },
+    {
+      "name": "grounded: one foot near the floor at some point",
+      "pass": true,
+      "detail": "lowest foot max -17 cm",
+      "level": "warn"
+    },
+    {
+      "name": "no pops (≤ 25°/frame @30 fps)",
+      "pass": false,
+      "detail": "164.3° on upperarm01.L",
+      "level": "error"
+    },
+    {
+      "name": "knees never bend backwards",
+      "pass": false,
+      "detail": "60.0°",
+      "level": "error"
+    },
+    {
+      "name": "elbows never bend backwards",
+      "pass": true,
+      "detail": "0.0°",
+      "level": "error"
+    },
+    {
+      "name": "seamless loop (≤ 4°)",
+      "pass": false,
+      "detail": "170.0°",
+      "level": "error"
+    }
+  ]
+}

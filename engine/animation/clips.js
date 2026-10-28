@@ -98,3 +98,6 @@ export function buildClipSet(names = Object.keys(CLIP_LIBRARY), opts = {}) {
 
 // Register custom clips at runtime (agents author new moves as pose functions).
 export function defineClip(name, def) { CLIP_LIBRARY[name] = def; return def; }
+
+// Authoring helpers for custom clips (*.anim.js scripts, see references/animation.md).
+export const CLIP_HELPERS = { S, C, ease, seg, bell, relaxed, locomotion };

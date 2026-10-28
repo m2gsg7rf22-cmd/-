@@ -56,3 +56,13 @@ test('every example model script builds and passes review checks (no render)', a
     assert.ok(m.triangles > 300, f + ' too simple');
   }
 });
+
+test('anim review: good example passes, broken example is caught', async () => {
+  const { reviewAnim } = await import('../../tools/anim.mjs');
+  const dir = new URL('../../skills/gameforge/anims/', import.meta.url).pathname, out = fs.mkdtempSync('/tmp/gfa-');
+  const good = await reviewAnim(dir + 'wave.anim.js', { render: false, quiet: true, out });
+  assert.ok(good.ok, JSON.stringify(good.checks.filter((c) => !c.pass)));
+  const bad = await reviewAnim(dir + 'bad-kick.anim.js', { render: false, quiet: true, out });
+  const failed = bad.checks.filter((c) => !c.pass).map((c) => c.name).join('|');
+  for (const w of ['sink', 'pops', 'knees', 'seamless']) assert.ok(failed.includes(w), 'expected failure: ' + w + ' in ' + failed);
+});

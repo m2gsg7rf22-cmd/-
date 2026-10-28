@@ -7,7 +7,8 @@ import { createRenderer } from '../engine/render/renderer.js';
 import { Atmosphere } from '../engine/render/sky.js';
 import { pbr } from '../engine/render/materials.js';
 import * as H from '../engine/humans.js';
-import { CLIP_LIBRARY } from '../engine/animation/clips.js';
+import { CLIP_LIBRARY, CLIP_HELPERS } from '../engine/animation/clips.js';
+const customAnim = q2 => q2.get('anim') ? import(q2.get('anim')).then((m) => (typeof m.default === 'function' ? m.default(CLIP_HELPERS) : m.default)) : null;
 const q = new URLSearchParams(location.search);
 const R = createRenderer({ container: document.getElementById('c') });
 const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(+(q.get('fov') || 35), 1, 0.05, 2000);
@@ -15,6 +16,7 @@ R.setup(scene, camera);
 const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || 15.5), sunAzimuth: +(q.get('az') || 160) });
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), pbr('concrete', { repeat: 12 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
 const data = await H.loadHumanData();
+const custom = await customAnim(q);
 const list = (q.get('who') || 'civilian:1,civilian:2,knight:3,superhero:4,businessperson:5,soldier:6,villager:7,wizard:8').split(',');
 const people = [];
 list.forEach((w, i) => {
@@ -28,7 +30,7 @@ list.forEach((w, i) => {
   scene.add(h); people.push(h);
   const api = h.userData;
   const clipName = q.get('clip') || 'idle';
-  const clip = q.get('bvh') ? H.clipFromBVHCanonical(api.retargeter, data.poses[q.get('bvh')], { name: 'bvh' }) : api.retargeter.clipFromPoseFn(clipName, (await_clip(clipName)));
+  const clip = q.get('bvh') ? H.clipFromBVHCanonical(api.retargeter, data.poses[q.get('bvh')], { name: 'bvh' }) : api.retargeter.clipFromPoseFn(clipName, custom || await_clip(clipName));
   const mixer = new THREE.AnimationMixer(h); const act = mixer.clipAction(clip); act.time = q.has('phase') ? (i / list.length) * clip.duration : i * 0.37; act.play(); if (q.has('phase')) act.timeScale = 0; if (q.has('side')) h.rotation.y = Math.PI / 2;
   api.mixer = mixer; if (q.get('expr')) api.setExpression(q.get('expr')); if (q.get('exprs')) api.setExpression(q.get('exprs').split(',')[i] || 'neutral'); if (q.has('noblink')) api.face.nextBlink = 1e9;
 });

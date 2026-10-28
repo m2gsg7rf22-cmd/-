@@ -37,7 +37,8 @@ the Modeling Kit and verified with `node $GF/tools/gameforge.mjs model <script>`
 4-view sheet with scale references. Open the sheet, critique it against the checklist in
 `references/modeling.md`, fix, repeat. Humans come from `references/characters.md`; cars from
 `GF.car`; generic props from `GF.PROPS` — extend or replace them with model scripts when the game
-needs something specific.
+needs something specific. Motion works the same way: write `anims/<name>.anim.js`, review with
+`node $GF/tools/gameforge.mjs anim <script>` (checks + side/front contact sheets), see `references/animation.md`.
 
 ## 1. Pipeline (never skip a stage, never confuse design with implementation)
 
@@ -123,6 +124,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 - `references/spec-reference.md` — every `game.spec.js` field, with examples per genre
 - `references/engine-api.md` — engine modules and the most useful calls
 - `references/modeling.md` — **how to create any 3D asset yourself**: model scripts with the Modeling Kit (SDF sculpting, branching, cards, lathe/loft/hard-surface), the `gameforge model` review loop and checklist
+- `references/animation.md` — **authoring any motion yourself**: joint conventions, anim scripts, `gameforge anim` checks + contact sheets, animator's method
 - `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/recipes.md` — code recipes: new enemy, boss, vehicle, cutscene, quest, minigame, traversal

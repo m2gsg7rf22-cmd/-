@@ -1,0 +1,51 @@
+{
+  "name": "wave",
+  "file": "/home/user/-/skills/gameforge/anims/wave.anim.js",
+  "duration": 1.6,
+  "loop": true,
+  "minFootOffset": 0.003,
+  "lowestFootMaxHeight": 0.003,
+  "maxDegPerFrame30": 6.5,
+  "maxStepBone": "lowerarm01.R",
+  "kneeHyperextensionDeg": 0,
+  "elbowHyperextensionDeg": 0,
+  "loopSeamDeg": 0,
+  "checks": [
+    {
+      "name": "feet do not sink into the ground (> −3 cm)",
+      "pass": true,
+      "detail": "0.3 cm",
+      "level": "error"
+    },
+    {
+      "name": "grounded: one foot near the floor at some point",
+      "pass": true,
+      "detail": "lowest foot max 0 cm",
+      "level": "warn"
+    },
+    {
+      "name": "no pops (≤ 25°/frame @30 fps)",
+      "pass": true,
+      "detail": "6.5° on lowerarm01.R",
+      "level": "error"
+    },
+    {
+      "name": "knees never bend backwards",
+      "pass": true,
+      "detail": "0.0°",
+      "level": "error"
+    },
+    {
+      "name": "elbows never bend backwards",
+      "pass": true,
+      "detail": "0.0°",
+      "level": "error"
+    },
+    {
+      "name": "seamless loop (≤ 4°)",
+      "pass": true,
+      "detail": "0.0°",
+      "level": "error"
+    }
+  ]
+}
