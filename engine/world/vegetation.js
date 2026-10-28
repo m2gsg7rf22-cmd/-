@@ -12,7 +12,7 @@ export function instanceProp(prop, matrices, { castShadow = true, receiveShadow 
   prop.traverse((m) => {
     if (!m.isMesh) return;
     const geo = m.geometry.clone().applyMatrix4(m.matrixWorld);
-    const mat = wind ? applyWind(m.material.clone(), { instanced: true, strength: 0.08 }) : m.material;
+    const mat = wind || m.material.userData?.wind ? applyWind(m.material.clone(), { instanced: true, strength: 0.06 }) : m.material;
     const im = new THREE.InstancedMesh(geo, mat, matrices.length);
     matrices.forEach((mx, i) => im.setMatrixAt(i, mx));
     im.instanceMatrix.needsUpdate = true; im.castShadow = castShadow; im.receiveShadow = receiveShadow;

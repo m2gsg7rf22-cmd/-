@@ -9,7 +9,15 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 function finish(group, kind, collider) { group.name = kind; group.userData.kind = kind; if (collider) group.userData.collider = collider; return group; }
 
 // ---------- Nature ----------
-export function tree({ species = 'oak', seed = 1, height = 6, leafColor, trunkColor } = {}) {
+import { generateTree, TREE_SPECIES } from './trees.js';
+// Trees: delegates to the v2 branching generator (geometry/trees.js). 'legacy-<species>' keeps
+// the old low-poly blob style for stylized games.
+export function tree(opts = {}) {
+  const sp = opts.species ?? 'oak';
+  if (!String(sp).startsWith('legacy-') && TREE_SPECIES.includes(sp)) return generateTree({ ...opts, barkColor: opts.trunkColor, detail: opts.detail ?? 'low' });
+  return legacyTree({ ...opts, species: String(sp).replace('legacy-', '') });
+}
+function legacyTree({ species = 'oak', seed = 1, height = 6, leafColor, trunkColor } = {}) {
   const rng = new RNG(seed), mb = new MeshBuilder();
   const bark = pbr('bark', { repeat: [1, 2], color: trunkColor ?? 0x4a3828 });
   const leafMat = applyWind(solid(leafColor ?? (species === 'pine' ? 0x2f5a2e : species === 'palm' ? 0x4f8a34 : rng.pick([0x4c7a2c, 0x5a8a30, 0x3f6e2a, 0x6d8f2e])), { roughness: 0.85, flat: false }), { instanced: false, strength: 0.08 });

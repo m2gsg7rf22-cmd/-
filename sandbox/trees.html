@@ -1,0 +1,24 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge trees</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#c{position:fixed;inset:0}</style></head>
+<body><div id="c"></div>
+<script type="module">
+// Vehicle inspection scene. ?types=sedan,sports,...&gap=2.6&cx&cy&cz&lx&ly&lz&fov&t&az&ry (rotation, deg)&seed
+import * as THREE from '../engine/vendor/three/three.module.js';
+import { createRenderer } from '../engine/render/renderer.js';
+import { Atmosphere } from '../engine/render/sky.js';
+import { pbr } from '../engine/render/materials.js';
+import { generateTree } from '../engine/geometry/trees.js';
+const q = new URLSearchParams(location.search);
+const R = createRenderer({ container: document.getElementById('c') });
+const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(+(q.get('fov') || 35), 1, 0.05, 2000);
+R.setup(scene, camera);
+const atm = new Atmosphere(scene, R.renderer, { timeOfDay: +(q.get('t') || 15.5), sunAzimuth: +(q.get('az') || 150) });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), pbr(q.get('ground') || 'grass', { repeat: 14 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const types = (q.get('types') || 'oak,maple,birch,pine,spruce,palm,dead,bush').split(',');
+const gap = +(q.get('gap') || 2.6);
+types.forEach((t, i) => { const v = generateTree({ species: t, seed: +(q.get('seed') || 1) + i, detail: q.get('detail') || 'high', season: q.get('season') || 'summer' }); v.position.x = (i - (types.length - 1) / 2) * gap; v.rotation.y = (+(q.get('ry') || 35)) * Math.PI / 180; v.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); scene.add(v); });
+camera.position.set(+(q.get('cx') || 0), +(q.get('cy') || 3.2), +(q.get('cz') || 12)); camera.lookAt(+(q.get('lx') || 0), +(q.get('ly') || 0.6), +(q.get('lz') || 0));
+atm.setFocus(new THREE.Vector3());
+let frames = 0; function loop() { if (window.__pause) return; R.render(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
+window.__stats = () => R.stats();
+</script></body></html>
