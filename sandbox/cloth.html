@@ -1,0 +1,41 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge cloth</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#c{position:fixed;inset:0}</style></head>
+<body><div id="c"></div>
+<script type="module">
+// Cloth preview: a flag in gusty wind, a hanging banner hit by a sphere, and a realistic human with a cape walking.
+// ?wind=6&who=knight:3&clip=walk&t=4 (seconds simulated before the shot)
+import * as THREE from '../engine/vendor/three/three.module.js';
+import { createRenderer } from '../engine/render/renderer.js';
+import { Atmosphere } from '../engine/render/sky.js';
+import { pbr } from '../engine/render/materials.js';
+import { Cloth } from '../engine/physics/cloth.js';
+import * as H from '../engine/humans.js';
+import { CLIP_LIBRARY } from '../engine/animation/clips.js';
+const q = new URLSearchParams(location.search);
+const R = createRenderer({ container: document.getElementById('c') });
+const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(40, 1, 0.05, 500); R.setup(scene, camera);
+const atm = new Atmosphere(scene, R.renderer, { timeOfDay: 15, sunAzimuth: 150 });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), pbr('grass', { repeat: 8 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+// flag
+const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 4.2, 10), new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.3 })); pole.position.set(-2.2, 2.1, -1); scene.add(pole);
+const flagMat = new THREE.MeshStandardMaterial({ map: pbr('fabric', { color: 0x1f4f8f, stripe: 0xf0f0f0, weave: 24 }).map, roughness: 0.8, side: THREE.DoubleSide });
+const flag = new Cloth({ width: 1.8, height: 1.1, segX: 26, segY: 16, pin: 'left', material: flagMat, frame: new THREE.Matrix4().makeTranslation(-2.2 + 0.9, 4.1, -1), wind: new THREE.Vector3(+(q.get('wind') || 6), 0, 1.5), seed: 2 });
+scene.add(flag.mesh);
+// banner + swinging ball
+const banner = new Cloth({ width: 1.2, height: 1.8, segX: 14, segY: 20, pin: 'top', material: new THREE.MeshStandardMaterial({ color: 0x9a2a2a, roughness: 0.85, side: THREE.DoubleSide }), frame: new THREE.Matrix4().makeTranslation(2.4, 2.6, -1), wind: new THREE.Vector3(0.6, 0, 0.4), seed: 5 });
+const ball = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), new THREE.MeshStandardMaterial({ color: 0xd8b040, metalness: 0.6, roughness: 0.3 })); scene.add(ball, banner.mesh); banner.addSphere(ball, 0.3);
+// human with cape
+const data = await H.loadHumanData(); const [arch, seed] = (q.get('who') || 'knight:3').split(':');
+const h = H.assembleHuman(data, { ...H.characterFromSpec(arch, +seed), textureSize: 512 }); scene.add(h);
+const clipName = q.get('clip') || 'walk'; const mixer = new THREE.AnimationMixer(h);
+if (CLIP_LIBRARY[clipName]) mixer.clipAction(h.userData.retargeter.clipFromPoseFn(clipName, CLIP_LIBRARY[clipName])).play();
+mixer.update(0); h.updateMatrixWorld(true);
+const cape = Cloth.cape(h, { wind: new THREE.Vector3(0, 0, -1.2) }); scene.add(cape.mesh);
+scene.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+camera.position.set(+(q.get('cx') || 0.3), +(q.get('cy') || 1.9), +(q.get('cz') || 6.5)); camera.lookAt(0, 1.6, -0.5); atm.setFocus(new THREE.Vector3());
+let t = 0; const dt = 1 / 60, warm = +(q.get('t') || 4);
+function step() { t += dt; mixer.update(dt); h.updateMatrixWorld(true); ball.position.set(2.4 + Math.sin(t * 1.3) * 0.5, 1.6, -1.0 + Math.cos(t * 1.3) * 0.45); flag.update(dt); banner.update(dt); cape.update(dt); }
+for (let i = 0; i < warm * 60; i++) step();
+window.__cloth = { flagStretch: flag.maxStretch(), bannerStretch: banner.maxStretch(), capeStretch: cape.maxStretch(), capeW: cape.width, capeBottom: Math.hypot(...[0, 1, 2].map((c) => cape.pos[cape.index(0, cape.segY) * 3 + c] - cape.pos[cape.index(cape.segX, cape.segY) * 3 + c])), capeTop: Math.hypot(...[0, 1, 2].map((c) => cape.pos[c] - cape.pos[cape.segX * 3 + c])) }; window.__capeObj = cape;
+let frames = 0; function loop() { if (window.__pause) return; step(); R.render(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
+</script></body></html>

@@ -70,3 +70,4 @@ export { computeRacingLine, RaceAI, RaceManager, formatTime } from './gameplay/r
 export { ShoulderedWeapon } from './gameplay/weapon-pose.js';
 export { decimate, decimateObject } from './geometry/decimate.js';
 export { building, streetBlock, FACADE_STYLES, GROUND_TYPES } from './world/facade.js';
+export { Cloth } from './physics/cloth.js';

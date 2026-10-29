@@ -16,7 +16,7 @@
 ## עשר המערכות: מיפוי לקוד ומצב
 | # | מערכת | קוד | בדיקות | מצב |
 |---|---|---|---|---|
-| 1 | Character Generation Engine | `engine/humans.js`, `engine/character/{human,human-data,skin,hair,clothing,archetypes}.js` | `tests/unit/humans.test.mjs`, `tools/bench-characters.mjs` (11/11) | ממומש ונבדק. פערים: LOD לקהל, שיער סיבים, סימולציית בד |
+| 1 | Character Generation Engine | `engine/humans.js`, `engine/character/{human,human-data,skin,hair,clothing,archetypes}.js` | `tests/unit/humans.test.mjs`, `tools/bench-characters.mjs` (11/11) | ממומש ונבדק. LOD (decimate) וסימולציית בד (`Cloth`, גלימות/דגלים) נוספו. פער: שיער סיבים |
 | 2 | Procedural 3D Modeling Engine | **`engine/modeling/`** (SDF + Surface Nets, L-system/turtle, space colonization, cards/paint, K), `tools/model.mjs` (לולאת ביקורת: מדדים + גיליון 4 זוויות + GLB), `references/modeling.md`, דוגמאות ב־`skills/gameforge/models/`; `engine/geometry/*` | `modeling.test.mjs` (6), `bench-vehicles` (7/7) | ממומש. **Claude יוצר מודלים בעצמו**. בדיקה עיוורת: ערבה בוכייה ב־5 סבבים (`docs/benchmarks/skill-blind-tests/`), ו־11 פערים שנמצאו תוקנו |
 | 3 | Animation & Rigging | `engine/animation/*` (כולל **`ik.js`**: two-bone/CCD, foot IK, look-at, hand IK; **`ragdoll.js`**: Verlet ragdoll), **`tools/anim.mjs`** (`gameforge anim`: בדיקות + גיליונות שלבים), `references/animation.md` (קונבנציות מדודות), דוגמאות ב־`skills/gameforge/anims/` | unit (כולל דוגמה שבורה שנתפסת) | **Claude כותב אנימציות בעצמו**. foot IK ו־ragdoll מומשו (`tools/bench-ik.mjs`). פערים: אנימציית קימה, self-collision ב־ragdoll |
 | 4 | World Generation | `engine/world/*`, `K.world`, **`engine/world/facade.js`** (דקדוק חזיתות: `K.building`/`K.streetBlock`, 5 סגנונות), **`gameforge scene`**, דוגמאות `skills/gameforge/scenes/`, `models/street-block.model.js` | playtests + review + `facade.test.mjs` | ממומש, כולל חזיתות עם גיאומטריה אמיתית. פער: פנים מבנים |
@@ -30,6 +30,7 @@
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs` (`--query`), `tools/visual-diff.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | `visual-diff.test.mjs` | ממומש, כולל רגרסיה ויזואלית מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.4.2**: `ShoulderedWeapon` משולב אוטומטית ב־WeaponSystem; `gameforge visual-diff`; ‏`decimate`/LOD לבני אדם; דקדוק חזיתות (`K.building`); סימולציית בד (`Cloth`, `Cloth.cape`). ‏unit 95/95.
 - **v0.4.1**: מוזגו IK + ragdoll ופלטפורמר + מרוצים. ריסים מרונדרים. `ShoulderedWeapon` לנשק ארוך על דמויות. בדיקות: unit 88/88, platformer 19/19, race-track 18/18, shooting-range 42/42, open-world 32/32, ashen-vale 22/22.
 - **v0.3.4**: יכולת נרטיב: פורמט `*.story.js`, מהדר ל־quests + dialogue, `gameforge story` (בדיקות גרף/דגלים/משימות/ענפים/דמויות/קצב/מקוריות + סימולציה), מסמך שיטה ודוגמת שוד מקורית (3 מערכות, 9 משימות, 3 סופים).
 - **v0.4 (open world)**: מערכות עולם פתוח כמודולים כלליים: `world/streaming.js` (ChunkManager, LODGroup, impostor), `ai/schedules.js` (לוחות זמנים יומיים, בריחה וחזרה, קפיצות זמן), `gameplay/wanted.js` (heat 0–5, רודפים, קו ראייה, cooldown, כוכבים ב־HUD דרך `ui.stars`), `world/crowd.js` (הולכי רגל על מדרכות עם LOD: אדם ריאליסטי ← בובה ← מוסתר). נוסף ל־humans.js נתיב `lod:'crowd'`, וגם `cloneHuman` ו־`mergeGarments`. בדיקות: `openworld.test.mjs` (7), סצנה `tests/scenes/open-world` (32/32), `tools/bench-crowd.mjs`. תיעוד: `references/open-world.md`.

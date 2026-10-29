@@ -133,3 +133,17 @@ under trousers/dresses is dropped and outer layers are pushed out a few mm so no
 27.8k body tris → 13.9k (0.5) / 6.9k (0.25), ~1–2 s per template — decimate the crowd *template* once and `cloneHuman()` it.
 Suggested ladder: full < 15 m · 0.5 at 15–30 m · 0.25 + `lod:'crowd'` beyond 30 m · impostor/hidden beyond 80 m.
 Preview: `sandbox/humans.html?who=civilian:5&decimate=0.25`.
+
+## Cloth: capes, flags, banners (`engine/physics/cloth.js`)
+Position-based Verlet cloth (fixed 240 Hz substeps → deterministic, frame-rate independent) with stretch/shear/bend
+constraints, long-range tethers (no rubbery stretch), wind with gusts + aerodynamic drag and skin friction, and
+sphere / capsule / plane colliders (Object3D or Vector3 ends, so bones work).
+```js
+const cape = GF.Cloth.cape(human, { length: 1.05, material });   // gathered at the shoulders, body capsules, ground plane
+scene.add(cape.mesh); app.add((dt) => cape.update(dt));          // after the mixer/IK so it follows the pose
+const flag = new GF.Cloth({ width: 1.8, height: 1.1, segX: 26, segY: 16, pin: 'left', wind: new THREE.Vector3(6, 0, 1.5), frame });
+flag.pinTo(pole); flag.addSphere(ball, 0.3); flag.wind.set(…);   // pin: 'top' | 'left' | 'corners' | [indices]
+```
+Cost: ~1.7 ms/frame (CPU) for a 460-particle flag; budget a few hero cloths per scene, and use `applyWind` vertex
+shaders (materials.js) for background flags/foliage. Preview: `sandbox/cloth.html?wind=6&who=knight:3&clip=walk`.
+Limits: no self-collision; colliders are spheres/capsules/planes only; garments built by `dress()` stay skinned (not simulated).
