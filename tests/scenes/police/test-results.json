@@ -1,0 +1,85 @@
+{
+  "game": "Police (wanted + policeForce)",
+  "quality": "low",
+  "startedAt": "2026-10-29T16:04:04.807Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "3620 ms"
+    },
+    {
+      "label": "no wanted level at start",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "a crime raises the wanted level to 1",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "level 1 sends unarmed officers",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "standing still next to an officer gets you arrested",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "arrest clears the wanted level",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "level 2 sends armed officers",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "unarmed officers withdraw once the response is armed",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "armed officers shoot at the player",
+      "ok": true,
+      "detail": 88
+    },
+    {
+      "label": "no arrests at level 2 (armed response)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-officers.png",
+    "screenshots/02-armed.png"
+  ],
+  "metrics": {
+    "fps": 37.67792352777,
+    "frameMs": 7,
+    "calls": 67,
+    "triangles": 51906,
+    "geometries": 33,
+    "textures": 14,
+    "tier": "low",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 125,
+    "particles": 1082
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 3620,
+  "durationMs": 21959,
+  "summary": "11/11 checks passed"
+}

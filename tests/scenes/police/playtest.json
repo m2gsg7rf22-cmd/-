@@ -1,0 +1,24 @@
+{
+  "name": "Police (wanted + policeForce)",
+  "serveRoot": "../../..",
+  "quality": "low",
+  "perfSampleMs": 1500,
+  "steps": [
+    { "do": "step", "frames": 30 },
+    { "do": "expect", "path": "level", "op": "==", "value": 0, "label": "no wanted level at start" },
+    { "do": "eval", "js": "window.__GF.cheat.crime('vehicleTheft')" }, { "do": "step", "frames": 30 },
+    { "do": "expect", "path": "level", "op": "==", "value": 1, "label": "a crime raises the wanted level to 1" },
+    { "do": "expect", "js": "window.__GF.state().units.length >= 1 && window.__GF.state().units.every((u) => !u.armed)", "op": "truthy", "label": "level 1 sends unarmed officers" },
+    { "do": "step", "frames": 360 },
+    { "do": "screenshot", "name": "01-officers" },
+    { "do": "expect", "path": "log.arrests", "op": ">=", "value": 1, "label": "standing still next to an officer gets you arrested" },
+    { "do": "expect", "path": "level", "op": "==", "value": 0, "label": "arrest clears the wanted level" },
+    { "do": "eval", "js": "window.__GF.cheat.setLevel(2)" }, { "do": "step", "frames": 30 },
+    { "do": "expect", "js": "window.__GF.state().units.some((u) => u.armed)", "op": "truthy", "label": "level 2 sends armed officers" },
+    { "do": "step", "frames": 600 },
+    { "do": "screenshot", "name": "02-armed" },
+    { "do": "expect", "js": "window.__GF.state().units.every((u) => u.armed)", "op": "truthy", "label": "unarmed officers withdraw once the response is armed" },
+    { "do": "expect", "path": "shots", "op": ">", "value": 0, "label": "armed officers shoot at the player" },
+    { "do": "expect", "path": "log.arrests", "op": "==", "value": 1, "label": "no arrests at level 2 (armed response)" }
+  ]
+}

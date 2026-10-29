@@ -150,9 +150,12 @@ parameter guidance, costs and limits: `references/navigation.md`.
 - **Crimes and heat:** `GF.CRIMES` = { trespass 0.4, vandalism 0.6, theft 0.8, assault 1.2, vehicleTheft 1.5, shooting 2.2,
   assaultOfficer 2.6, murder 3.2, killOfficer 4.5 } heat; `GF.WANTED_LEVELS` = [0, 1, 3, 6, 10, 15] heat per star (index = stars).
   `wanted.reportCrime(kind, pos)`; add your own kinds by passing a number instead of a name.
-- **Armed police:** the wanted system only assigns pursuit goals. For shooting cops, spawn `GF.RangedEnemy` units
-  (references/shooter.md) as the pursuers and feed them the `assignPursuit` goals; for arrests, check
-  `player within 1.5 m of a unit for 2 s while wanted ≤ 2 and not moving` in your module and fade out / respawn.
+- **Police (`GF.policeForce`)**: ready-made WantedSystem callbacks. Level 1: unarmed officers chase; a player who stops
+  next to one for 2 s is **arrested** (`app.events` → `police:arrest`, wanted cleared — you choose the penalty). From
+  `armedFrom` (2) stars: armed officers (`RangedEnemy`, cover-aware) replace them and shoot.
+  `const police = GF.policeForce(app, { player, cover }); const wanted = new GF.WantedSystem({ ...police.callbacks, events: app.events });`
+  `app.add((dt) => { wanted.update(dt, player); police.update(dt, wanted); });` · HUD: `police.arrestProgress` (0..1).
+  Test scene: `tests/scenes/police` (11 checks).
 - **Traffic:** `new GF.TrafficSystem(scene, city, { count = 12, seed = 3, speed = 11 })`; `update(dt, obstacles)` (pass
   player vehicles so AI cars brake for them); `collide(vehicle, onImpact)`; `cars[]` (each has `rig` (Object3D), `position`, `yaw`, `speed`). composeGame
   exposes it as `game.traffic` for city worlds.
