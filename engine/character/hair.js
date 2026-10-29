@@ -158,7 +158,7 @@ function surfaceRadius(F, dir) {
 export function addHair(human, opts = {}) {
   const api = human.userData; const style = opts.style ?? 'short'; if (style === 'bald' || !STYLE[style]) return null;
   const st = { ...STYLE[style] }; if (opts.length !== undefined) st.len = opts.length; if (opts.volume !== undefined) st.vol *= opts.volume; if (opts.fringe !== undefined) st.fringe = opts.fringe;
-  const color = new THREE.Color(opts.color ?? 0x2a1a10), noise = new Noise(opts.seed ?? 3), part = opts.part ?? 0.35;
+  const color = new THREE.Color(opts.color ?? 0x2a1a10), noise = new Noise(opts.seed ?? 3), part = opts.part ?? 0.35, soft = opts.soft ?? true; // soft: blended tip pass (set false for crowds)
   const F = headFrame(api);
   const HEAD = api.data.boneIndex.head, NECK = api.data.boneIndex.neck01, SPINE = api.data.boneIndex.spine02;
   const meshes = [];
@@ -172,7 +172,8 @@ export function addHair(human, opts = {}) {
     const front = Math.cos(az) > 0 ? Math.pow(Math.cos(az), 2) : 0; // 1 at front
     const side = Math.abs(Math.sin(az));
     const back = Math.cos(az) < 0 ? Math.pow(Math.cos(az), 2) : 0;
-    const frontPolar = Math.acos(THREE.MathUtils.clamp((fh - F.c.y) / F.r.y, -1, 1)) * (1 + st.fringe * 0.35);
+    const browPolar = Math.acos(THREE.MathUtils.clamp((F.eyeMid.y + F.ipd * 0.3 - F.c.y) / F.r.y, -1, 1)); // fringe never hangs below the brows
+    const frontPolar = Math.min(browPolar, Math.acos(THREE.MathUtils.clamp((fh - F.c.y) / F.r.y, -1, 1)) * (1 + st.fringe * 0.35));
     const temple = 0.16 * Math.exp(-Math.pow((Math.abs(az) - 0.72) / 0.22, 2)); // natural recession at the temples (not a bowl cut)
     return frontPolar * front + 1.75 * side * (1 - back) * (1 - front) + 2.05 * back - temple;
   };
@@ -244,7 +245,19 @@ export function addHair(human, opts = {}) {
 
   function addBuzz() { const b = g.clone(); b.setIndex(idx); const m = hairMaterial(color, STYLE.buzz, 30); m.alphaTest = 0; const k = b.attributes.position; for (let i = 0; i < k.count; i++) { const v = new THREE.Vector3().fromBufferAttribute(k, i).sub(F.c); const l = v.length(); v.setLength(surfaceRadius(F, v.clone().normalize()) + 0.002); k.setXYZ(i, F.c.x + v.x, F.c.y + v.y, F.c.z + v.z); void l; } b.computeVertexNormals(); return skinned(b, m); }
   function skinned(geo, mat) { const m = new THREE.SkinnedMesh(geo, mat); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; m.bind(api.skeleton, api.mesh.bindMatrix); return m; }
-  function finish(extra) { if (extra) meshes.push(extra); const grp = new THREE.Group(); grp.name = 'hair'; for (const m of meshes) grp.add(m); human.add(grp); api.hair = grp; return grp; }
+  function finish(extra) {
+    if (extra) meshes.push(extra); const grp = new THREE.Group(); grp.name = 'hair';
+    for (const m of meshes) {
+      grp.add(m);
+      // two-pass hair (no MSAA → no alpha-to-coverage): the alpha-tested core writes depth, then a soft blended
+      // pass of the same cards draws the thin strand tips (alpha below the core threshold) without hard edges
+      if (soft && m.material.alphaTest > 0 && m.material.map) {
+        const mat = m.material.clone(); mat.alphaTest = 0.04; mat.transparent = true; mat.depthWrite = false; mat.name = m.material.name + ':soft';
+        const sm = new THREE.SkinnedMesh(m.geometry, mat); sm.bind(api.skeleton, api.mesh.bindMatrix); sm.frustumCulled = false; sm.castShadow = false; sm.receiveShadow = true; sm.renderOrder = 1; sm.name = 'hair-soft'; grp.add(sm);
+      }
+    }
+    human.add(grp); api.hair = grp; return grp;
+  }
   function tubeHair(start, offsets, r0, r1, col, s, endsAlpha) {
     const pts = offsets.map((o) => start.clone().add(new THREE.Vector3(...o)));
     const curve = new THREE.CatmullRomCurve3(pts); const segs = 24, rad = 14;
