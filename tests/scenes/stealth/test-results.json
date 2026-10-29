@@ -1,0 +1,112 @@
+{
+  "game": "Stealth (stealth kit)",
+  "quality": "medium",
+  "startedAt": "2026-10-29T11:11:45.446Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "5582 ms"
+    },
+    {
+      "label": "scene boots into play",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "all guards start on patrol",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "crouching in the bush makes the player nearly invisible",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "unlit corner reads dark (light probe)",
+      "ok": true,
+      "detail": 0.08
+    },
+    {
+      "label": "under a lamp reads bright (light probe)",
+      "ok": true,
+      "detail": 0.71
+    },
+    {
+      "label": "standing in lamplight in a guard's view raises suspicion",
+      "ok": true,
+      "detail": 0.34
+    },
+    {
+      "label": "guard enters the suspicious ('?') state",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "out of sight, suspicion decays back to patrol",
+      "ok": true,
+      "detail": "patrol"
+    },
+    {
+      "label": "a thrown-bottle noise sends the patrol guard to investigate",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "guard searches, finds nothing, resumes patrol",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "silent takedown from behind succeeds",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "taken-down guard is out",
+      "ok": true,
+      "detail": "down"
+    },
+    {
+      "label": "another guard discovers the body under the lamp",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "radio alarm puts the remaining guards on alert",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-courtyard.png",
+    "screenshots/01b-spotted.png",
+    "screenshots/02-investigate.png",
+    "screenshots/03-alarm.png"
+  ],
+  "metrics": {
+    "fps": 59.99999999999997,
+    "frameMs": 2.0999999998603016,
+    "calls": 1,
+    "triangles": 1,
+    "geometries": 38,
+    "textures": 34,
+    "tier": "medium",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 0,
+    "particles": 0
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 5582,
+  "durationMs": 77803,
+  "summary": "16/16 checks passed"
+}

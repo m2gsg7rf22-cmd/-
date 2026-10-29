@@ -1,0 +1,40 @@
+{
+  "name": "Stealth (stealth kit)",
+  "serveRoot": "../../..",
+  "quality": "low",
+  "perfSampleMs": 1500,
+  "steps": [
+    { "do": "step", "frames": 30 },
+    { "do": "expect", "path": "state", "op": "==", "value": "playing", "label": "scene boots into play" },
+    { "do": "expect", "js": "window.__GF.state().guards.every((g) => g.state === 'patrol')", "op": "truthy", "label": "all guards start on patrol" },
+    { "do": "screenshot", "name": "01-courtyard" },
+
+    { "do": "eval", "js": "window.__GF.cheat.teleport(-10, 6, 0); window.__GF.cheat.crouch(true)" }, { "do": "step", "frames": 60 },
+    { "do": "expect", "path": "visibility", "op": "<", "value": 0.08, "label": "crouching in the bush makes the player nearly invisible" },
+    { "do": "eval", "js": "window.__GF.cheat.crouch(false); window.__GF.cheat.teleport(12, 8, 0)" }, { "do": "step", "frames": 30 },
+    { "do": "expect", "path": "light", "op": "<", "value": 0.3, "label": "unlit corner reads dark (light probe)" },
+    { "do": "eval", "js": "window.__GF.cheat.teleport(-8, -5, 0)" }, { "do": "step", "frames": 30 },
+    { "do": "expect", "path": "light", "op": ">", "value": 0.5, "label": "under a lamp reads bright (light probe)" },
+    { "do": "eval", "js": "window.__GF.cheat.teleport(9, -3, Math.PI)" }, { "do": "step", "frames": 40 },
+    { "do": "expect", "js": "window.__GF.state().guards[1].susp", "op": ">", "value": 0.3, "label": "standing in lamplight in a guard's view raises suspicion" },
+    { "do": "expect", "js": "window.__GF.state().events.states.includes('1:suspicious')", "op": "truthy", "label": "guard enters the suspicious ('?') state" },
+    { "do": "screenshot", "name": "01b-spotted" },
+    { "do": "eval", "js": "window.__GF.cheat.teleport(-12, 9, 0)" }, { "do": "step", "frames": 420 },
+
+    { "do": "expect", "js": "window.__GF.state().guards[1].state", "op": "==", "value": "patrol", "label": "out of sight, suspicion decays back to patrol" },
+    { "do": "eval", "js": "window.__GF.cheat.noise(-3, -5, 14)" }, { "do": "step", "frames": 30 },
+    { "do": "expect", "js": "window.__GF.state().events.states.includes('0:investigate')", "op": "truthy", "label": "a thrown-bottle noise sends the patrol guard to investigate" },
+    { "do": "screenshot", "name": "02-investigate" },
+    { "do": "step", "frames": 1500 },
+    { "do": "expect", "js": "window.__GF.state().events.states.includes('0:search') && window.__GF.state().guards[0].state === 'patrol'", "op": "truthy", "label": "guard searches, finds nothing, resumes patrol" },
+
+    { "do": "eval", "js": "window.__GF.cheat.crouch(true); window.__GF.cheat.behind(1)" }, { "do": "step", "frames": 2 },
+    { "do": "expect", "js": "window.__GF.cheat.takedown(1)", "op": "truthy", "label": "silent takedown from behind succeeds" },
+    { "do": "step", "frames": 30 },
+    { "do": "expect", "js": "window.__GF.state().guards[1].state", "op": "==", "value": "down", "label": "taken-down guard is out" },
+    { "do": "eval", "js": "window.__GF.cheat.teleport(-12, 9, 0)" }, { "do": "step", "frames": 240 },
+    { "do": "expect", "path": "events.bodies", "op": ">=", "value": 1, "label": "another guard discovers the body under the lamp" },
+    { "do": "expect", "js": "window.__GF.state().guards.filter((g) => g.state === 'alert').length", "op": ">=", "value": 2, "label": "radio alarm puts the remaining guards on alert" },
+    { "do": "screenshot", "name": "03-alarm" }
+  ]
+}

@@ -41,6 +41,7 @@ It cannot deliver 100 hours of content. State the slice scope in the GDD.
 | Cities, terrain, foliage, water | `engine/world/*`, `gameforge scene` | modeling.md (scenes), open-world.md |
 | Streaming, crowds, schedules, police/wanted | `world/streaming.js`, `world/crowd.js`, `ai/schedules.js`, `gameplay/wanted.js` | open-world.md |
 | Melee, combos, bosses | `engine/gameplay/player.js`, `actors.js` | engine-api.md |
+| Stealth (light, suspicion, noise, takedowns) | `engine/gameplay/stealth.js` | stealth.md |
 | Guns, cover, aiming, first person | `engine/gameplay/shooter.js` | shooter.md |
 | Driving and racing | `physics/vehicle.js`, `geometry/vehicles.js`, `gameplay/racing.js`, `world/track.js` | genres.md |
 | Platforming, traversal (swing, glide, dash, wall-run) | `gameplay/traversal.js`, `gameplay/platformer.js` | genres.md, recipes.md |
@@ -109,8 +110,8 @@ tests. Don't bury it inside the game. Then add it to this table.
 
 ### Stealth
 - **Core loop:** observe, hide, distract, takedown.
-- **AI:** perception cones with light levels, suspicion meter (behaviour trees), patrol
-  schedules, alarm → wanted escalation.
+- **AI:** `StealthSystem` (stealth.md): perception cones weighted by `lightProbe`, suspicion meter,
+  patrol → investigate → search → alert, radio alarm → wanted escalation.
 - **Level design:** multiple routes, readable guard paths, safe zones.
 
 ## 4. Production plan

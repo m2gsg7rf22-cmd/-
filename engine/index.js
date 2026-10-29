@@ -71,3 +71,4 @@ export { ShoulderedWeapon } from './gameplay/weapon-pose.js';
 export { decimate, decimateObject } from './geometry/decimate.js';
 export { building, streetBlock, FACADE_STYLES, GROUND_TYPES } from './world/facade.js';
 export { Cloth } from './physics/cloth.js';
+export { StealthSystem, lightProbe, GUARD_STATES, defaultMoveTo } from './gameplay/stealth.js';
