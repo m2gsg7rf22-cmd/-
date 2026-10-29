@@ -87,6 +87,7 @@ function applyTargets(data, weights, out) {
   }
 }
 
+const lashGroups = ['helper-l-eyelashes-1', 'helper-l-eyelashes-2', 'helper-r-eyelashes-1', 'helper-r-eyelashes-2'];
 // Seam-welded smooth normals on base topology, then copied to render vertices.
 function computeNormals(data, pos, groupNames) {
   const n = new Float32Array(pos.length), r2b = data.renderToBase;
@@ -173,7 +174,7 @@ export function buildHuman(data, params = {}) {
   // 3. render geometry
   const nR = data.meta.renderVerts;
   const rp = new Float32Array(nR * 3), rn = new Float32Array(nR * 3), si = new Uint16Array(nR * 4), sw = new Float32Array(nR * 4);
-  const norms = computeNormals(data, pos, ['body', 'helper-upper-teeth', 'helper-lower-teeth', 'helper-tongue']);
+  const norms = computeNormals(data, pos, ['body', 'helper-upper-teeth', 'helper-lower-teeth', 'helper-tongue', ...lashGroups]);
   for (let i = 0; i < nR; i++) {
     const b = r2b[i];
     rp[i * 3] = pos[b * 3] * DM; rp[i * 3 + 1] = pos[b * 3 + 1] * DM; rp[i * 3 + 2] = pos[b * 3 + 2] * DM;
@@ -188,7 +189,19 @@ export function buildHuman(data, params = {}) {
   geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
   geo.setAttribute('skinWeight', new THREE.BufferAttribute(sw, 4));
   // index with material groups: 0 skin, 1 teeth, 2 tongue (hair/lash helpers excluded)
-  const order = [['body', 0], ['helper-upper-teeth', 1], ['helper-lower-teeth', 1], ['helper-tongue', 2]];
+  // eyelashes: MakeHuman lash helper quads (their UVs live in the body atlas) get their own UVs
+  // (u along the lid, v root→tip) and an alpha-tested strand material (group 3); they stay in this
+  // mesh so blinks/expressions move them with the lids.
+  { const uvA = geo.attributes.uv.array;
+    for (const gname of lashGroups) {
+      const tris = data.groups[gname]; if (!tris) continue; const side = gname.includes('-l-') ? 'L' : 'R';
+      const eye = sk.byName['eye.' + side]?.userData.head; if (!eye) continue;
+      const vs = [...new Set(tris)]; let dmin = Infinity, dmax = -Infinity, amin = Infinity, amax = -Infinity; const info = [];
+      for (const v of vs) { const x = rp[v * 3] - eye.x, y = rp[v * 3 + 1] - eye.y, z = rp[v * 3 + 2] - eye.z; const d = Math.hypot(x, y, z), a = Math.atan2(y, x * (side === 'L' ? 1 : -1)); info.push([v, d, a]); dmin = Math.min(dmin, d); dmax = Math.max(dmax, d); amin = Math.min(amin, a); amax = Math.max(amax, a); }
+      for (const [v, d, a] of info) { uvA[v * 2] = ((a - amin) / Math.max(1e-6, amax - amin)) * 3; uvA[v * 2 + 1] = (d - dmin) / Math.max(1e-6, dmax - dmin); }
+    }
+    geo.attributes.uv.needsUpdate = true; }
+  const order = [['body', 0], ['helper-upper-teeth', 1], ['helper-lower-teeth', 1], ['helper-tongue', 2], ...lashGroups.map((g) => [g, 3])];
   const total = order.reduce((s, [g]) => s + (data.groups[g]?.length || 0), 0);
   const index = new Uint32Array(total); let o = 0;
   for (const [g, mi] of order) { const t = data.groups[g]; if (!t) continue; index.set(t, o); geo.addGroup(o, t.length, mi); o += t.length; }
@@ -303,13 +316,23 @@ export function skinToneFor(p) {
   c.add(new THREE.Color(SKIN_TONES.brown).multiplyScalar(e.african || 0)).add(new THREE.Color(SKIN_TONES.light).multiplyScalar(e.asian || 0)).add(new THREE.Color(SKIN_TONES.fair).multiplyScalar(e.caucasian || 0));
   return c;
 }
+let lashTex = null;
+function lashTexture() { // ~70 curved tapered lashes per tile: root at v=0, tips at v=1
+  if (lashTex) return lashTex;
+  const W = 256, H = 64, d = new Uint8Array(W * H * 4); let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let k = 0; k < 70; k++) { const x0 = rnd() * W, len = (0.6 + 0.4 * rnd()) * H, curl = (rnd() - 0.3) * 10;
+    for (let y = 0; y < len; y++) { const t = y / len, x = Math.round(x0 + curl * t * t), w = 1.6 * (1 - t * 0.85); for (let dx = -1; dx <= 1; dx++) { const xx = (x + dx + W) % W, cov = Math.max(0, w - Math.abs(dx)); if (cov <= 0) continue; const i = (y * W + xx) * 4; d[i] = d[i + 1] = d[i + 2] = 255; d[i + 3] = Math.max(d[i + 3], Math.round(255 * Math.min(1, cov))); } } }
+  lashTex = new THREE.DataTexture(d, W, H, THREE.RGBAFormat); lashTex.wrapS = THREE.RepeatWrapping; lashTex.generateMipmaps = true; lashTex.minFilter = THREE.LinearMipmapLinearFilter; lashTex.magFilter = THREE.LinearFilter; lashTex.needsUpdate = true;
+  return lashTex;
+}
 let skinFactory = null;
 export function setSkinMaterialFactory(f) { skinFactory = f; }
 function defaultHumanMaterials(p, data, geo) {
   const skin = skinFactory ? skinFactory(p, data, geo) : new THREE.MeshStandardMaterial({ color: skinToneFor(p), roughness: 0.55 });
   const teeth = new THREE.MeshStandardMaterial({ color: 0xece4d4, roughness: 0.25 });
   const tongue = new THREE.MeshStandardMaterial({ color: 0xa34a4a, roughness: 0.4 });
-  return [skin, teeth, tongue];
+  const lash = new THREE.MeshStandardMaterial({ color: new THREE.Color(p.lashColor ?? 0x1a120c), map: lashTexture(), alphaTest: 0.35, side: THREE.DoubleSide, roughness: 0.6 }); lash.name = 'gf:eyelashes';
+  return [skin, teeth, tongue, lash];
 }
 function eyeMaterial() {
   return new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.03 });
