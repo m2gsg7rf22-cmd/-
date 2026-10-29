@@ -15,6 +15,9 @@ const PRESETS = {
   confetti: { count: 60, speed: [3, 9], life: [1.2, 2.4], size: [0.1, 0.18], gravity: -6, drag: 1.2, colors: [0xff4a6a, 0x4ad0ff, 0xffd04a, 0x6aff8a], additive: false, spread: 0.6, up: 1.6 },
   trail: { count: 1, speed: [0, 0.2], life: [0.3, 0.5], size: [0.25, 0.35], gravity: 0, drag: 0, colors: [0x9adfff, 0x4a6aff], additive: true, spread: 1 },
   tireSmoke: { count: 2, speed: [0.3, 1], life: [0.8, 1.6], size: [0.6, 1.2], gravity: 0.8, drag: 1.2, colors: [0xd0d0d0, 0x9a9a9a], additive: false, spread: 0.6, up: 0.4, opacity: 0.35, grow: 2.5 },
+  muzzle: { count: 7, speed: [0.6, 3.5], life: [0.03, 0.07], size: [0.1, 0.26], gravity: 0, drag: 10, colors: [0xfff3c8, 0xff9a3a], additive: true, spread: 0.3 },
+  impact: { count: 5, speed: [0.8, 2.5], life: [0.25, 0.6], size: [0.08, 0.2], gravity: -3, drag: 3, colors: [0xb0a490, 0x7a7060], additive: false, spread: 0.5, opacity: 0.6, grow: 1.5 },
+  blood: { count: 8, speed: [1, 3.5], life: [0.2, 0.45], size: [0.05, 0.12], gravity: -9, drag: 1.5, colors: [0x8a0a0a, 0x4a0505], additive: false, spread: 0.6, opacity: 0.9 },
   heal: { count: 16, speed: [0.5, 1.5], life: [0.6, 1.2], size: [0.12, 0.2], gravity: 2, drag: 1, colors: [0x6aff9a, 0xd0ffd0], additive: true, spread: 0.6, up: 1 },
 };
 

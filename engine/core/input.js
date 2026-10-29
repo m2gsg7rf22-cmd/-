@@ -5,17 +5,20 @@ export const DEFAULT_BINDINGS = {
   moveLeft: ['KeyA', 'ArrowLeft'], moveRight: ['KeyD', 'ArrowRight'],
   jump: ['Space'], sprint: ['ShiftLeft', 'ShiftRight'], crouch: ['KeyC', 'ControlLeft'],
   interact: ['KeyE'], attack: ['Mouse0', 'KeyJ'], heavy: ['Mouse2', 'KeyK'], block: ['KeyQ'],
-  dodge: ['AltLeft', 'KeyL'], lockOn: ['Tab'], ability: ['KeyF'], reload: ['KeyT'],
+  dodge: ['AltLeft', 'KeyL'], lockOn: ['Tab'], ability: ['KeyF'], reload: ['KeyT', 'KeyR'],
   pause: ['Escape', 'KeyP'], map: ['KeyM'], journal: ['KeyJ'], camera: ['KeyV'],
   accelerate: ['KeyW', 'ArrowUp'], brake: ['KeyS', 'ArrowDown'], steerLeft: ['KeyA', 'ArrowLeft'],
   steerRight: ['KeyD', 'ArrowRight'], handbrake: ['Space'], boost: ['ShiftLeft'], horn: ['KeyH'],
   swing: ['KeyR', 'Mouse1'], glide: ['Space'],
   confirm: ['Enter', 'Space'], back: ['Escape', 'Backspace'],
   choice1: ['Digit1'], choice2: ['Digit2'], choice3: ['Digit3'], choice4: ['Digit4'],
+  // shooter kit (Mouse0 = left button fires, Mouse2 = right button aims; reload = KeyT/KeyR)
+  fire: ['Mouse0'], aim: ['Mouse2'], cover: ['KeyX'], shoulderSwap: ['KeyZ'],
+  weapon1: ['Digit1'], weapon2: ['Digit2'], weapon3: ['Digit3'], weapon4: ['Digit4'], weaponNext: ['KeyN'], weaponPrev: ['KeyB'],
 };
 // Standard gamepad mapping (buttons) -> actions
-const PAD_BUTTONS = { 0: ['jump', 'confirm', 'handbrake', 'glide'], 1: ['dodge', 'back'], 2: ['attack', 'interact'], 3: ['heavy'],
-  4: ['block'], 5: ['lockOn', 'swing'], 6: ['brake'], 7: ['accelerate'], 9: ['pause'], 10: ['sprint', 'boost'] };
+const PAD_BUTTONS = { 0: ['jump', 'confirm', 'handbrake', 'glide'], 1: ['dodge', 'back', 'cover'], 2: ['attack', 'interact', 'reload'], 3: ['heavy', 'weaponNext'],
+  4: ['block'], 5: ['lockOn', 'swing'], 6: ['brake', 'aim'], 7: ['accelerate', 'fire'], 9: ['pause'], 10: ['sprint', 'boost'], 11: ['shoulderSwap'] };
 
 export class Input {
   constructor(target = typeof window !== 'undefined' ? window : null, bindings = DEFAULT_BINDINGS) {

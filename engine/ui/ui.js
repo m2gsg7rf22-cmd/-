@@ -76,6 +76,26 @@ const CSS = `
 .gf-knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.35)}
 .gf-touch-btns{position:absolute;right:24px;bottom:30px;display:flex;gap:12px;pointer-events:auto}
 .gf-touch-btns button{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-weight:800;font-size:18px}
+.gf-ret{position:absolute;left:50%;top:50%;width:0;height:0;display:none;--g:6px}
+.gf-ret i{position:absolute;background:var(--gf-text);box-shadow:0 0 0 1px rgba(0,0,0,.55);border-radius:1px;transition:transform .05s}
+.gf-ret .u,.gf-ret .d{width:2px;height:8px;left:-1px}.gf-ret .u{bottom:var(--g)}.gf-ret .d{top:var(--g)}
+.gf-ret .l,.gf-ret .r{width:8px;height:2px;top:-1px}.gf-ret .l{right:var(--g)}.gf-ret .r{left:var(--g)}
+.gf-ret .c{width:2px;height:2px;left:-1px;top:-1px;border-radius:50%}
+.gf-ret .hm{position:absolute;left:-11px;top:-11px;width:22px;height:22px;opacity:0;transition:opacity .25s}
+.gf-ret .hm:before,.gf-ret .hm:after{content:'';position:absolute;left:10px;top:-2px;width:2px;height:26px;background:#fff;transform:rotate(45deg);clip-path:polygon(0 0,100% 0,100% 30%,0 30%,0 70%,100% 70%,100% 100%,0 100%)}
+.gf-ret .hm:after{transform:rotate(-45deg)}
+.gf-ret.head .hm:before,.gf-ret.head .hm:after{background:var(--gf-accent2)}.gf-ret.kill .hm:before,.gf-ret.kill .hm:after{background:var(--gf-danger)}
+.gf-ret.ads i{opacity:.75}
+.gf-scope{position:absolute;inset:0;display:none;background:radial-gradient(circle at center,transparent 0 31vh,#000 31.3vh)}
+.gf-scope:before,.gf-scope:after{content:'';position:absolute;background:rgba(0,0,0,.85)}.gf-scope:before{left:50%;top:19vh;bottom:19vh;width:2px;margin-left:-1px}.gf-scope:after{top:50%;left:calc(50% - 31vh);right:calc(50% - 31vh);height:2px;margin-top:-1px}
+.gf-ammo{padding:8px 16px;text-align:right;min-width:170px}
+.gf-ammo .n{font-size:.72em;letter-spacing:.14em;text-transform:uppercase;color:var(--gf-dim)}
+.gf-ammo .v{font-size:2.2em;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+.gf-ammo .v small{font-size:.45em;color:var(--gf-dim);font-weight:600;margin-left:6px}
+.gf-ammo.low .v b{color:var(--gf-danger)}
+.gf-ammo .rl{height:3px;background:rgba(255,255,255,.1);margin-top:5px;border-radius:2px;overflow:hidden;visibility:hidden}.gf-ammo .rl div{height:100%;background:var(--gf-accent);transform-origin:left}
+.gf-hitind{position:absolute;left:50%;top:50%;width:0;height:0}
+.gf-hitind div{position:absolute;left:-22px;top:-110px;width:44px;height:16px;border-top:4px solid var(--gf-danger);border-radius:50% 50% 0 0;opacity:0;transform-origin:22px 110px;transition:opacity .7s}
 @media (max-width:700px){.gf-mini{width:120px;height:120px}.gf-bar{width:180px}.gf-compass{width:240px}}
 `;
 
@@ -192,6 +212,43 @@ export class UI {
     const r = Math.max(0, ratio); b.querySelector('.f').style.transform = `scaleX(${r})`; b.querySelector('.g').style.transform = `scaleX(${r})`;
   }
   crosshair(on) { this.el.cross.style.display = on ? 'block' : 'none'; }
+  // Dynamic shooter reticle: set({ gap px, visible, ads, scope }); hit('hit'|'head'|'kill') flashes a hit marker.
+  reticle() {
+    if (this.widgets.reticle) return this.widgets.reticle;
+    const d = document.createElement('div'); d.className = 'gf-ret'; d.innerHTML = '<i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><i class="c"></i><div class="hm"></div>';
+    const sc = document.createElement('div'); sc.className = 'gf-scope'; this.root.appendChild(sc); this.root.appendChild(d);
+    const hm = d.querySelector('.hm'); let gap = -1, vis = null, t = null;
+    const w = { el: d, set: ({ gap: g = 6, visible = true, ads = false, scope = false } = {}) => {
+      g = Math.round(Math.min(120, g)); if (g !== gap) { gap = g; d.style.setProperty('--g', g + 'px'); }
+      if (vis !== visible) { vis = visible; d.style.display = visible ? 'block' : 'none'; }
+      d.classList.toggle('ads', ads); sc.style.display = scope ? 'block' : 'none';
+    }, hit: (kind = 'hit') => { d.classList.remove('head', 'kill'); if (kind !== 'hit') d.classList.add(kind); hm.style.transition = 'none'; hm.style.opacity = 1; clearTimeout(t); t = setTimeout(() => { hm.style.transition = 'opacity .25s'; hm.style.opacity = 0; }, 90); w.lastHit = kind; w.hits = (w.hits || 0) + 1; },
+    show: (b) => w.set({ gap, visible: b }) };
+    this.widgets.reticle = w; return w;
+  }
+  // Ammo counter: set({ name, mag, magSize, reserve, reload: 0..1 | null }).
+  ammoCounter(corner = 'br') {
+    if (this.widgets.ammo) return this.widgets.ammo;
+    const d = document.createElement('div'); d.className = 'gf-ammo gf-panel'; d.innerHTML = '<div class="n"></div><div class="v"><b>0</b><small>/ 0</small></div><div class="rl"><div></div></div>';
+    this.el[corner].appendChild(d);
+    const n = d.querySelector('.n'), b = d.querySelector('.v b'), sm = d.querySelector('.v small'), rl = d.querySelector('.rl'), bar = rl.firstChild; let last = '';
+    const w = { el: d, set: ({ name = '', mag = 0, magSize = 1, reserve = 0, reload = null } = {}) => {
+      const key = `${name}|${mag}|${reserve}|${reload === null ? '-' : Math.round(reload * 50)}`; if (key === last) return; last = key;
+      n.textContent = reload !== null ? 'Reloading…' : name; b.textContent = mag; sm.textContent = '/ ' + (reserve === Infinity ? '∞' : reserve);
+      d.classList.toggle('low', mag <= Math.max(1, Math.floor(magSize * 0.25)));
+      rl.style.visibility = reload !== null ? 'visible' : 'hidden'; bar.style.transform = `scaleX(${reload ?? 0})`;
+      w.value = { name, mag, reserve, reload };
+    }, show: (s) => (d.style.display = s ? '' : 'none') };
+    this.widgets.ammo = w; return w;
+  }
+  // Directional damage indicator: show(angle) with angle in radians (0 = in front, +ve = right).
+  hitIndicator() {
+    if (this.widgets.hitIndicator) return this.widgets.hitIndicator;
+    const d = document.createElement('div'); d.className = 'gf-hitind'; this.root.appendChild(d);
+    const arcs = [0, 1, 2].map(() => { const a = document.createElement('div'); d.appendChild(a); return a; }); let i = 0;
+    const w = { el: d, show: (angle) => { const a = arcs[i++ % arcs.length]; a.style.transform = `rotate(${angle}rad)`; a.style.transition = 'none'; a.style.opacity = 1; requestAnimationFrame(() => { a.style.transition = 'opacity .8s'; a.style.opacity = 0; }); w.count = (w.count || 0) + 1; } };
+    this.widgets.hitIndicator = w; return w;
+  }
   letterbox(on) { const h = on ? '11vh' : '0'; this.el.lt.style.height = h; this.el.lb.style.height = h; }
   flash(intensity = 1) { if (this.settings.reducedMotion) intensity *= 0.4; const f = this.el.flash; f.style.transition = 'none'; f.style.opacity = intensity; requestAnimationFrame(() => { f.style.transition = 'opacity .5s'; f.style.opacity = 0; }); }
   fade(to = 1, ms = 600) { const f = this.el.fade; f.style.transition = `opacity ${ms}ms`; f.style.opacity = to; return new Promise((r) => setTimeout(r, ms)); }

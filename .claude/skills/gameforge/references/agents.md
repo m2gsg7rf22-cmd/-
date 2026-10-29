@@ -96,12 +96,12 @@ Authors any motion the game needs as anim scripts (pose functions on canonical j
 - **Accept:** gameforge anim: no FAIL for every clip; sheets inspected; action readable from the side sheet; hit events fire in playtests
 
 ## Gameplay Engineer (`gameplay-engineer`)
-Implements rules, win/lose conditions, interactions, progression, traversal and custom mechanics in code.
+Implements rules, win/lose conditions, interactions, progression, traversal and custom mechanics in code, including ranged combat with the shooter kit (references/shooter.md).
 
 - **Inputs:** GDD mechanics, design numbers.
 - **Outputs:** src/gameplay.js
 - **Owns:** src/gameplay.js
-- **Accept:** each mechanic covered by a passing playtest check; win and lose reachable
+- **Accept:** each mechanic covered by a passing playtest check; win and lose reachable; shooters: playtest proves firing reduces ammo, reload restores it, hits damage, AI shoots back, cover snap works (see tests/scenes/shooting-range)
 
 ## Graphics Engineer (`graphics-engineer`)
 Owns lighting, sky/time of day, shadows, post-processing, quality tiers and the overall image; fixes blown-out or crushed frames.

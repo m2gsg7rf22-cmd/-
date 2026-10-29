@@ -81,13 +81,24 @@ three.js r180. Everything is procedural and runs without network or build step.
 | `GF.Health`, `GF.Stamina`, `GF.meleeSweep`, `GF.ComboSystem`, `GF.ProjectileSystem`, `GF.Inventory`, `GF.Progression`, `GF.separateActors` | systems |
 | `GF.Flags`, `GF.QuestSystem`, `GF.DialogueSystem` (`define(id, script)`), `GF.parseDialogue`, `GF.Mission` | narrative |
 
+## Shooter kit (see shooter.md)
+| API | Notes |
+|---|---|
+| `new GF.ShooterController(app, player, { weapons, view: 'third'|'first', cover, aimAssist, aimToggle })` `.control(dt)` (instead of `player.control`) `.setView()` `.enterCover()` `.debug()` | aim camera, FP view + viewmodel, snap-to-cover, crosshair + ammo HUD |
+| `GF.WEAPONS` (rifle carbine smg pistol shotgun sniper launcher), `GF.defineWeapon(id, def)`, `GF.timeToKill(def, hp, opts)` | data-driven weapons; falloff, spread/bloom, recoil pattern, ammo, modes |
+| `new GF.WeaponSystem(app, actor, { weapons, targets, ammo })` `.aim.origin/.dir` `.setTrigger` `.setAim` `.reload` `.equip` `.update(dt)` `.on('shot'|'hit'|'kill'|'reload'|'empty'|'equip')` | any actor (player or AI) |
+| `GF.hitscan(world, o, dir, max, targets)`, `GF.actorHitboxes(a)`, `new GF.ShootingTarget(app, opts)` | head/body/limb zones |
+| `new GF.CoverSystem(app.physics)` `.find(pos)` `.points(center, threat)` `.isProtected(pos, threat)` | cover faces, edges, peek points |
+| `new GF.RangedEnemy(app, { type: rifleman|gunner|marksman|shotgunner, cover, targets })` `.think(dt, target)` `.update(dt)` | cover → peek-shoot → flank → reload AI |
+| `GF.weaponModel(kind)` + `GF.attachFirearm(actor, model)`; `GF.FirstPersonCamera` | Modeling-Kit firearms, grip at origin / muzzle +Z |
+
 ## Audio & UI
 | API | Notes |
 |---|---|
 | `app.audio.play(name, { pos, pitch, volume })` | GF.SFX_NAMES: swing hit heavyHit clang block hurt death footstep(Grass) jump land dodge pickup coin powerup levelUp questComplete questStart ui* explosion crash screech horn checkpoint countdown go magic shoot door chest splash bird alarm whoosh thwip |
 | `app.audio.playMusic(mood, { intensity })`, `.music.intensity = x` | moods: exploration calm tension combat driving heroic mystery |
 | `app.audio.engine()` → `.set(rpm, load)`; `.ambience('wind'/'waves'/'city'/'rain'/'forest')`; `.speak(text)` | continuous sounds |
-| `app.ui.bar/counter/objectives/minimap/compass/speedometer/prompt/toast/subtitle/damageNumber/boss/letterbox/flash/fade` | HUD |
+| `app.ui.bar/counter/objectives/minimap/compass/speedometer/prompt/toast/subtitle/damageNumber/boss/letterbox/flash/fade/reticle/ammoCounter/hitIndicator` | HUD |
 | `app.ui.mainMenu/pauseMenu/settingsMenu/endScreen/loading/showDialogue` | menus; settings include volume, quality, sensitivity, invert Y, text size, subtitles, high contrast, colour filters, reduced motion, shake |
 
 ## Composer
