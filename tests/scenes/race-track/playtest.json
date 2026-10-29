@@ -1,0 +1,41 @@
+{
+  "name": "Race track kit scene",
+  "serveRoot": "../../..",
+  "quality": "low",
+  "steps": [
+    { "do": "step", "frames": 20 },
+    { "do": "expect", "path": "state", "op": "==", "value": "countdown", "label": "race opens with a countdown on the start grid" },
+    { "do": "expect", "path": "lineOk", "op": "truthy", "label": "racing line is inside the track limits" },
+    { "do": "canvas", "label": "track renders" },
+    { "do": "screenshot", "name": "01-grid" },
+    { "do": "hold", "action": "accelerate" },
+    { "do": "step", "frames": 60 },
+    { "do": "expect", "path": "car.kmh", "op": "<", "value": 3, "label": "cars are held during the countdown" },
+    { "do": "step", "frames": 130 },
+    { "do": "expect", "path": "state", "op": "==", "value": "racing", "label": "GO after the countdown" },
+
+    { "do": "eval", "js": "window.__GF.scene.assist(true); let n = 0; while (window.__GF.state().player.cpCount < 2 && n++ < 600) window.__GF.step(3);" },
+    { "do": "expect", "path": "player.cpCount", "op": ">=", "value": 2, "label": "player car (throttle held, steering inputs) drives across the line and through checkpoint 1" },
+    { "do": "expect", "path": "car.grounded", "op": "truthy", "label": "player car stays on its wheels on the banked track" },
+    { "do": "screenshot", "name": "02-racing" },
+    { "do": "expect", "path": "positionChanges", "op": ">", "value": 0, "label": "race positions update live" },
+    { "do": "expect", "js": "JSON.stringify(window.__GF.state().entrants.map(e => e.position).sort((a, b) => a - b))", "op": "==", "value": "[1,2,3,4,5,6]", "label": "positions are a consistent ranking" },
+
+    { "do": "eval", "js": "window.__GF.scene.assist(false); window.__GF.scene.reverse();" },
+    { "do": "step", "frames": 90 },
+    { "do": "expect", "path": "player.wrongWay", "op": "truthy", "label": "driving against the track direction is flagged wrong way" },
+    { "do": "release", "action": "accelerate" },
+    { "do": "eval", "js": "window.__GF.scene.respawn();" },
+    { "do": "step", "frames": 60 },
+    { "do": "expect", "path": "player.wrongWay", "op": "falsy", "label": "respawn puts the car back on track facing the right way" },
+    { "do": "expect", "js": "Math.abs(window.__GF.state().player.lateral) < 4", "op": "truthy", "label": "respawn is on the road" },
+
+    { "do": "eval", "js": "window.__GF.scene.pilot(true); let n = 0; while (window.__GF.state().entrants.some(e => e.lap < 1) && n++ < 540) window.__GF.step(10);" },
+    { "do": "expect", "js": "window.__GF.state().entrants.filter(e => e.name !== 'You').every(e => e.lap >= 1 && e.lapTimes.length >= 1)", "op": "truthy", "label": "all five AI cars complete a timed lap" },
+    { "do": "expect", "path": "player.lap", "op": ">=", "value": 1, "label": "player completes a lap (pilot through the Input system)" },
+    { "do": "expect", "js": "window.__GF.state().entrants.filter(e => e.name !== 'You').every(e => e.lapTimes[0] > 15 && e.lapTimes[0] < 90)", "op": "truthy", "label": "AI lap times are plausible" },
+    { "do": "step", "frames": 20 },
+    { "do": "canvas", "label": "racing frame renders" },
+    { "do": "screenshot", "name": "03-lap" }
+  ]
+}

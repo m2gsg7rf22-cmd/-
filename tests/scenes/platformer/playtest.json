@@ -1,0 +1,45 @@
+{
+  "name": "Platformer kit scene",
+  "serveRoot": "../../..",
+  "quality": "low",
+  "steps": [
+    { "do": "step", "frames": 30 },
+    { "do": "expect", "path": "state", "op": "==", "value": "playing", "label": "scene boots into play" },
+    { "do": "expect", "path": "reachable", "op": "truthy", "label": "generated course passes the reachability check" },
+    { "do": "expect", "path": "player.grounded", "op": "truthy", "label": "player lands on the start platform" },
+    { "do": "canvas", "label": "course renders" },
+    { "do": "screenshot", "name": "01-start" },
+
+    { "do": "hold", "action": "moveRight" },
+    { "do": "eval", "js": "const g = window.__GF.scene.firstGap; let n = 0; while (window.__GF.state().player.x < g.edgeX - 0.2 && n++ < 600) window.__GF.step(1);" },
+    { "do": "expect", "path": "player.grounded", "op": "truthy", "label": "scripted run reaches the edge of the first gap on foot" },
+    { "do": "press", "action": "jump", "frames": 24 },
+    { "do": "step", "frames": 50 },
+    { "do": "release", "action": "moveRight" },
+    { "do": "step", "frames": 20 },
+    { "do": "expect", "js": "window.__GF.state().player.platform === window.__GF.scene.firstGap.to", "op": "truthy", "label": "scripted moveRight + jump crosses the first generated gap" },
+    { "do": "expect", "path": "level.deaths", "op": "==", "value": 0, "label": "no fall on the scripted jump" },
+
+    { "do": "eval", "js": "window.__GF.scene.autopilot(true); let n = 0; while (window.__GF.state().level.checkpoint < 0 && n++ < 360) window.__GF.step(10); window.__GF.scene.autopilot(false); window.__GF.releaseAll();" },
+    { "do": "expect", "path": "level.checkpoint", "op": ">=", "value": 0, "label": "bot reaches the first checkpoint (stairs + spike pit)" },
+    { "do": "step", "frames": 20 },
+    { "do": "eval", "js": "window.__checkpointX = window.__GF.state().player.x; window.__GF.app.debugState(); window.__deaths0 = window.__GF.state().level.deaths; window.__GF.scene.dropInto('lava');" },
+    { "do": "step", "frames": 90 },
+    { "do": "expect", "js": "window.__GF.state().level.deaths - window.__deaths0", "op": "==", "value": 1, "label": "falling into lava kills the player once" },
+    { "do": "expect", "path": "level.lastDeath", "op": "==", "value": "lava", "label": "death cause is the lava kill volume" },
+    { "do": "expect", "js": "Math.abs(window.__GF.state().player.x - window.__checkpointX) < 2.5 && window.__GF.state().player.grounded", "op": "truthy", "label": "hazard respawns the player at the active checkpoint" },
+
+    { "do": "eval", "js": "window.__GF.scene.autopilot(true); let n = 0; while (!window.__GF.state().player.platformKind?.startsWith('moving') && n++ < 360) window.__GF.step(10);" },
+    { "do": "expect", "path": "player.platformKind", "op": "==", "value": "moving", "label": "player boards a moving platform" },
+    { "do": "step", "frames": 40 },
+    { "do": "screenshot", "name": "02-moving-platform" },
+    { "do": "eval", "js": "let n = 0; while (!window.__GF.state().level.reachedGoal && n++ < 900) window.__GF.step(10);" },
+    { "do": "expect", "path": "level.reachedGoal", "op": "truthy", "label": "autopilot clears the whole generated course to the goal" },
+    { "do": "expect", "path": "level.collected", "op": ">", "value": 3, "label": "gems collected along the jump arcs" },
+    { "do": "expect", "path": "level.springs", "op": ">=", "value": 1, "label": "spring launched the player" },
+    { "do": "expect", "js": "(s => s.level.checkpoints >= 3 && s.level.checkpoint === s.level.checkpoints - 1)(window.__GF.state())", "op": "truthy", "label": "every checkpoint (3+) activated in order" },
+    { "do": "step", "frames": 30 },
+    { "do": "canvas", "label": "goal frame renders" },
+    { "do": "screenshot", "name": "03-goal" }
+  ]
+}

@@ -1,15 +1,19 @@
 // Kinematic character controller: acceleration-based movement, coyote time, jump
 // buffering, step-up onto ledges, slope limits with sliding, wall collision via the
 // PhysicsWorld, swimming at water level, knockback, and optional wall-run/glide hooks.
+// Optional `profile` (e.g. platformerProfile() from gameplay/platformer.js) replaces the
+// default velocity/jump/gravity logic with a precise-feel controller; the collision
+// integration below is shared, and without a profile behaviour is unchanged.
 import * as THREE from '../vendor/three/three.module.js';
 import { damp } from '../core/rng.js';
 
 export class CharacterController {
-  constructor(world, { position = new THREE.Vector3(), radius = 0.35, height = 1.8, walkSpeed = 2.0, runSpeed = 5.0, sprintSpeed = 7.8, accel = 14, airControl = 0.35, jumpSpeed = 8.2, maxSlope = 0.55, stepHeight = 0.45, gravityScale = 1 } = {}) {
+  constructor(world, { position = new THREE.Vector3(), radius = 0.35, height = 1.8, walkSpeed = 2.0, runSpeed = 5.0, sprintSpeed = 7.8, accel = 14, airControl = 0.35, jumpSpeed = 8.2, maxSlope = 0.55, stepHeight = 0.45, gravityScale = 1, coyoteTime = 0.12, jumpBufferTime = 0.15, profile = null } = {}) {
     this.world = world;
     this.position = position.clone();
     this.velocity = new THREE.Vector3();
-    Object.assign(this, { radius, height, walkSpeed, runSpeed, sprintSpeed, accel, airControl, jumpSpeed, maxSlope, stepHeight, gravityScale });
+    Object.assign(this, { radius, height, walkSpeed, runSpeed, sprintSpeed, accel, airControl, jumpSpeed, maxSlope, stepHeight, gravityScale, coyoteTime, jumpBufferTime });
+    this.profile = null;
     this.grounded = false; this.coyote = 0; this.jumpBuffer = 0; this.swimming = false;
     this.groundNormal = new THREE.Vector3(0, 1, 0);
     this.facing = 0; // yaw radians (0 = +Z)
@@ -20,12 +24,21 @@ export class CharacterController {
     this.lastGroundY = position.y;
     this.fallDistance = 0;
     this.id = 'char' + Math.random().toString(36).slice(2, 7);
+    if (profile) this.setProfile(profile);
   }
+  // Install (or remove with null) a controller profile: { attach(ctrl), control(ctrl, dt, desired, speed, opts) -> 'skip'? }
+  setProfile(profile) { this.profile = profile; if (profile?.attach) profile.attach(this); return this; }
   // desired: THREE.Vector3 world-space horizontal direction (length 0..1); speed: m/s target.
-  move(dt, desired, speed, { jump = false, faceMovement = true, turnRate = 12 } = {}) {
+  move(dt, desired, speed, opts = {}) {
     if (!this.enabled) return;
+    if (this.profile) {
+      if (this.profile.control(this, dt, desired, speed, opts) === 'skip') return;
+      this._integrate(dt);
+      return;
+    }
+    const { jump = false, faceMovement = true, turnRate = 12 } = opts;
     const w = this.world;
-    if (jump) this.jumpBuffer = 0.15; else this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
+    if (jump) this.jumpBuffer = this.jumpBufferTime; else this.jumpBuffer = Math.max(0, this.jumpBuffer - dt);
     const target = new THREE.Vector3(desired.x * speed, 0, desired.z * speed);
     const control = this.grounded ? 1 : this.swimming ? 0.6 : this.airControl;
     const k = 1 - Math.exp(-this.accel * control * dt);
@@ -51,6 +64,11 @@ export class CharacterController {
       const slide = new THREE.Vector3(this.groundNormal.x, 0, this.groundNormal.z).normalize().multiplyScalar(9 * dt);
       this.velocity.add(slide);
     }
+    this._integrate(dt);
+  }
+  // Shared collision integration: external impulses, substepped walls, ground snap, ceilings, water, bounds.
+  _integrate(dt) {
+    const w = this.world;
     this.external.multiplyScalar(Math.exp(-5 * dt));
     const vx = this.velocity.x + this.external.x, vz = this.velocity.z + this.external.z;
     // integrate with substeps to avoid tunnelling
@@ -84,7 +102,7 @@ export class CharacterController {
       const snap = wasGrounded && this.velocity.y <= 0 ? 0.35 : 0.02;
       if (this.position.y <= ground + snap && this.velocity.y <= 0.01) {
         if (!this.grounded) { this.landSpeed = -this.velocity.y; this.fallDistance = this.lastGroundY - ground; }
-        this.position.y = ground; this.velocity.y = 0; this.grounded = true; this.jumps = 0; this.coyote = 0.12;
+        this.position.y = ground; this.velocity.y = 0; this.grounded = true; this.jumps = 0; this.coyote = this.coyoteTime;
         this.lastGroundY = ground; this.surface = gq.surface;
       } else {
         if (this.grounded) this.lastGroundY = this.position.y;

@@ -101,7 +101,7 @@ Implements rules, win/lose conditions, interactions, progression, traversal and 
 - **Inputs:** GDD mechanics, design numbers.
 - **Outputs:** src/gameplay.js
 - **Owns:** src/gameplay.js
-- **Accept:** each mechanic covered by a passing playtest check; win and lose reachable
+- **Accept:** each mechanic covered by a passing playtest check; win and lose reachable; platformer: generated level report.ok and the bot reaches the goal; racing: AI cars complete a lap and positions update
 
 ## Graphics Engineer (`graphics-engineer`)
 Owns lighting, sky/time of day, shadows, post-processing, quality tiers and the overall image; fixes blown-out or crushed frames.
@@ -117,7 +117,7 @@ Owns colliders, character movement tuning, vehicles (raycast model), dynamic pro
 - **Inputs:** Movement/vehicle feel targets.
 - **Outputs:** src/physics.js
 - **Owns:** src/physics.js
-- **Accept:** no tunnelling through buildings at top speed; vehicle accelerates/steers/brakes in playtest
+- **Accept:** no tunnelling through buildings at top speed; vehicle accelerates/steers/brakes in playtest; coyote/buffer/variable-jump covered by checks when a platformer profile is used
 
 ## AI Engineer (`ai-engineer`)
 Builds enemy and NPC behaviour: behaviour trees, perception, attack tokens, encounters, bosses, traffic and navigation.
