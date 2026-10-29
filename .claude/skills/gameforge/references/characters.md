@@ -88,6 +88,9 @@ scene.add(human);
   `H.clipFromBVHCanonical(human.userData.retargeter, bvhText, { names: 'mixamo'|'cmu'|'makehuman', up: 'y', name, loop })`
   retargets BVH files with any of the known naming schemes. The bundled CC0 clips are in
   `data.poses`: walk, dance, zombieWalk, tpose.
+- **IK and ragdoll.** Actors plant their feet on terrain, look at targets, reach, hold weapons
+  with two hands and can ragdoll on death. See "Procedural IK, look-at and ragdoll" in
+  `animation.md`.
 - **Hands.** `retargeter.setHands(gripL, gripR)` curls the fingers.
   `app.humans.create({ ..., armed: true })` sets a weapon grip.
 

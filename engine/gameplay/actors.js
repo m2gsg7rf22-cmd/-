@@ -5,6 +5,8 @@
 import * as THREE from '../vendor/three/three.module.js';
 import { createHumanoid, attach } from '../character/humanoid.js';
 import { HumanoidAnimator } from '../animation/animator.js';
+import { CharacterIK, groundFromPhysics } from '../animation/ik.js';
+import { Ragdoll } from '../animation/ragdoll.js';
 import { CharacterController, syncVisual } from '../physics/character.js';
 import { Health, meleeSweep } from './systems.js';
 import { bt, BehaviorTree, Steering, Perception, RUNNING, SUCCESS, FAILURE } from '../ai/behavior.js';
@@ -14,7 +16,7 @@ import { RNG } from '../core/rng.js';
 let ACTOR_ID = 1;
 
 export class Actor {
-  constructor(app, { look = {}, position = new THREE.Vector3(), facing = 0, hp = 100, weapon = null, name = 'Actor', tags = [], scale = 1, speed = {} } = {}) {
+  constructor(app, { look = {}, position = new THREE.Vector3(), facing = 0, hp = 100, weapon = null, name = 'Actor', tags = [], scale = 1, speed = {}, ik = {}, ragdollOnDeath = false } = {}) {
     this.app = app; this.id = 'a' + ACTOR_ID++; this.name = name; this.tags = new Set(tags);
     // Realistic humans when the app has the human system loaded (app.useHumans), unless the
     // look asks for the legacy stylized mannequin.
@@ -33,6 +35,24 @@ export class Actor {
     this.listeners = {};
     this.footT = 0;
     this.model.traverse((o) => { if (o.isMesh) o.userData.actor = this; });
+    // Procedural layer after the mixer: foot planting (default on for realistic humans on
+    // terrain), look-at and hand IK. ik: false disables it; ik: { footIK, lookAt, lookLimits, … }.
+    this.ik = ik === false ? null : new CharacterIK(this.model, { ground: groundFromPhysics(app.physics), footIK: this.realistic && !!app.physics.hf, ...ik });
+    this.ragdollOnDeath = ragdollOnDeath; this.ragdoll = null;
+  }
+  /** Look at a point / Object3D / Actor (its head), or null to stop. */
+  lookAt(target, opts) { this.ik?.setLookTarget(target, opts); return this; }
+  /** Reach with a hand ('L' | 'R') to a point / Object3D, or null to release. */
+  reach(side, target, opts) { this.ik?.setHandTarget(side, target, opts); return this; }
+  /** Two-handed weapon grip: the left hand holds a point on the right-hand weapon. */
+  twoHanded(on = true, opts) { this.ik?.grip(on ? this.weapon : null, opts); return this; }
+  /** Switch to the ragdoll now (also used on death when ragdollOnDeath). */
+  goRagdoll({ impulse = null, point = null } = {}) {
+    this.ragdoll ||= new Ragdoll(this.model, { physics: this.app.physics });
+    const v = this.ctrl.velocity.clone().add(this.ctrl.external);
+    this.ragdoll.activate({ velocity: v, impulse, point });
+    if (this.ik) this.ik.enabled = false;
+    return this.ragdoll;
   }
   get position() { return this.ctrl.position; }
   get facing() { return this.ctrl.facing; }
@@ -44,8 +64,14 @@ export class Actor {
     if (info.direction) this.ctrl.knockback(info.direction, info.knockback ?? 3, info.up ?? 1.5);
     if (!info.noStagger) { this.stagger = info.stagger ?? 0.35; this.anim.play('hit'); }
   }
-  onDeath(info) {
-    this.alive = false; this.anim.play('death'); this.emit('death', info);
+  onDeath(info = {}) {
+    this.alive = false;
+    if (this.ragdollOnDeath) {
+      const dir = info.direction ? new THREE.Vector3(info.direction.x, 0, info.direction.z) : null;
+      const impulse = dir ? dir.multiplyScalar(18 * (info.knockback ?? 3)).add(new THREE.Vector3(0, 12 * (info.up ?? 1), 0)) : null;
+      this.goRagdoll({ impulse });
+    } else this.anim.play('death');
+    this.emit('death', info);
     this.ctrl.velocity.set(0, 0, 0);
   }
   faceTowards(p, dt, rate = 10) {
@@ -62,9 +88,16 @@ export class Actor {
     const hs = this.ctrl.horizontalSpeed();
     this.anim.setLocomotion(this.alive ? hs : 0, this.ctrl.grounded);
     if (this.alive) this.anim.setOverride(this.forcedOverride !== undefined && this.forcedOverride !== null ? this.forcedOverride : !this.ctrl.grounded && this.ctrl.velocity.y < -4 ? 'fall' : this.ctrl.swimming ? 'swing' : null);
-    this.anim.update(dt);
+    const rag = this.ragdoll && (this.ragdoll.active || this.ragdoll.blend);
+    if (!rag || this.ragdoll.blend) this.anim.update(dt); // a ragdoll drives the bones itself
     this.model.userData.face?.update(dt);
     syncVisual(this.model, this.ctrl, dt);
+    if (rag) this.ragdoll.update(dt);
+    else if (this.ik) {
+      const c = this.anim.current?.name;
+      this.ik.feetWeight = this.alive && this.ctrl.grounded && !this.anim.override && c !== 'dodge' && c !== 'death' && c !== 'jump' && c !== 'kick' ? 1 : 0;
+      this.ik.update(dt);
+    }
     // footsteps
     if (this.ctrl.grounded && hs > 1) { this.footT += dt * hs / 1.6; if (this.footT > 1) { this.footT = 0; this.emit('footstep', hs); } }
   }
@@ -164,6 +197,7 @@ export class NPC extends Actor {
     this.dialogue = opts.dialogue || null; this.role = opts.role || 'villager';
     this.home = this.position.clone(); this.waypoints = opts.waypoints || null; this.wpIndex = 0; this.wait = 0;
     this.talking = false; this.lookTarget = null; this.wanderRadius = opts.wanderRadius ?? 0;
+    this.lookRange = opts.lookRange ?? 8; // NPCs look at the player (head/neck IK) within this distance; 0 = off
     this.rng = new RNG(opts.seed ?? ACTOR_ID * 7);
     this.idleAnim = opts.idleAnim || null; if (this.idleAnim) this.anim.setUpperOverride(this.idleAnim);
     this.marker = null;
@@ -186,6 +220,7 @@ export class NPC extends Actor {
       if (this.wait > 0) this.wait -= dt; else { if (!this.wanderTarget || this.position.distanceTo(this.wanderTarget) < 0.6) { this.wanderTarget = this.home.clone().add(new THREE.Vector3(this.rng.range(-1, 1) * this.wanderRadius, 0, this.rng.range(-1, 1) * this.wanderRadius)); this.wait = this.rng.range(1, 4); } else { dir = this.wanderTarget.clone().sub(this.position).setY(0).normalize(); speed = 1.3; } }
     }
     if (player && !this.talking && player.position.distanceTo(this.position) < 3.5 && speed === 0) this.faceTowards(player.position, dt, 3);
+    if (this.ik) this.ik.setLookTarget(this.lookTarget || (player && (this.talking || player.position.distanceTo(this.position) < this.lookRange) ? player : null));
     if (this.marker) this.marker.position.y = this.model.userData.height + 0.45 + Math.sin(this.app.loop.time * 3) * 0.06;
     super.update(dt, dir, speed);
   }

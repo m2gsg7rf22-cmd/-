@@ -18,7 +18,7 @@
 |---|---|---|---|---|
 | 1 | Character Generation Engine | `engine/humans.js`, `engine/character/{human,human-data,skin,hair,clothing,archetypes}.js` | `tests/unit/humans.test.mjs`, `tools/bench-characters.mjs` (11/11) | ממומש ונבדק. פערים: LOD לקהל, שיער סיבים, סימולציית בד |
 | 2 | Procedural 3D Modeling Engine | **`engine/modeling/`** (SDF + Surface Nets, L-system/turtle, space colonization, cards/paint, K), `tools/model.mjs` (לולאת ביקורת: מדדים + גיליון 4 זוויות + GLB), `references/modeling.md`, דוגמאות ב־`skills/gameforge/models/`; `engine/geometry/*` | `modeling.test.mjs` (6), `bench-vehicles` (7/7) | ממומש. **Claude יוצר מודלים בעצמו**. בדיקה עיוורת: ערבה בוכייה ב־5 סבבים (`docs/benchmarks/skill-blind-tests/`), ו־11 פערים שנמצאו תוקנו |
-| 3 | Animation & Rigging | `engine/animation/*`, **`tools/anim.mjs`** (`gameforge anim`: בדיקות + גיליונות שלבים), `references/animation.md` (קונבנציות מדודות), דוגמאות ב־`skills/gameforge/anims/` | unit (כולל דוגמה שבורה שנתפסת) | **Claude כותב אנימציות בעצמו**. פערים: foot IK, ragdoll |
+| 3 | Animation & Rigging | `engine/animation/*` (כולל **`ik.js`**: two-bone/CCD, foot IK, look-at, hand IK; **`ragdoll.js`**: Verlet ragdoll), **`tools/anim.mjs`** (`gameforge anim`: בדיקות + גיליונות שלבים), `references/animation.md` (קונבנציות מדודות), דוגמאות ב־`skills/gameforge/anims/` | unit (כולל דוגמה שבורה שנתפסת) | **Claude כותב אנימציות בעצמו**. foot IK ו־ragdoll מומשו (`tools/bench-ik.mjs`). פערים: אנימציית קימה, self-collision ב־ragdoll |
 | 4 | World Generation | `engine/world/*`, `K.world`, **`gameforge scene`** (מבט־על + 3 צילומים בגובה עיניים + תקציבים), דוגמה `skills/gameforge/scenes/` | playtests + review | ממומש. פערים: שיטת עבודה מפורטת לעולם פתוח, חזיתות מבנים |
 | 5 | Rendering & Materials | `engine/render/*` | canvas checks | ממומש. פערים: SSAO, אמת מידה ויזואלית לסביבה |
 | 6 | Physics & Gameplay | `engine/physics/*`, `engine/gameplay/*` | unit + playtests | ממומש |
@@ -28,6 +28,7 @@
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | — | ממומש. פער: השוואת פיקסלים מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.3.4**: שכבה פרוצדורלית אחרי ה־mixer לשני ה־rigs: two-bone IK אנליטי עם pole ו־CCD, foot IK על שטח לא אחיד (ברירת מחדל לבני אדם ריאליסטיים על heightfield), look-at עם מגבלות והחלקה (NPC מסתכלים על השחקן), hand IK ואחיזה בשתי ידיים, ragdoll מסוג Verlet (`ragdollOnDeath`). בדיקות: `tests/unit/ik.test.mjs`, ויזואלי: `sandbox/ik.html` ו־`tools/bench-ik.mjs` (`docs/benchmarks/ik/`).
 - **v0.3.3**: 3 בדיקות עיוורות עברו (ערבה, רובה, הליכת זומבי), וכל הפערים שנמצאו תוקנו. בין היתר: באג בתיעוד של סימן `foot`, `ease` לא מוגבל, `groundFeet`, גיליונות אורתוגרפיים עם תוויות, `K.socket` וחומרים, מסגור ביקורת לפריטים קטנים.
 - **v0.3.2**: יכולת סאונד (`gameforge sound`). רצות שתי בדיקות עיוורות: רובה מדע בדיוני (model) והליכת זומבי (anim).
 - **v0.3.1**: בדיקה עיוורת ראשונה הצליחה (ערבה). נוספו `cardStrip`, `curve`, פירוט משולשים לכל רשת, גיליון ביקורת עם 6 תצוגות, `gameforge anim` ו־`gameforge scene`, ומתכונים לצמיחה נפולה.

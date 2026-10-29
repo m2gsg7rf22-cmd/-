@@ -118,3 +118,87 @@ Helpers (passed to your default export):
 Real mocap beats hand keys for realism. `H.clipFromBVHCanonical(retargeter, bvhText, { names })`
 retargets BVH files with CMU, Mixamo-style or MakeHuman naming. Only CC0 or properly licensed
 BVH may be bundled.
+
+## Procedural IK, look-at and ragdoll (after the mixer)
+
+`engine/animation/ik.js` and `engine/animation/ragdoll.js` add a procedural layer on top of
+clips. They work on both rigs (realistic 163-bone human and stylized mannequin). Every
+`Actor`, `Player`, `NPC` and `Enemy` already has one. Use them for these cases:
+
+| Need | Use |
+|---|---|
+| Feet float or sink on slopes, stairs or rocks | **foot IK** (on by default for realistic humans when the world has a heightfield) |
+| An NPC should watch the player, or a guard should track a noise | **look-at** (`actor.lookAt(target)`; NPCs look at the player within `lookRange`, default 8 m) |
+| A hand must touch something: a lever, a door handle, a wall, a ledge | **hand IK** (`actor.reach('R', obj)`) |
+| Two-handed sword, rifle or staff | **grip** (`actor.twoHanded()`): the left hand goes to a point on the right-hand weapon |
+| Deaths should react to the hit and to the terrain | **ragdoll** (`ragdollOnDeath: true`, or `actor.goRagdoll({ impulse })`) |
+
+Don't use foot IK for airborne moves. The Actor fades it out automatically when the actor is
+not grounded, during overrides (sit, drive, fall, swing) and during `dodge`, `jump`, `kick` and
+`death`. Keep authoring clips on flat ground with `groundFeet: true`. The IK adapts them to the
+terrain at runtime.
+
+```js
+// Actor options (all optional)
+new GF.Enemy(app, { type: 'grunt', ragdollOnDeath: true,
+  ik: { footIK: true, lookAt: true, lookLimits: { yaw: 70, up: 35, down: 40 }, lookRate: 6, maxStepUp: 0.5, maxStepDown: 0.55, maxFootTilt: 35 } });
+// ik: false switches the layer off.
+actor.lookAt(player);                 // Actor (looks at its head), Vector3, Object3D, or null
+actor.reach('R', leverObject, { weight: 1 });   // reach('R', null) releases
+actor.twoHanded(true, { point: new THREE.Vector3(0, -0.12, 0) }); // weapon-local grip point; or add a child 'grip_L'
+actor.goRagdoll({ impulse: dir.clone().multiplyScalar(60), point });  // kg·m/s at a world point
+actor.ragdoll.deactivate({ blend: 0.4 });  // blend back to animation (get-up clip not included)
+```
+
+Standalone (your own mixer loop):
+
+```js
+import { CharacterIK, groundFromPhysics, solveTwoBone, solveCCD } from './engine/animation/ik.js';
+import { Ragdoll } from './engine/animation/ragdoll.js';
+const ik = new CharacterIK(model, { ground: groundFromPhysics(app.physics) }); // or groundFromHeightfield(hf), flatGround(y)
+// each frame: mixer.update(dt); place model; model.updateMatrixWorld(); ik.update(dt);
+const rd = new Ragdoll(model, { physics: app.physics }).activate({ velocity, impulse, point });
+// each frame afterwards: rd.update(dt)   (don't run the mixer while it is active)
+solveTwoBone(upper, mid, end, targetWorld, { pole: kneeWorld.clone().add(forward), weight: 1 });
+solveCCD([b0, b1, b2, b3], tipObject, targetWorld, { iterations: 12 });
+```
+
+How it works and what the parameters mean:
+- **Two-bone IK** is analytic: it is exact for reachable targets, and an unreachable target
+  straightens the chain towards it. `pole` is the world point the knee or elbow bends towards.
+  If you omit it, the solver keeps the current bend plane. Use **CCD** for chains longer than
+  two bones, such as tails, spines and tentacles.
+- **Foot IK** works on each foot separately:
+  - It probes the ground under the heel and the toe. A toe that cuts into a step edge lifts
+    the foot.
+  - It drops the hips so that the lower foot can reach. It never raises them.
+  - It solves each leg with the knee pole pointing forward.
+  - It tilts each foot onto the ground normal, up to `maxFootTilt`. The tilt weight comes from
+    contact, i.e. how far the clip lifts the foot. A swinging foot keeps its animated arc and
+    follows the terrain height.
+- **Look-at** clamps yaw and pitch relative to the body. It spreads the rotation over
+  spine → neck → head (the head takes about 50%) and eases in with `lookRate`. When a target
+  goes more than about 25° past the yaw limit (behind the character), it lets go smoothly.
+- **Bones** that the mixer leaves alone are restored every frame, so IK never accumulates.
+- **Ragdoll:**
+  - It uses 18 Verlet particles at the major joints and capsule ground contact.
+  - Bones and the torso are held by distance constraints. Joint limits are distance ranges:
+    elbows, knees, ankles, neck, hip flexion and hip abduction. A hinge-side rule stops knees
+    from bending backwards.
+  - It collides with the heightfield and walkable static tops, and walls push it out through
+    `resolveCylinder`.
+  - It sleeps once it has settled (`ragdoll.settled`).
+  - Bones are aimed from where they actually are, so the skinned mesh stays on the particles.
+
+Review: `node tools/bench-ik.mjs [--style stylized]` renders `sandbox/ik.html`. It shows IK
+off/on pairs on a 20° slope and a 16 cm step, plus a ragdoll drop on bumpy ground, and writes
+the shots and metrics to `docs/benchmarks/ik/`. Open the images and check three things: no
+gap or penetration under the feet, the knee bent on the uphill or step side, and the ragdoll
+lying on the ground without stretched limbs.
+
+Limits:
+- The ragdoll has no self-collision between limbs, except through the joint limits.
+- It doesn't twist the forearms.
+- It has no get-up animation. `deactivate` blends straight back to the current clip.
+- Foot IK assumes an upright character.
+- Look-at doesn't drive the eyes.
