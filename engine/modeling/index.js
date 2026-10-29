@@ -11,6 +11,7 @@ import { pbr, solid, emissive, glass, carPaint, textureSet, applyWind, MaterialL
 import { generateTexture, TEXTURE_KINDS } from '../render/textures.js';
 import { RNG, Noise } from '../core/rng.js';
 import { decimate, decimateObject } from '../geometry/decimate.js';
+import { building, streetBlock, FACADE_STYLES, GROUND_TYPES } from '../world/facade.js';
 import { Heightfield, terrainMesh, terrainMaterial } from '../world/terrain.js';
 import { populate, instanceProp, scatterPoints, grassField } from '../world/vegetation.js';
 import { createWater } from '../world/water.js';
@@ -70,6 +71,7 @@ export const K = {
   // MeshBuilder, mat4, ellipseRing, superRing, profileRing, mergeByMaterial, validateGeometry, validateObject
   ...builders,
   sdf, branching, ...sdf, ...branching,
+  building, streetBlock, FACADE_STYLES, GROUND_TYPES, // facade grammar: real-geometry architecture (references/modeling.md › Architecture)
   decimate, decimateObject, // LODs / budgets: decimate(geo, { ratio }) keeps uv/normal/skin attributes (references/modeling.md)
   paint: cardsMod.paint, cardTexture: cardsMod.cardTexture, cards: cardsMod.cards, cardStrip: cardsMod.cardStrip, cardMaterial: cardsMod.cardMaterial,
   // materials: pbr(kind, {color, repeat, normalScale, roughness}) with TEXTURE_KINDS, solid, emissive, glass, carPaint

@@ -1,0 +1,345 @@
+{
+  "name": "street-block",
+  "file": "/home/user/-/skills/gameforge/models/street-block.model.js",
+  "params": {},
+  "buildMs": 1017,
+  "triangles": 40896,
+  "vertices": 81792,
+  "meshes": 44,
+  "drawCallsApprox": 25,
+  "materials": 25,
+  "textures": 15,
+  "cardMeshes": 0,
+  "size": [
+    50,
+    19.671,
+    16.5
+  ],
+  "sizeAxes": "x(width) × y(height) × z(depth), metres",
+  "perMesh": [
+    {
+      "name": "building:brownstone",
+      "triangles": 2136,
+      "material": "gf:brick",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 2496,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 12,
+      "material": "gf:fabric",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 1152,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 264,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 216,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:brownstone",
+      "triangles": 36,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 2904,
+      "material": "gf:concrete",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 2748,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 156,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 312,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 360,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 1488,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 60,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 3288,
+      "material": "gf:concrete",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 3144,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 360,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 120,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 744,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 408,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:modern",
+      "triangles": 108,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 4536,
+      "material": "gf:plaster",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 6552,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 2592,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 588,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 2016,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 1416,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "building:oldtown",
+      "triangles": 492,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    },
+    {
+      "name": "streetBlock",
+      "triangles": 12,
+      "material": "MeshStandardMaterial",
+      "instances": 1
+    }
+  ],
+  "min": [
+    -25,
+    0,
+    -6.5
+  ],
+  "nanValues": 0,
+  "degenerateTriangles": 0,
+  "openEdges": 0,
+  "collider": null,
+  "checks": [
+    {
+      "name": "no NaN/Infinity positions",
+      "pass": true,
+      "detail": "0 bad values",
+      "level": "error"
+    },
+    {
+      "name": "has geometry",
+      "pass": true,
+      "detail": "40896 triangles",
+      "level": "error"
+    },
+    {
+      "name": "plausible size (1 cm … 500 m)",
+      "pass": true,
+      "detail": "50 × 19.671 × 16.5 m",
+      "level": "error"
+    },
+    {
+      "name": "rests on the ground (min.y ≈ 0) — pass params.floating for socket-origin assets",
+      "pass": true,
+      "detail": "min.y = -0.000",
+      "level": "warn"
+    },
+    {
+      "name": "few degenerate triangles (< 1 %)",
+      "pass": true,
+      "detail": "0",
+      "level": "warn"
+    },
+    {
+      "name": "solid meshes are closed (open edges)",
+      "pass": true,
+      "detail": "0 open edges (cards, tubes and geometry.userData.open meshes are skipped)",
+      "level": "warn"
+    },
+    {
+      "name": "draw calls ≤ 8 per asset",
+      "pass": false,
+      "detail": "25 materials",
+      "level": "warn"
+    },
+    {
+      "name": "renders without page errors",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    }
+  ],
+  "views": "/home/user/-/skills/gameforge/models/review/street-block.views.jpg"
+}

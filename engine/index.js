@@ -69,3 +69,4 @@ export { Track, generateTrack, trackMesh, addTrackPhysics } from './world/track.
 export { computeRacingLine, RaceAI, RaceManager, formatTime } from './gameplay/racing.js';
 export { ShoulderedWeapon } from './gameplay/weapon-pose.js';
 export { decimate, decimateObject } from './geometry/decimate.js';
+export { building, streetBlock, FACADE_STYLES, GROUND_TYPES } from './world/facade.js';

@@ -345,3 +345,16 @@ Do not call an asset photorealistic. Show the review sheet as evidence.
 every mesh in a hierarchy. Vertices are never moved (half-edge collapse), so uv/normal/color/skin attributes stay valid; UV seams
 and open borders are locked. Use it to meet a budget after sculpting (SDF meshes are dense) and to build LOD levels for
 `LODGroup` (references/open-world.md). Check the result in `gameforge model` at the distance the LOD is used.
+
+## Architecture: the facade grammar (`K.building`, `K.streetBlock`)
+Close-up streets need real depth: recessed windows, frames, sills, cornices, balconies, storefronts. `engine/world/facade.js`
+builds them from a grammar — a core box behind the window reveal, then per side: ground floor (`shop` | `lobby` | `residential`
+| `blank`) → upper floors of window bays between piers (glass in a reveal, frame + mullions, sill, lintel, shutters, balcony,
+AC unit) with string courses → cornice + parapet + roof units. Styles: `brownstone`, `oldtown`, `modern`, `industrial`, `glass`
+(`K.FACADE_STYLES`); override any field: `K.building({ width: 12, depth: 10, floors: 5, style: 'oldtown', ground: 'shop', seed: 3, bayW: 2.2, balcony: 0.4 })`.
+Returns a Group (front faces +Z, base y=0) with `userData.collider`, `height` and `doors: [{x, z, facing}]` (spawn/entry points).
+`K.streetBlock({ length: 60, depth: 12, seed, styles, floors: [3, 7] })` lines attached buildings along +X.
+Budget: ~8–12k tris and 6–8 materials per 5-floor building — use it for the street the player walks; use
+`geometry/buildings.js` `tower()` (textured facades) or `K.decimate` for distant blocks (`LODGroup`, references/open-world.md).
+Example + review: `skills/gameforge/models/street-block.model.js` → `gameforge model`. Write your own style by passing a new
+style object (wall: [pbr kind, opts], trim/frame colours, floorH, groundH, bayW, winW, winH, reveal, mullions [cols, rows], …).
