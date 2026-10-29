@@ -21,6 +21,8 @@ export { createHumanoid, attach, defaultParams, BONES, UPPER_BODY } from './char
 export { CLIP_LIBRARY, buildClip, buildClipSet, defineClip } from './animation/clips.js';
 export { HumanoidAnimator, AnimStateMachine } from './animation/animator.js';
 export { Tween, Tweens, Ease } from './animation/tween.js';
+export { CharacterIK, solveTwoBone, solveCCD, rigOf, groundFromPhysics, groundFromHeightfield, flatGround, rotateBoneWorld, setBoneWorldQuat } from './animation/ik.js';
+export { Ragdoll } from './animation/ragdoll.js';
 export { Heightfield, terrainMesh, terrainMaterial } from './world/terrain.js';
 export { populate, scatterPoints, instanceProp, grassField } from './world/vegetation.js';
 export { createWater } from './world/water.js';

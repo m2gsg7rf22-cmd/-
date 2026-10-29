@@ -1,0 +1,89 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge IK + ragdoll</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#c{position:fixed;inset:0}.lab{position:fixed;color:#fff;font:600 15px system-ui;background:#000b;padding:3px 8px;border-radius:4px;transform:translateX(-50%);white-space:nowrap}</style></head>
+<body><div id="c"></div>
+<script type="module">
+// Visual test for engine/animation/ik.js + ragdoll.js on the realistic human.
+//   ?view=slope | steps | ragdoll | all   &clip=idle|walk   &t=<sim seconds>   &style=stylized
+// Pairs: left = IK off, right = IK on. Ragdoll: dropped with an impulse onto bumpy ground.
+import * as THREE from '../engine/vendor/three/three.module.js';
+import { createRenderer } from '../engine/render/renderer.js';
+import { Atmosphere } from '../engine/render/sky.js';
+import { pbr } from '../engine/render/materials.js';
+import * as H from '../engine/humans.js';
+import { CLIP_LIBRARY } from '../engine/animation/clips.js';
+import { CharacterIK } from '../engine/animation/ik.js';
+import { Ragdoll } from '../engine/animation/ragdoll.js';
+import { createHumanoid } from '../engine/character/humanoid.js';
+import { HumanoidAnimator } from '../engine/animation/animator.js';
+
+const q = new URLSearchParams(location.search), view = q.get('view') || 'all';
+const R = createRenderer({ container: document.getElementById('c') });
+const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(+(q.get('fov') || 30), innerWidth / innerHeight, 0.05, 500);
+R.setup(scene, camera);
+const atm = new Atmosphere(scene, R.renderer, { timeOfDay: 14.5, sunAzimuth: 200 });
+scene.fog = null;
+
+// ---- ground: slope (x<0), steps (0..3), bumps (x>3.5)
+const SLOPE = 0.36; // ~20°
+function groundY(x, z) {
+  if (x < -0.4) return SLOPE * (x + 2.5);
+  if (x < 3.2) { const u = ((x + 1.5) % 1.5 + 1.5) % 1.5; return u >= 0.75 + 0.0 ? 0.16 : 0; } // step edges at x = 0.0+0.75k … characters straddle them
+  return 0.07 * Math.sin(x * 3.1) * Math.cos(z * 2.3) + 0.04 * Math.sin(z * 5 + x);
+}
+const groundN = (x, z) => { if (x >= -0.4 && x < 3.2) return new THREE.Vector3(0, 1, 0); const e = 0.01; return new THREE.Vector3(groundY(x - e, z) - groundY(x + e, z), 2 * e, groundY(x, z - e) - groundY(x, z + e)).normalize(); };
+const ground = (x, z) => ({ y: groundY(x, z), normal: groundN(x, z) });
+{
+  const W = 14, D = 6, nx = 700, nz = 120, g = new THREE.PlaneGeometry(W, D, nx, nz); g.rotateX(-Math.PI / 2); g.translate(1.5, 0, 0);
+  const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, groundY(p.getX(i), p.getZ(i)));
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, pbr('concrete', { repeat: 10 })); m.receiveShadow = true; scene.add(m);
+}
+const data = await H.loadHumanData();
+const stylized = q.get('style') === 'stylized';
+const make = (seed) => {
+  const h = stylized ? createHumanoid({ seed }) : H.assembleHuman(data, { ...H.characterFromSpec('athlete', seed), textureSize: 512 });
+  scene.add(h); return h;
+};
+const labels = [];
+const actors = [];
+function addPair(x0, x1, z, label) {
+  for (const [x, on] of [[x0, false], [x1, true]]) {
+    const h = make(3); h.position.set(x, groundY(x, z), z);
+    const anim = new HumanoidAnimator(h); anim.setLocomotion(q.get('clip') === 'walk' ? 1.6 : 0, true);
+    const ik = on ? new CharacterIK(h, { ground, lookAt: false }) : null;
+    actors.push({ h, anim, ik }); labels.push([new THREE.Vector3(x, groundY(x, z) + 2.05, z), `${label}: IK ${on ? 'ON' : 'off'}`]);
+  }
+}
+addPair(-3.3, -1.7, 0, 'slope 20°');
+addPair(0.75, 2.25, 0, 'step 16 cm');
+// ragdoll: one human already mid-death, dropped from 1 m with a hit from the left
+const rh = make(8); rh.position.set(5.2, 1.0, -0.2); rh.rotation.y = -0.4;
+const rAnim = new HumanoidAnimator(rh); rAnim.play('hit'); rAnim.update(0.15); rh.updateMatrixWorld(true);
+const rag = new Ragdoll(rh, { ground });
+labels.push([new THREE.Vector3(5.2, 1.3, -0.2), 'ragdoll drop']);
+
+// ---- deterministic simulation
+const T = +(q.get('t') || 12), dt = 1 / 60;
+let ragStarted = false;
+for (let f = 0; f < T * 60; f++) {
+  for (const a of actors) { a.anim.update(dt); a.h.updateMatrixWorld(true); a.ik?.update(dt); }
+  if (f * dt >= 0.2 && !ragStarted) { rag.activate({ velocity: new THREE.Vector3(0.8, 0, 0), impulse: new THREE.Vector3(70, 25, 20) }); ragStarted = true; }
+  if (ragStarted) rag.update(dt); else { rAnim.update(dt); }
+}
+scene.updateMatrixWorld(true);
+// diagnostics for the playwright driver
+window.__ik = actors.map((a) => {
+  const B = a.h.userData.bones; const names = stylized ? ['foot_L', 'foot_R'] : ['foot.L', 'foot.R'];
+  const feet = names.map((n) => { const p = new THREE.Vector3().setFromMatrixPosition(B[n].matrixWorld); return +(p.y - groundY(p.x, p.z)).toFixed(3); });
+  return { x: +a.h.position.x.toFixed(2), ik: !!a.ik, ankleAboveGround: feet, hipsOffset: a.ik ? +a.ik.debug.hipsOffset.toFixed(3) : 0 };
+});
+window.__ragdoll = { settled: rag.settled, lengthError: +rag.boneLengthError().toFixed(4), minClearance: +Math.min(...rag.particles.map((p) => p.pos.y - p.r - groundY(p.pos.x, p.pos.z))).toFixed(3), top: +Math.max(...rag.particles.map((p) => p.pos.y)).toFixed(2) };
+
+// ---- camera
+const V = { all: [[1.5, 2.2, 10.5], [1.5, 0.7, 0]], slope: [[-2.5, 1.0, 3.6], [-2.5, 0.35, 0]], steps: [[1.5, 0.75, 3.4], [1.5, 0.35, 0]], ragdoll: (() => { const c = rag.center(); return [[c.x + 1.2, c.y + 1.3, c.z + 2.3], [c.x, c.y - 0.1, c.z]]; })(), ragside: (() => { const c = rag.center(); return [[c.x + 2.6, c.y + 0.35, c.z], [c.x, c.y - 0.05, c.z]]; })(), feet: [[-2.5, 0.25, 2.2], [-2.5, 0.05, 0]] }[view] || [[1.5, 2.2, 10.5], [1.5, 0.7, 0]];
+camera.position.set(...V[0]); camera.lookAt(...V[1]); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+atm.setFocus(new THREE.Vector3(...V[1]));
+for (const [p, t] of labels) { const v = p.clone().project(camera); if (v.z > 1 || Math.abs(v.x) > 1.05 || Math.abs(v.y) > 1.05) continue; const d = document.createElement('div'); d.className = 'lab'; d.textContent = t; d.style.left = ((v.x + 1) / 2 * innerWidth) + 'px'; d.style.top = ((1 - v.y) / 2 * innerHeight) + 'px'; document.body.appendChild(d); }
+let frames = 0; function loop() { R.render(); window.__frames = ++frames; if (frames < 6) requestAnimationFrame(loop); } loop();
+</script>
+</body></html>

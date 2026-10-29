@@ -1,0 +1,86 @@
+{
+  "views": {
+    "all": "/home/user/-/.claude/worktrees/agent-a3b30f102690a54e1/docs/benchmarks/ik/all-stylized.jpg",
+    "slope": "/home/user/-/.claude/worktrees/agent-a3b30f102690a54e1/docs/benchmarks/ik/slope-stylized.jpg",
+    "feet": "/home/user/-/.claude/worktrees/agent-a3b30f102690a54e1/docs/benchmarks/ik/feet-stylized.jpg",
+    "steps": "/home/user/-/.claude/worktrees/agent-a3b30f102690a54e1/docs/benchmarks/ik/steps-stylized.jpg",
+    "ragdoll": "/home/user/-/.claude/worktrees/agent-a3b30f102690a54e1/docs/benchmarks/ik/ragdoll-stylized.jpg",
+    "ragside": "/home/user/-/.claude/worktrees/agent-a3b30f102690a54e1/docs/benchmarks/ik/ragside-stylized.jpg"
+  },
+  "checks": [
+    {
+      "name": "IK on: both ankles at the same height above their ground (≤ 2 cm)",
+      "pass": true,
+      "detail": "0.088/0.089  0.088/0.089"
+    },
+    {
+      "name": "IK on: no ankle below its ground",
+      "pass": true,
+      "detail": "0.088, 0.088"
+    },
+    {
+      "name": "IK off shows the problem (one foot floats or sinks ≥ 4 cm)",
+      "pass": true,
+      "detail": "0.068/0.114  0.088/0.249"
+    },
+    {
+      "name": "ragdoll settled on the ground",
+      "pass": true,
+      "detail": "{\"settled\":true,\"lengthError\":0,\"minClearance\":0,\"top\":0.11}"
+    },
+    {
+      "name": "ragdoll bone lengths within 2%",
+      "pass": true,
+      "detail": "0"
+    },
+    {
+      "name": "no page errors",
+      "pass": true,
+      "detail": "none"
+    }
+  ],
+  "ik": [
+    {
+      "x": -3.3,
+      "ik": false,
+      "ankleAboveGround": [
+        0.068,
+        0.114
+      ],
+      "hipsOffset": 0
+    },
+    {
+      "x": -1.7,
+      "ik": true,
+      "ankleAboveGround": [
+        0.088,
+        0.089
+      ],
+      "hipsOffset": -0.025
+    },
+    {
+      "x": 0.75,
+      "ik": false,
+      "ankleAboveGround": [
+        0.088,
+        0.249
+      ],
+      "hipsOffset": 0
+    },
+    {
+      "x": 2.25,
+      "ik": true,
+      "ankleAboveGround": [
+        0.088,
+        0.089
+      ],
+      "hipsOffset": -0.16
+    }
+  ],
+  "ragdoll": {
+    "settled": true,
+    "lengthError": 0,
+    "minClearance": 0,
+    "top": 0.11
+  }
+}

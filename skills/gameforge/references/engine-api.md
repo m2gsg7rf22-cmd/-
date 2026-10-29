@@ -44,6 +44,10 @@ three.js r180. Everything is procedural and runs without network or build step.
 |---|---|
 | `new GF.HumanoidAnimator(char)` `.setLocomotion(speed, grounded)` `.play(clip, { upperOnly, speed, onEnd })` `.setOverride(loopClip)` `.setUpperOverride(clip)` `.on('hit', fn)` | idle walk run sprint jump fall land attack1-3 heavy punch kick block dodge hit death talk wave cheer sit drive cast interact swing fly combatIdle strafe |
 | `GF.defineClip(name, { duration, loop, events: { hit: 0.4 }, pose: (p) => ({ bone: [x,y,z] deg, hipsY }) })` | author new moves as pose functions |
+| `actor.lookAt(target)`, `actor.reach('L'\|'R', target)`, `actor.twoHanded(on, { point })`, Actor options `ik: { footIK, lookAt, lookLimits, … } \| false`, `ragdollOnDeath`, `actor.goRagdoll({ impulse, point })` | procedural layer after the mixer; foot IK is on by default for realistic humans on terrain; NPCs look at the player within `lookRange` (see animation.md) |
+| `new GF.CharacterIK(model, { ground })` `.update(dt)` `.setLookTarget(t)` `.setHandTarget(side, t, { pole, rotation })` `.grip(weapon)`; `GF.groundFromPhysics(world)`, `GF.groundFromHeightfield(hf)`, `GF.flatGround(y)` | the same layer for any model (both rigs), outside actors |
+| `GF.solveTwoBone(root, mid, end, target, { pole, weight })`, `GF.solveCCD(joints, effector, target, opts)`, `GF.rigOf(model)` | analytic two-bone IK with a pole, plus a CCD fallback |
+| `new GF.Ragdoll(model, { physics \| ground })` `.activate({ velocity, impulse, point })` `.update(dt)` `.deactivate({ blend })` `.settled` | Verlet ragdoll built from the skeleton |
 | `new GF.CinematicCamera(camera).play(keys, onEnd)` | keys `{ t, pos, look, fov }` |
 | `GF.Tweens` | `to(obj, props, sec, { ease })` |
 
