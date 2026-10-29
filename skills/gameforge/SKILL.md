@@ -142,6 +142,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 - `references/cinematics.md` — **cutscenes**: shot grammar (sizes, moves, 180° rule), event timeline, character lighting, `gameforge cinematic` storyboard review, `playCinematic`
 - `references/narrative.md` — **writing story, cast, missions and branching dialogue yourself**: story scripts, `gameforge story` (graph + bible + playthrough simulation + checks), premise→theme→characters→structure→beats→branching→dialogue→quests method, checklist
 - `references/open-world.md` — **open worlds (GTA-style cities, open fantasy regions)**: chunk streaming + LOD budgets, NPC daily schedules, wanted/heat with pursuers, sidewalk crowds with a realistic→mannequin LOD ladder, measured crowd budgets
+- `references/navigation.md` — **navmesh pathfinding**: build from physics/terrain (multi-level, stairs, ramps), findPath/raycast/closestPoint, dynamic obstacles (parked cars, doors), NavAgent/NavCrowd avoidance, planners for schedules/crowds, measured costs and limits
 - `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/shooter.md` — **ranged combat / shooters (third- and first-person)**: weapons, hitscan + projectiles, cover, ranged AI, aim camera, HUD; weapon-feel tuning, TTK math, encounter design, aim assist and accessibility

@@ -13,6 +13,7 @@ import { PhysicsWorld } from '../physics/world.js';
 import { AudioEngine } from '../audio/audio.js';
 import { UI } from '../ui/ui.js';
 import { VFX } from '../render/particles.js';
+import { buildNavMesh } from '../ai/navmesh.js';
 
 export const ENGINE_VERSION = '0.1.0';
 
@@ -83,6 +84,10 @@ export class GameApp {
     };
     return this;
   }
+
+  // Opt-in navigation mesh over this.physics (terrain + static colliders). Nothing calls it by
+  // default; see ai/navmesh.js and references/navigation.md. Returns (and stores) app.navmesh.
+  buildNavMesh(opts = {}) { this.navmesh = buildNavMesh({ physics: this.physics, ...opts }); return this.navmesh; }
 
   _preUpdate(dt) {
     for (let i = this.timers.length - 1; i >= 0; i--) { this.timers[i].t -= dt; if (this.timers[i].t <= 0) { const f = this.timers[i].fn; this.timers.splice(i, 1); f(); } }

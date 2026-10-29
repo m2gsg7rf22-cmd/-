@@ -125,7 +125,7 @@ Builds enemy and NPC behaviour: behaviour trees, perception, attack tokens, enco
 - **Inputs:** Encounter design.
 - **Outputs:** src/ai.js
 - **Owns:** src/ai.js
-- **Accept:** enemies perceive, pursue, attack and die in playtest; no enemy stuck in geometry in screenshots; open worlds: after a time jump NPCs are at their schedule places; wanted level rises on a crime and decays after hiding
+- **Accept:** enemies perceive, pursue, attack and die in playtest; no enemy stuck in geometry in screenshots; navmesh games: agents never off the mesh / inside colliders in playtest (count it in debugState), unreachable targets handled (findPath null); open worlds: after a time jump NPCs are at their schedule places; wanted level rises on a crime and decays after hiding
 
 ## Audio Director (`audio-director`)
 Designs every sound the game needs as synth recipes (layered transient/body/tail with osc, noise, FM, pluck voices), verifies them with the gameforge sound review (spectrogram + checks), maps SFX to actions and music moods to game states — see references/audio.md.

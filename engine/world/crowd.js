@@ -13,6 +13,7 @@ import { characterFromSpec } from '../character/archetypes.js';
 import { OUTFITS } from '../character/clothing.js';
 import { CLIP_LIBRARY, buildClip } from '../animation/clips.js';
 import { ScheduleAgent, ScheduleSystem, PlaceRegistry } from '../ai/schedules.js';
+import { navMeshPlanner } from '../ai/navmesh.js';
 
 const clampv = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -129,13 +130,14 @@ export function pedestrianLook(seed, archetype = 'civilian') {
  * Crowd(app, city, opts)
  *   count, seed, templates { worker: weight, ... }, variants (realistic templates), maxNear,
  *   nearRange (realistic), midRange (mannequin; hidden beyond), hysteresis, shadows ('near' | 'all' | 'none'),
- *   humans (default app.humans), clock () => hour (default app.atmosphere.timeOfDay)
+ *   humans (default app.humans), clock () => hour (default app.atmosphere.timeOfDay),
+ *   navmesh (opt-in: route pedestrians over a NavMesh instead of the sidewalk graph)
  * await crowd.prepare() builds the realistic variant templates (skip if app.humans unset).
  * crowd.update(dt, viewPos) runs schedules + LOD; crowd.alarm(pos, opts) makes people flee.
  */
 export class Crowd {
   constructor(app, city, { count = 40, seed = 11, templates = { worker: 4, shopper: 2.5, retiree: 1.5, student: 1, nightOwl: 1 }, variants = 3, maxNear = 6, nearRange = 14, midRange = 60,
-    hysteresis = 0.12, shadows = 'near', humans, clock, animStride = 2, parent } = {}) {
+    hysteresis = 0.12, shadows = 'near', humans, clock, animStride = 2, parent, navmesh = null } = {}) {
     this.app = app; this.city = city; this.seed = seed; this.rng = new RNG(seed);
     Object.assign(this, { count, maxNear, nearRange, midRange, hysteresis, shadows, animStride });
     this.humans = humans !== undefined ? humans : app.humans || null;
@@ -148,12 +150,15 @@ export class Crowd {
     const names = Object.keys(templates), weights = names.map((n) => templates[n]), total = weights.reduce((a, b) => a + b, 0);
     const sidewalkY = city.sidewalkY ?? 0.18;
     const groundY = (x, z) => (city.isRoad(x, z) ? 0.02 : sidewalkY);
+    const navPlan = navmesh ? navMeshPlanner(navmesh) : null;
+    const navWalk = navmesh ? (p) => navmesh.closestPoint({ x: p.x, z: p.z }) || p : null;
+    const navY = navmesh ? (x, z) => navmesh.heightAt(x, z) ?? groundY(x, z) : null;
     for (let i = 0; i < count; i++) {
       let r = this.rng.next() * total, tpl = names[0]; for (let k = 0; k < names.length; k++) { r -= weights[k]; if (r <= 0) { tpl = names[k]; break; } }
       const lane = this.rng.range(-1.1, 1.1);
       const start = this.network.randomPoint(this.rng, lane);
       const agent = new ScheduleAgent({ id: 'ped' + i, schedule: tpl, registry: this.places, seed: seed * 1000 + i, position: new THREE.Vector3(start.x, sidewalkY, start.z),
-        planner: (a, b) => this.network.path(a, b, lane), walkable: (p) => this.network.project(p, lane), groundY });
+        planner: navmesh ? navPlan : (a, b) => this.network.path(a, b, lane), walkable: navmesh ? navWalk : (p) => this.network.project(p, lane), groundY: navmesh ? navY : groundY });
       this.schedules.add(agent);
       const variant = i % Math.max(1, variants);
       this.peds.push({ i, agent, template: tpl, lane, variant, look: pedestrianLook(seed * 100 + (this.humans ? variant : i)).stylized, tier: -1, near: null, mid: null, anim: null, dist: Infinity, speed: 0 });

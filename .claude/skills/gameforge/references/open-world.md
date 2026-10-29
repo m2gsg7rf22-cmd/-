@@ -76,7 +76,7 @@ app.add((dt) => stream.update(player.position, dt));
 | `new GF.PlaceRegistry([{ id, kind \| kinds, x, z, radius }])` | `.of(kind)`, `.pick(kind, rng)`, `.nearest(kind, x, z)` |
 | `new GF.ScheduleAgent({ schedule, registry \| places, position, seed, speed, runSpeed, planner, walkable, groundY, integrate })` | `.update(dt, hour)` → `.velocity`, `.position`, `.heading`, `.visible`, `.state` (inside travel perform flee cower watch), `.activity`; `.interrupt({ type, from, duration })`, `.resume()`, `.teleport(hour)` |
 | `new GF.ScheduleSystem({ jumpHours })` + `GF.attachSchedules(app, system)` | follows `app.atmosphere.timeOfDay`; `.alarm(pos, { radius, type, duration, watchRadius })`; `.stats()` |
-| planners | `GF.straightPlanner`, `GF.navGridPlanner(GF.NavGrid.fromWorld(app.physics, ...))`, sidewalk graph `crowd.network.path` |
+| planners | `GF.straightPlanner`, `GF.navGridPlanner(GF.NavGrid.fromWorld(app.physics, ...))`, `GF.navMeshPlanner(nav)` (navigation.md), sidewalk graph `crowd.network.path` |
 
 Named NPCs (quest givers, shopkeepers) can use a `ScheduleAgent` with `integrate: false` and feed
 `agent.velocity` into `npc.update(dt, dir, speed)`, so they keep physics and dialogue.
@@ -113,6 +113,17 @@ skinned mesh (`H.mergeGarments`), no teeth/tongue/facial morphs. `H.cloneHuman(t
 shares geometry, skin textures and baked clips; only the skeleton is duplicated. Variety in the
 near tier = number of templates (`variants`); mannequins reuse the same clothes/skin/hair colours so
 the near↔mid swap does not change the person's palette.
+
+## 5b. Navigation (navmesh)
+
+For anything off the sidewalk graph (plazas, interiors, bridges, courtyards, terrain) build a
+navmesh once and route through it: `const nav = app.buildNavMesh({ bounds, seeds: [spawn] })`.
+`GF.navMeshPlanner(nav)` plugs into `ScheduleAgent` (like `navGridPlanner`),
+`new GF.Crowd(app, city, { navmesh: nav })` routes pedestrians over it, `GF.NavAgent` + `GF.NavCrowd`
+give named NPCs / pursuers path following with reciprocal avoidance, and
+`nav.addObstacle(box)` / `removeObstacle(id)` reroute everyone around parked cars and closed doors.
+100 × 100 m of city at 0.3 m cells builds in ~0.2-0.5 s, a path query is ~1 ms. Full API,
+parameter guidance, costs and limits: `references/navigation.md`.
 
 ## 6. Testing an open world
 

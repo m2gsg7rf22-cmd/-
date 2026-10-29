@@ -69,3 +69,6 @@ export { Track, generateTrack, trackMesh, addTrackPhysics } from './world/track.
 export { computeRacingLine, RaceAI, RaceManager, formatTime } from './gameplay/racing.js';
 export { ShoulderedWeapon } from './gameplay/weapon-pose.js';
 export { decimate, decimateObject } from './geometry/decimate.js';
+// ---- Navigation: navmesh (voxelized walkable surfaces, multi-level, dynamic obstacles), A* + funnel,
+// NavAgent/NavCrowd steering with reciprocal avoidance, ScheduleAgent planner. See references/navigation.md.
+export { buildNavMesh, NavMesh, NavAgent, NavCrowd, navMeshPlanner, NAVMESH_DEFAULTS } from './ai/navmesh.js';
