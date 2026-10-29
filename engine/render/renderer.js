@@ -116,6 +116,8 @@ export function createRenderer({ canvas, container, quality = 'auto', clearColor
   };
   state.render = (time = 0) => {
     if (state.grade) state.grade.uniforms.time.value = time % 100;
+    // count the whole frame (every post pass) in renderer.info, not just the last full-screen quad
+    renderer.info.autoReset = false; renderer.info.reset();
     if (state.composer) state.composer.render();
     else renderer.render(state.scene, state.camera);
   };

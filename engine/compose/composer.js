@@ -19,6 +19,7 @@ import { Inventory, Progression } from '../gameplay/systems.js';
 import { applyStoryToSpec } from '../gameplay/story.js';
 import { Vehicle } from '../physics/vehicle.js';
 import { ChaseCamera } from '../camera/cameras.js';
+import { ShooterController } from '../gameplay/shooter.js';
 import { LightPool } from '../render/lightpool.js';
 
 export const BIOMES = {
@@ -128,6 +129,12 @@ export function composeGame(rawSpec, { container = document.getElementById('game
   const player = new Player(app, { combat: spec.player.combat && spec.player.mode !== 'vehicle', hp: spec.player.hp, position: spawn, facing: Math.PI, look: spec.player.look || {} });
   game.player = player;
   player.targets = () => game.enemies.filter((e) => e.alive);
+  // on-foot control hook: modules replace it (e.g. a custom traversal); spec.player.weapons wires the shooter kit
+  game.controlOnFoot = (dt) => player.control(dt);
+  if (spec.player.weapons?.length && spec.player.mode !== 'vehicle') {
+    game.shooter = new ShooterController(app, player, { weapons: spec.player.weapons, ...(spec.player.shooter || {}) });
+    game.controlOnFoot = (dt) => game.shooter.control(dt); // ShooterController calls player.control itself — never call both
+  }
   if (spec.player.mode === 'vehicle') {
     const rig = car({ type: spec.player.vehicle?.type || 'sports', color: spec.player.vehicle?.color ?? 0x16c8ff, seed: spec.seed });
     app.scene.add(rig);
@@ -187,11 +194,12 @@ export function composeGame(rawSpec, { container = document.getElementById('game
   let talking = null, lastEnd = -1;
   const show = () => { const cur = dialogue.current(); if (!cur) return endTalk(); app.ui.showDialogue(cur, (c) => advance(c)); app.audio.speak(cur.text); };
   const advance = (choice = null) => { const cur = dialogue.current(); if (!cur) return endTalk(); if (cur.choices.length && choice === null) return; dialogue.advance(choice); show(); };
-  const endTalk = () => { app.ui.hideDialogue(); if (talking) { game.npcs[talking].talking = false; game.npcs[talking].anim.setUpperOverride(null); } talking = null; lastEnd = app.loop.time; if (app.state === 'dialogue') app.setState('playing'); };
+  // a 'talk' objective completes when the conversation ENDS, so the NPC's in-quest lines (start node chosen by quest state) are shown first
+  const endTalk = () => { app.ui.hideDialogue(); const id = talking; if (talking) { game.npcs[talking].talking = false; game.npcs[talking].anim.setUpperOverride(null); } talking = null; lastEnd = app.loop.time; if (app.state === 'dialogue') app.setState('playing'); if (id) { flags.set('talked:' + id); quests.report('talk', id); } };
   game.talk = (id) => {
     if (app.loop.time - lastEnd < 0.4 || !dialogue.dialogues[id]) return;
     talking = id; game.npcs[id].talking = true; game.npcs[id].anim.setUpperOverride('talk');
-    app.setState('dialogue'); flags.set('talked:' + id); quests.report('talk', id); dialogue.start(id); show();
+    app.setState('dialogue'); dialogue.start(id); show();
   };
   app.add(() => {
     if (app.ui.dialogueOpen && (app.input.pressed('interact') || app.input.pressed('confirm'))) { if (!app.ui.skipTyping()) advance(null); }
@@ -236,7 +244,7 @@ export function composeGame(rawSpec, { container = document.getElementById('game
       const v = game.vehicle; v.drive(app.input); v.update(dt); game.chase.update(dt, v); player.ctrl.position.copy(v.position);
       game.engineSnd?.set(v.rpm, v.throttle); speedo.set(v.kmh, v.gear, v.boostFuel); app.atmosphere.setFocus(v.position);
       game.traffic?.collide(v, (imp) => imp > 3 && app.audio.play('crash', { volume: 0.6 }));
-    } else player.control(dt);
+    } else game.controlOnFoot(dt);
     game.traffic?.update(dt, game.vehicle ? [game.vehicle] : []);
     for (const e of game.enemies) { e.think(dt, player); e.update(dt); }
     for (const n of Object.values(game.npcs)) n.update(dt, player);

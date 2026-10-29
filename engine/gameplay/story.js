@@ -289,8 +289,7 @@ export function simulatePlaythrough(compiled, { choose = 'first', prefer = null,
     while (rounds++ < maxRounds && !ended()) {
       const before = JSON.stringify([flags.v, quests.state]);
       for (const npc of Object.keys(compiled.dialogues)) {
-        flags.set('talked:' + npc); quests.report('talk', npc); auto();
-        dialogue.start(npc);
+        dialogue.start(npc); // same order as the game: the talk objective completes when the conversation ends
         let guard = 0;
         while (dialogue.current() && guard++ < 300) {
           const cur = dialogue.current(); lines.push({ npc, node: cur.node, speaker: cur.speaker, text: cur.text });
@@ -303,7 +302,7 @@ export function simulatePlaythrough(compiled, { choose = 'first', prefer = null,
           } else dialogue.advance();
         }
         if (guard >= 300) { problems.push(`dialogue loop with ${npc} at ${dialogue.current()?.node}`); dialogue.end(); }
-        auto();
+        flags.set('talked:' + npc); quests.report('talk', npc); auto();
         if (ended()) break;
       }
       if (ended()) break;
