@@ -2,7 +2,7 @@
 // GameForge automated playtester. Drives a game through window.__GF hooks with a JSON
 // scenario (<project>/playtest.json), asserts on game state, checks for runtime errors,
 // verifies the canvas is not blank, measures performance and captures screenshots.
-// Usage: node tools/playtest.mjs <game-dir> [--quality low|medium|high] [--shots dir] [--query 'a=1&b=2'] [--headed]
+// Usage: node tools/playtest.mjs <game-dir> [--quality low|medium|high] [--shots dir] [--query 'a=1&b=2'] [--scenario other.json] [--headed]
 import fs from 'node:fs';
 import path from 'node:path';
 import { launchBrowser } from './lib/playwright.mjs';
@@ -11,9 +11,10 @@ import { serve } from './serve.mjs';
 function get(obj, p) { return p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj); }
 const OPS = { '<': (a, b) => a < b, '<=': (a, b) => a <= b, '>': (a, b) => a > b, '>=': (a, b) => a >= b, '==': (a, b) => a === b, '!=': (a, b) => a !== b, 'truthy': (a) => !!a, 'falsy': (a) => !a, 'includes': (a, b) => Array.isArray(a) ? a.includes(b) : String(a).includes(b) };
 
-export async function playtest(gameDir, { quality, shotsDir, serveRoot, file = null, resultsName = 'test-results.json', log = console.log, query = '' } = {}) {
+export async function playtest(gameDir, { quality, shotsDir, serveRoot, file = null, resultsName = 'test-results.json', log = console.log, query = '', scenarioFile = 'playtest.json' } = {}) {
   gameDir = path.resolve(gameDir);
-  const scenario = JSON.parse(fs.readFileSync(path.join(gameDir, 'playtest.json'), 'utf8'));
+  const scenario = JSON.parse(fs.readFileSync(path.join(gameDir, scenarioFile), 'utf8'));
+  if (scenarioFile !== 'playtest.json' && resultsName === 'test-results.json') resultsName = `test-results.${path.basename(scenarioFile, '.json')}.json`;
   const root = path.resolve(serveRoot || scenario.serveRoot ? path.resolve(gameDir, scenario.serveRoot || '.') : gameDir);
   const rel = path.relative(root, gameDir).split(path.sep).join('/');
   const q = quality || scenario.quality || 'low';
@@ -103,7 +104,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   let failed = 0;
   for (const d of dirs) {
     console.log(`\n▶ Playtest ${d}`);
-    const r = await playtest(d, { quality: opt('quality'), shotsDir: opt('shots'), serveRoot: opt('root'), file: opt('file'), query: opt('query'), resultsName: opt('file') ? 'test-results.dist.json' : 'test-results.json' });
+    const r = await playtest(d, { quality: opt('quality'), shotsDir: opt('shots'), serveRoot: opt('root'), file: opt('file'), query: opt('query'), scenarioFile: opt('scenario') || 'playtest.json', resultsName: opt('file') ? 'test-results.dist.json' : 'test-results.json' });
     console.log(`  ${r.passed ? '✔' : '✘'} ${r.summary} in ${(r.durationMs / 1000).toFixed(1)}s  metrics=${JSON.stringify(r.metrics)}`);
     if (!r.passed) failed++;
   }

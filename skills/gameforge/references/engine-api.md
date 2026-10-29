@@ -137,3 +137,13 @@ three.js r180. Everything is procedural and runs without network or build step.
 ## Composer
 `GF.composeGame(spec, { modules })` → `game` object (see spec-reference.md). Modules export
 `install(game)`; set `game.onUpdate = (dt) => …` for per-frame custom logic (runs in `playing`).
+
+## UI quick reference (engine/ui/ui.js)
+- `app.ui.prompt(text, key = 'E')` shows a key prompt; `app.ui.prompt(null)` hides it (call it every frame you want it, or
+  once — it de-duplicates). Hide it while driving / in dialogue.
+- Widgets (`objectives`, `minimap`, `speedometer`, `ammo`, `reticle`, …) return `{ el, set… }`; hide one with
+  `w.el.style.display = 'none'` and show with `''`. They are also in `app.ui.widgets[name]`.
+- `app.ui.boss(name | null, ratio)`, `toast(text, { big, sub, ms })`, `showDialogue(node, onChoice)` / `hideDialogue()`,
+  `dialogueOpen`, `skipTyping()`.
+- Modeling Kit in game code: `import { K } from '../engine/modeling/index.js'` (named) or `import K from …` (default).
+  `import * as K` gives the module namespace, not the kit. Model scripts receive `K` as their first argument.

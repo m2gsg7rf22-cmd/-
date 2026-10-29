@@ -147,3 +147,10 @@ flag.pinTo(pole); flag.addSphere(ball, 0.3); flag.wind.set(…);   // pin: 'top'
 Cost: ~1.7 ms/frame (CPU) for a 460-particle flag; budget a few hero cloths per scene, and use `applyWind` vertex
 shaders (materials.js) for background flags/foliage. Preview: `sandbox/cloth.html?wind=6&who=knight:3&clip=walk`.
 Limits: no self-collision; colliders are spheres/capsules/planes only; garments built by `dress()` stay skinned (not simulated).
+
+## Quick facts
+- `sex`: **1 = male, 0 = female**, values in between blend. `characterFromSpec(archetype, seed)` picks it from the seed;
+  override with `{ ...H.characterFromSpec('civilian', 4), sex: 1 }`.
+- Garment `material`: `cotton | fleece | denim | wool | silk | spandex | leather | canvas | steel`. Differences are in
+  weave scale, sheen and roughness — `canvas` and `cotton` read alike from a distance; use `leather`/`silk`/`denim` for a
+  visible change, and colour (`color`) for the biggest one.

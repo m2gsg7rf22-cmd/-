@@ -145,3 +145,17 @@ parameter guidance, costs and limits: `references/navigation.md`.
 - Pursuers in the scene are on-foot actors; cars/roadblocks/helicopters are game-level work.
 - Streaming streams visuals of existing objects (or whatever `build` returns); physics colliders
   of a city stay resident.
+
+## Integration facts (from the GTA-style blind test)
+- **Crimes and heat:** `GF.CRIMES` = { trespass 0.4, vandalism 0.6, theft 0.8, assault 1.2, vehicleTheft 1.5, shooting 2.2,
+  assaultOfficer 2.6, murder 3.2, killOfficer 4.5 } heat; `GF.WANTED_LEVELS` = [0, 1, 3, 6, 10, 15] heat per star (index = stars).
+  `wanted.reportCrime(kind, pos)`; add your own kinds by passing a number instead of a name.
+- **Armed police:** the wanted system only assigns pursuit goals. For shooting cops, spawn `GF.RangedEnemy` units
+  (references/shooter.md) as the pursuers and feed them the `assignPursuit` goals; for arrests, check
+  `player within 1.5 m of a unit for 2 s while wanted ≤ 2 and not moving` in your module and fade out / respawn.
+- **Traffic:** `new GF.TrafficSystem(scene, city, { count = 12, seed = 3, speed = 11 })`; `update(dt, obstacles)` (pass
+  player vehicles so AI cars brake for them); `collide(vehicle, onImpact)`; `cars[]` (each has `rig` (Object3D), `position`, `yaw`, `speed`). composeGame
+  exposes it as `game.traffic` for city worlds.
+- **Crowd density:** schedules put people indoors during work/sleep hours. For a busy street at 08–10, 12–14 or 17–20 use
+  60–120 pedestrians per 4×4-block district; at other hours use `ScheduleSystem` templates with more `wander`/`errand`
+  activities or start the clock in those windows (`app.atmosphere.timeOfDay`).

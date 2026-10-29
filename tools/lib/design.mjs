@@ -41,7 +41,7 @@ ${list(spec.story?.characters || spec.npcs, (n) => `  - **${n.name}** (${n.id}) 
 - **Quests / missions:**
 ${spec.story ? `  - Story script: ${spec.story.title || spec.story.id} — review with \`gameforge story <file.story.js>\` (graph + story bible)\n` : ''}${list(spec.quests?.length ? spec.quests : (spec.story?.missions || (spec.story?.acts || []).flatMap((a) => (a.missions || []).filter((m) => typeof m === 'object'))), (q) => `  - **${q.title}** — ${q.description || q.summary || ''} Objectives: ${(q.objectives || []).map((o) => o.text).join('; ')}`)}
 
-## 5. Art direction
+${spec.assetScripts?.length ? `- **Authored asset scripts (review with gameforge model/anim/sound/scene/cinematic):** ${spec.assetScripts.map((f) => '`' + f + '`').join(', ')}\n\n` : ''}## 5. Art direction
 - **Style:** ${spec.art?.style || 'stylized-realistic PBR, readable silhouettes, procedural textures'}
 - **Palette:** biome "${w.biome || 'temperate'}"${spec.theme ? `, UI accent ${spec.theme.accent}` : ''}
 - **Hero assets:** ${(spec.art?.heroAssets || []).join(', ') || 'player character, signature landmark'}

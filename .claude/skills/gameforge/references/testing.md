@@ -59,3 +59,10 @@ Each PNG is box-blurred 3×3; a pixel is "changed" when its largest channel delt
 FAILS when more than `--threshold` (2 %) of its pixels changed. Open `screenshots/diff/<name>.diff.png` (changed pixels red over a
 dimmed frame) and decide: regression → fix; intended → `--update` to accept the new baseline. Report: `diff/visual-diff.json`.
 Compare only shots taken on the same machine/GPU path (SwiftShader vs a real GPU differ everywhere).
+
+## Dialogue in playtests
+Dialogue lines type out (typewriter). The first `interact`/`confirm` press completes the line, the second advances — so
+press twice per node (or `window.__GF.press('interact'); step(2); press('interact')`). Choices: `press('choice1')`…
+State: `app.ui.dialogueOpen`, and `game.dialogue.current()` → `{ node, speaker, text, choices: [{ index, text }] }`.
+Alternative scenarios: `node tools/playtest.mjs <dir> --scenario playtest-night.json` runs another scenario file from the
+same project (results go to `test-results.<name>.json`).

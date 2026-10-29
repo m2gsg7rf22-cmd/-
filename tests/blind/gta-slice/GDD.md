@@ -18,11 +18,17 @@ Explore → encounter enemies → fight with combos, dodges and blocks → earn 
 - _None specified — Game Designer to decide._
 
 ## 4. Story, characters and missions
-- **Premise:** Steal a councilman's gold coupe in broad daylight, shake the Port Solana police and decide what a favour is worth.
+- **Premise:** A broke courier who swore off crime must steal a councilman's gold coupe for the fixer who saved his life, and decide whether a favour repaid is worth more than a fair price.
 - **Characters:**
-- _None specified — Game Designer to decide._
+  - **Dez Varga** (dez) — protagonist; wants: Pay back Lu and walk away clean.
+  - **Lu Anwen** (lu) — fixer; wants: Embarrass Councilman Pryce before the election.
+  - **Tomas Ruiz** (ruiz) — mechanic; wants: Retire to his brother's farm with clean hands.
 - **Quests / missions:**
-- _None specified — Game Designer to decide._
+  - Story script: Borrowed Shine — review with `gameforge story <file.story.js>` (graph + story bible)
+  - **Borrowed Shine** — Lu asks Dez to steal Councilman Pryce's gold coupe, shake the police and bring it to the Halfmoon body shop. Objectives: Steal the gold coupe; Lose the police; Bring the coupe to Halfmoon; Hand the coupe to Ruiz
+  - **Payday** — Dez returns to Lu; how she settles depends on whether he kept his word. Objectives: Settle up with Lu
+
+- **Authored asset scripts (review with gameforge model/anim/sound/scene/cinematic):** `assets/halfmoon-garage.model.js`
 
 ## 5. Art direction
 - **Style:** stylized-realistic PBR, readable silhouettes, procedural textures
@@ -63,20 +69,4 @@ All assets are generated procedurally at load time (no files, no paid generators
 - [ ] Title → play → win/lose → retry flow works
 - [ ] `node tools/gameforge.mjs build .` produces `dist/gta-slice.html` that also passes the playtest via file://
 - [ ] Screenshots reviewed against the art direction
-
-## 12. Reference decomposition (aaa-blueprints.md §1), filled by the Director
-The generated sections above say "None specified" because `gameforge gdd` does not read
-`story/*.story.js` (set on `SPEC.story` in `main.js`) or the custom modules. The decisions are:
-
-| Layer | Decision for this slice |
-|---|---|
-| Fantasy | A broke courier pulled back into one last favour in a sun-bleached harbour city (original IP: Port Solana, Cobalt Row) |
-| Core loop (30 s) | Walk, talk, steal a car, drive, aim/shoot (pistol, rifle), evade the police |
-| Mission loop | `Borrowed Shine`: talk to Lu, steal the gold coupe, lose the heat, drive to Halfmoon, branch (keep word / squeeze Lu), `Payday` foldback |
-| Meta loop | Out of scope for the slice (XP only) |
-| Camera/controls | Third-person over-the-shoulder (ShooterController); chase camera in cars (ChaseCamera); F enters/exits cars |
-| World | One 4x4-block district (`generateCity`), 6 traffic cars, 4 parked drivable cars, 80 scheduled pedestrians, bespoke Halfmoon garage model |
-| Systemic layer | WantedSystem (car theft + shooting), crowd alarm/flee, on-foot officers + a police cruiser from level 2, cooldown out of sight |
-| Presentation | Composer HUD (objectives, wanted stars, ammo, speedometer, dialogue), noon lighting |
-| Content budget | 2 missions, 1 branch point, 3 characters |
 

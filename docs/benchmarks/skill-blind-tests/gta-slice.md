@@ -224,3 +224,24 @@
 - **קוד של סצנות בדיקה:** קראתי את `tests/scenes/open-world/main.js` ואת `tests/scenes/shooting-range/main.js`, שהתיעוד מפנה אליהן. קראתי גם את `tests/scenes/race-track/main.js`, שהתיעוד מפנה רק ל־`playtest.json` שלה.
 - **בדיקות API בזמן ריצה:** `GF.CRIMES`, אב־הטיפוס של `TrafficSystem`, השדות של `city`, `ui.prompt.toString()`, ורשימת ה־exports של `engine/modeling/index.js`.
 - **קבצים שנוצרו מכלים:** `review/*.compiled.json` של `gameforge story`, ושלד `gameforge new` בתיקייה זמנית.
+
+## סטטוס תיקון הפערים (אחרי הבדיקה)
+| # | פער | סטטוס |
+|---|---|---|
+| 1 | composeGame + ShooterController = תנועה כפולה | ✔ תוקן: `spec.player.weapons` מחבר את ShooterController, ו־`game.controlOnFoot` הוא hook רשמי (shooter.md, spec-reference.md) |
+| 2 | אין כניסה/יציאה מרכב ברגל | בעבודה אצל סוכן הרכבים (מערכת כללית לכל סוגי הרכבים + תיעוד ChaseCamera/cameraRigs/resetOnRoad) |
+| 3 | חוזה `Vehicle.drive` ונהיגת AI | בעבודה אצל סוכן הרכבים |
+| 4 | objective מסוג talk נסגר לפני הדיאלוג; הסימולטור לא הגיע לסוף | ✔ תוקן במשחק ובסימולטור (נסגר בסוף השיחה). story עכשיו 4/4 ריצות מגיעות לסוף |
+| 5 | מקום בלי `kind` | ✔ תועד (narrative.md) |
+| 6 | משמעות `sex` | ✔ תועד (characters.md) |
+| 7 | ייבוא K | ✔ תועד (engine-api.md) |
+| 8 | `ui.prompt` והסתרת widgets | ✔ תועד (engine-api.md) |
+| 9 | typewriter בפלייטסט | ✔ תועד (testing.md) |
+| 10 | CRIMES / WANTED_LEVELS | ✔ תועד (open-world.md) |
+| 11 | TrafficSystem API | ✔ תועד (open-world.md) |
+| 12 | צפיפות קהל לפי שעה | ✔ תועד (open-world.md) |
+| 13 | CLI: help, model בלי ארגומנט, תרחיש חלופי | ✔ תוקן: help מציג את כל כלי הביקורת, usage במקום קריסה, `playtest --scenario` |
+| 14 | gdd מתעלם מהסיפור | ✔ תוקן: `gameforge gdd` מוצא `*.story.js` וסקריפטי נכסים |
+| 15 | metrics ב־medium = calls:1 | ✔ תוקן: הספירה מצטברת על כל המעברים בפריים |
+| 16 | חומר בגד | ✔ תועד (רשימת חומרים והבדלים) |
+| 17 | שוטרים יורים/מעצר | ✔ מתכון (open-world.md); מימוש מלא נשאר פער |

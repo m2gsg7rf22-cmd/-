@@ -41,12 +41,16 @@ export const SPEC = { title: 'The Blue Ledger', world: { type: 'city' }, story, 
 - missions become `quests`;
 - each character with dialogue becomes an NPC with one merged dialogue graph whose entry
   depends on mission state;
-- `world.locations` that have a `kind` become `landmarks`;
+- `world.locations` that have a `kind` become `landmarks` (**give every location a `kind`**, e.g. `garage`, `park`,
+  `plaza`: a character placed `at` a location without one is dropped at a random spot, and a `reach` objective
+  to it has no anchor);
 - `items`, `startQuests` and missions with `start: 'auto'` are merged too;
 - a default `goal: { type: 'quests' }` is added from the ending.
 
 Entries you write in the spec directly win on id clashes. `reach` objectives complete when
-the player comes within 12 m of the location's anchor (set `radius` to change this). For
+the player comes within 12 m of the location's anchor (set `radius` to change this). A `talk` objective completes
+when the conversation **ends**, so the NPC first plays its in-mission lines; the simulator in `gameforge story`
+uses the same order. For
 `custom` objectives, call `game.quests.report('custom', target)` from your module code.
 
 ## Story script format

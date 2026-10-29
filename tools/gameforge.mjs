@@ -11,6 +11,11 @@
 //   shot <dir> [--quality high] capture screenshots (title + gameplay)
 //   export <asset> [--out f.glb] [--params json]       export a procedural asset to GLB/OBJ
 //   story <file.story.js> [--out dir]   compile + review a story script (graph, bible, checks)
+//   model <file.model.js> [--params json] [--glb]   build + review a model script (metrics, checks, 6-view sheet)
+//   scene <file.scene.js> [--time h]               review a scene script (overview + eye-level shots, budgets, ground audit)
+//   anim <file.anim.js> [--phases n]               review an animation script (foot contacts, hinges, loop seam, phase sheet)
+//   sound <file.sfx.js> [--seed n]                 render + analyse a sound recipe (WAV, spectrogram, checks)
+//   cinematic <file.cine.js>                       storyboard + film-grammar checks for a cutscene script
 //   visual-diff <shots-dir> --baseline dir [--update] [--threshold 0.02]   pixel regression vs baseline screenshots
 //   status <dir>                print task/test status
 import fs from 'node:fs';
@@ -28,6 +33,14 @@ const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i
 const flag = (k) => args.includes('--' + k);
 const positional = args.slice(1).filter((a, i, arr) => !a.startsWith('--') && !(i > 0 && arr[i - 1].startsWith('--') && !['--all', '--force'].includes(arr[i - 1])));
 
+function findFiles(dir, re, depth = 3, out = []) {
+  if (depth < 0 || !fs.existsSync(dir)) return out;
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (['node_modules', 'dist', 'review', '.git', 'screenshots'].includes(e.name)) continue;
+    const p = path.join(dir, e.name); if (e.isDirectory()) findFiles(p, re, depth - 1, out); else if (re.test(e.name)) out.push(p);
+  }
+  return out.sort();
+}
 function copyDir(src, dst, filter = () => true) {
   fs.mkdirSync(dst, { recursive: true });
   for (const e of fs.readdirSync(src, { withFileTypes: true })) {
@@ -181,7 +194,13 @@ const main = {
   async model() { if (!positional[0]) return console.log('usage: gameforge model <file.model.js> [--params json] [--out dir] [--no-render] [--glb] [--no-ref] [--yaw deg]'); const { reviewModel } = await import('./model.mjs'); const m = await reviewModel(positional[0], { params: JSON.parse(opt('params', '{}')), out: opt('out'), render: !flag('no-render'), glb: flag('glb'), ref: !flag('no-ref'), yaw: +opt('yaw', 0) }); if (!m.ok) process.exitCode = 1; },
   async story() { const { reviewStory } = await import('./story.mjs'); const r = await reviewStory(positional[0], { out: opt('out'), render: !flag('no-render') }); if (!r.ok) process.exitCode = 1; },
   async new() { await cmdNew(); },
-  async gdd() { const d = path.resolve(positional[0] || '.'); fs.writeFileSync(path.join(d, 'GDD.md'), generateGDD(await loadSpec(d))); console.log('  wrote GDD.md'); },
+  async gdd() {
+    const d = path.resolve(positional[0] || '.'), spec = await loadSpec(d);
+    // story scripts loaded at runtime (story/*.story.js) and model/anim/sound scripts belong in the GDD too
+    if (!spec.story) { const f = findFiles(d, /\.story\.m?js$/)[0]; if (f) { const m = await import(pathToFileURL(f).href); spec.story = m.default || m.story; console.log('  story: ' + path.relative(d, f)); } }
+    spec.assetScripts ||= findFiles(d, /\.(model|anim|sfx|scene|cine)\.m?js$/).map((f) => path.relative(d, f));
+    fs.writeFileSync(path.join(d, 'GDD.md'), generateGDD(spec)); console.log('  wrote GDD.md');
+  },
   async plan() { const d = path.resolve(positional[0] || '.'); const g = generateTasks(await loadSpec(d)); const v = validateTasks(g); fs.writeFileSync(path.join(d, 'tasks.json'), JSON.stringify(g, null, 2)); console.log(`  wrote tasks.json: ${g.tasks.length} tasks, ${g.waves} waves, valid=${v.ok}`); for (let w = 0; w < g.waves; w++) console.log(`   wave ${w}: ${g.tasks.filter((t) => t.wave === w).map((t) => `${t.id}(${t.role})`).join(', ')}`); if (!v.ok) { console.log(v.errors.join('\n')); process.exitCode = 1; } },
   async validate() { const ok = await cmdValidate(positional[0] || '.'); if (!ok) process.exitCode = 1; },
   async serve() { const { serve } = await import('./serve.mjs'); const d = path.resolve(positional[0] || '.'); await serve(fs.existsSync(path.join(d, 'engine')) ? d : ROOT, +opt('port', 5173)); },
