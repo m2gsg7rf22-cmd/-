@@ -46,6 +46,8 @@ It cannot deliver 100 hours of content. State the slice scope in the GDD.
 | Platforming, traversal (swing, glide, dash, wall-run) | `gameplay/traversal.js`, `gameplay/platformer.js` | genres.md, recipes.md |
 | Story, missions, dialogue, branching | story scripts + `gameforge story`, quests | narrative.md |
 | Sound effects, music, ambience | sfx scripts + `gameforge sound`, adaptive music | audio.md |
+| Survival: items, inventory, crafting, needs, resource nodes, building | `engine/gameplay/survival.js` | survival.md |
+| Weather (rain/storm/snow/fog, wind, lightning, wet surfaces, forecast) | `engine/render/weather.js` | weather.md |
 | Lighting, time of day, post | `engine/render/*` | engine-api.md |
 | HUD, menus, accessibility, save | `engine/ui`, `core/save.js` | engine-api.md |
 | Verification | playtests, `report.mjs`, benchmarks, review sheets | testing.md, quality-gates.md |
@@ -106,6 +108,9 @@ tests. Don't bury it inside the game. Then add it to this table.
 - **Core loop:** gather, craft, build, survive (hunger, temperature), with day/night threats.
 - **World:** biome terrain with resource nodes (scatterPoints), weather, shelters.
 - **Systems:** inventory and crafting recipes (data-driven), enemy schedules at night.
+- **Modules:** `ItemRegistry` + `SlotInventory` + `Equipment`, `CraftingSystem`, `Needs`,
+  `ResourceNodes.scatter(hf, …)`, `BuildPlacement` and `attachWeather` — see survival.md and
+  weather.md; the integration scene `tests/scenes/survival/` wires them all.
 
 ### Stealth
 - **Core loop:** observe, hide, distract, takedown.

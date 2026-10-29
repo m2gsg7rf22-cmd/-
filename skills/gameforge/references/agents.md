@@ -109,7 +109,7 @@ Owns lighting, sky/time of day, shadows, post-processing, quality tiers and the 
 - **Inputs:** Mood, screenshots from QA.
 - **Outputs:** src/graphics.js (atmosphere, exposure, bloom, grade, lights).
 - **Owns:** src/graphics.js
-- **Accept:** no blown sky or black frames; canvas check passes on low and high
+- **Accept:** no blown sky or black frames; canvas check passes on low and high; weather games: a screenshot per weather state was inspected
 
 ## Physics Engineer (`physics-engineer`)
 Owns colliders, character movement tuning, vehicles (raycast model), dynamic props, triggers and collision bugs.

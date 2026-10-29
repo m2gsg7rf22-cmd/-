@@ -24,7 +24,8 @@ your report for the owner/Integration Engineer instead of editing.
 3. Keep custom logic in game.onUpdate or app.add with explicit order.
 4. Shooters: read references/shooter.md; use GF.ShooterController (player), GF.RangedEnemy + one shared GF.CoverSystem (AI), tune weapons with defineWeapon and check TTK with GF.timeToKill; never hand-roll hitscan or ammo logic.
 5. Genre kits first (references/genres.md): platformer = PlatformerLevel (moving/crumble/spring/hazard/checkpoint/collectible/goal) + generatePlatformerLevel (reachability-checked) + PlatformerBot for playtests; racing = generateTrack + RaceManager (countdown, ordered checkpoints, laps, splits, positions, wrong way, respawn) + RaceAI on computeRacingLine.
-6. Platformer: call level.update(dt, [ctrl]) BEFORE ctrl.move each step (movers carry the player); pass jump (pressed edge) and jumpHeld separately. Racing: ai.update -> vehicle.update -> race.update(dt).
+6. Survival/crafting: read references/survival.md; use ItemRegistry + SlotInventory + Equipment, CraftingSystem (canCraft reasons in the UI), Needs fed by weather.temperature/windSpeed/rainIntensity + BuildPlacement.shelterAt/heatAt, ResourceNodes.harvest, and attachSurvivalSave; never hand-roll stacking, recipes or placement validity.
+7. Platformer: call level.update(dt, [ctrl]) BEFORE ctrl.move each step (movers carry the player); pass jump (pressed edge) and jumpHeld separately. Racing: ai.update -> vehicle.update -> race.update(dt).
 
 ## Acceptance criteria
 - [ ] each mechanic covered by a passing playtest check

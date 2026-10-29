@@ -30,6 +30,7 @@
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs` (`--query`), `tools/visual-diff.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | `visual-diff.test.mjs` | ממומש, כולל רגרסיה ויזואלית מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.4.3**: ערכת הישרדות `engine/gameplay/survival.js` (רישום פריטים, `SlotInventory`, ציוד, crafting עם תור והסבר חוסרים, `Needs`, `ResourceNodes`, `BuildPlacement` עם ghost, שמירה) ו־`engine/render/weather.js` (מעברים, כיפת עננים, ערפל, רוח לצמחייה ולבד, גשם ושלג GPU, ברקים ורעמים, משטחים רטובים ושלג, תחזית seeded). תיעוד: `references/survival.md`, `references/weather.md`. בדיקות: unit 107/107, סצנה `tests/scenes/survival` 39/39, open-world 32/32.
 - **v0.4.2**: `ShoulderedWeapon` משולב אוטומטית ב־WeaponSystem; `gameforge visual-diff`; ‏`decimate`/LOD לבני אדם; דקדוק חזיתות (`K.building`); סימולציית בד (`Cloth`, `Cloth.cape`). ‏unit 95/95.
 - **v0.4.1**: מוזגו IK + ragdoll ופלטפורמר + מרוצים. ריסים מרונדרים. `ShoulderedWeapon` לנשק ארוך על דמויות. בדיקות: unit 88/88, platformer 19/19, race-track 18/18, shooting-range 42/42, open-world 32/32, ashen-vale 22/22.
 - **v0.3.4**: יכולת נרטיב: פורמט `*.story.js`, מהדר ל־quests + dialogue, `gameforge story` (בדיקות גרף/דגלים/משימות/ענפים/דמויות/קצב/מקוריות + סימולציה), מסמך שיטה ודוגמת שוד מקורית (3 מערכות, 9 משימות, 3 סופים).
