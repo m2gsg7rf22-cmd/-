@@ -1,0 +1,249 @@
+{
+  "spec": "gta-slice",
+  "generated": "2026-10-29T11:17:00.818Z",
+  "waves": 7,
+  "tasks": [
+    {
+      "id": "design",
+      "role": "game-designer",
+      "title": "Finalize game.spec.js: goal, mechanics, enemies, collectibles, tuning numbers",
+      "deps": [],
+      "owns": [
+        "game.spec.js",
+        "GDD.md"
+      ],
+      "acceptance": [
+        "GDD.md regenerated (gameforge gdd)",
+        "spec passes gameforge validate"
+      ],
+      "wave": 0,
+      "status": "pending"
+    },
+    {
+      "id": "architecture",
+      "role": "game-director",
+      "title": "Confirm module boundaries and write ARCHITECTURE notes in README.md",
+      "deps": [
+        "design"
+      ],
+      "owns": [
+        "README.md",
+        "tasks.json"
+      ],
+      "acceptance": [
+        "every task has an owner and acceptance criteria"
+      ],
+      "wave": 1,
+      "status": "pending"
+    },
+    {
+      "id": "world",
+      "role": "world-builder",
+      "title": "Terrain/city, landmarks, spawn points and level layout",
+      "deps": [
+        "architecture"
+      ],
+      "owns": [
+        "src/world.js"
+      ],
+      "acceptance": [
+        "player spawns grounded",
+        "landmarks reachable (no walls blocking)"
+      ],
+      "wave": 2,
+      "status": "pending"
+    },
+    {
+      "id": "assets",
+      "role": "3d-artist",
+      "title": "Hero props and signature landmark meshes",
+      "deps": [
+        "architecture"
+      ],
+      "owns": [
+        "src/assets.js"
+      ],
+      "acceptance": [
+        "gameforge validate reports no invalid geometry",
+        "screenshot shows hero assets"
+      ],
+      "wave": 2,
+      "status": "pending"
+    },
+    {
+      "id": "graphics",
+      "role": "graphics-engineer",
+      "title": "Lighting, sky, post-processing and quality tiers",
+      "deps": [
+        "architecture"
+      ],
+      "owns": [
+        "src/graphics.js"
+      ],
+      "acceptance": [
+        "canvas check passes",
+        "no blown-out or black frames in screenshots"
+      ],
+      "wave": 2,
+      "status": "pending"
+    },
+    {
+      "id": "animation",
+      "role": "animation-director",
+      "title": "Custom animation clips and animation event hooks",
+      "deps": [
+        "architecture"
+      ],
+      "owns": [
+        "src/animation.js"
+      ],
+      "acceptance": [
+        "new clips play without errors"
+      ],
+      "wave": 2,
+      "status": "pending"
+    },
+    {
+      "id": "audio",
+      "role": "audio-director",
+      "title": "Music moods per state, SFX hooks, ambience",
+      "deps": [
+        "architecture"
+      ],
+      "owns": [
+        "src/audio.js"
+      ],
+      "acceptance": [
+        "audioEvents > 0 in playtest metrics"
+      ],
+      "wave": 2,
+      "status": "pending"
+    },
+    {
+      "id": "hud",
+      "role": "ui-ux-designer",
+      "title": "HUD widgets, menus, accessibility options",
+      "deps": [
+        "architecture"
+      ],
+      "owns": [
+        "src/hud.js"
+      ],
+      "acceptance": [
+        "menu → play → pause → resume works",
+        "text scale and subtitles settings work"
+      ],
+      "wave": 2,
+      "status": "pending"
+    },
+    {
+      "id": "gameplay",
+      "role": "gameplay-engineer",
+      "title": "Core rules, win/lose, progression, interactions",
+      "deps": [
+        "world"
+      ],
+      "owns": [
+        "src/gameplay.js"
+      ],
+      "acceptance": [
+        "goal can be completed",
+        "game over and victory screens reachable"
+      ],
+      "wave": 3,
+      "status": "pending"
+    },
+    {
+      "id": "physics",
+      "role": "physics-engineer",
+      "title": "Vehicle tuning, collisions, dynamic props",
+      "deps": [
+        "world"
+      ],
+      "owns": [
+        "src/physics.js"
+      ],
+      "acceptance": [
+        "car accelerates, steers, brakes",
+        "cannot drive through buildings"
+      ],
+      "wave": 3,
+      "status": "pending"
+    },
+    {
+      "id": "integration",
+      "role": "integration-engineer",
+      "title": "Wire modules in main.js, resolve conflicts, build dist",
+      "deps": [
+        "world",
+        "assets",
+        "graphics",
+        "animation",
+        "audio",
+        "hud",
+        "gameplay",
+        "physics"
+      ],
+      "owns": [
+        "main.js",
+        "index.html"
+      ],
+      "acceptance": [
+        "game boots with no console errors",
+        "gameforge build succeeds"
+      ],
+      "wave": 4,
+      "status": "pending"
+    },
+    {
+      "id": "qa",
+      "role": "qa-engineer",
+      "title": "Extend playtest.json to cover every mechanic; run and file bugs",
+      "deps": [
+        "integration"
+      ],
+      "owns": [
+        "playtest.json",
+        "test-results.json"
+      ],
+      "acceptance": [
+        "all playtest checks pass on source and dist builds"
+      ],
+      "wave": 5,
+      "status": "pending"
+    },
+    {
+      "id": "performance",
+      "role": "performance-engineer",
+      "title": "Profile metrics, reduce draw calls/triangles, tune quality tiers",
+      "deps": [
+        "integration"
+      ],
+      "owns": [
+        "PERF.md"
+      ],
+      "acceptance": [
+        "metrics recorded",
+        "no tier exceeds budgets in GDD §10"
+      ],
+      "wave": 5,
+      "status": "pending"
+    },
+    {
+      "id": "polish",
+      "role": "game-director",
+      "title": "Review screenshots vs art direction, assign fixes, final sign-off",
+      "deps": [
+        "qa",
+        "performance"
+      ],
+      "owns": [],
+      "acceptance": [
+        "all tasks done",
+        "limitations documented"
+      ],
+      "wave": 6,
+      "status": "pending"
+    }
+  ]
+}

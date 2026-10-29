@@ -1,0 +1,8 @@
+  PASS  no NaN/Infinity positions  (0 bad values)
+  PASS  has geometry  (2288 triangles)
+  PASS  plausible size (1 cm … 500 m)  (8.1 × 4.6 × 9.005 m)
+  PASS  rests on the ground (min.y ≈ 0) — pass params.floating for socket-origin assets  (min.y = 0.000)
+  PASS  few degenerate triangles (< 1 %)  (0)
+  WARN  solid meshes are closed (open edges)  (6 open edges (cards, tubes and geometry.userData.open meshes are skipped))
+  PASS  draw calls ≤ 8 per asset  (7 materials)
+  PASS  renders without page errors  (ok)

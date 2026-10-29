@@ -1,0 +1,521 @@
+{
+  "name": "borrowed-shine",
+  "file": "/home/user/-/.claude/worktrees/agent-a938b98f8f26d8be9/tests/blind/gta-slice/story/borrowed-shine.story.js",
+  "ok": true,
+  "metrics": {
+    "title": "Borrowed Shine",
+    "characters": 3,
+    "mainCharacters": 2,
+    "missions": 2,
+    "acts": 1,
+    "conversations": 5,
+    "nodes": 16,
+    "lines": 15,
+    "choicePoints": 5,
+    "options": 9,
+    "words": 161,
+    "wordsPerLine": 10.7,
+    "branches": 2,
+    "flags": 4,
+    "meaningfulChoiceRatio": 0.89,
+    "perMission": {
+      "borrowed_shine": {
+        "title": "Borrowed Shine",
+        "conversations": 4,
+        "lines": 11,
+        "choices": 3,
+        "options": 5,
+        "words": 121,
+        "wordsPerLine": 11,
+        "beats": 5,
+        "objectives": 4
+      },
+      "payday": {
+        "title": "Payday",
+        "conversations": 1,
+        "lines": 4,
+        "choices": 2,
+        "options": 4,
+        "words": 40,
+        "wordsPerLine": 10,
+        "beats": 2,
+        "objectives": 1
+      }
+    },
+    "flagTable": {
+      "coupe_handed": {
+        "setBy": [
+          "ruiz_drop#choose > \"Keys. We're even now.\"",
+          "ruiz_drop#choose > \"Free? Tell Lu it costs two grand.\""
+        ],
+        "readBy": [
+          "mission borrowed_shine objective call"
+        ],
+        "doc": ""
+      },
+      "kept_word": {
+        "setBy": [
+          "ruiz_drop#choose > \"Keys. We're even now.\""
+        ],
+        "readBy": [
+          "lu_payday#partner > \"Partner gets a cut.\""
+        ],
+        "doc": "Dez handed the coupe over as a favour"
+      },
+      "settled": {
+        "setBy": [
+          "lu_payday#partner > \"No more work, Lu.\"",
+          "lu_payday#partner > \"Partner gets a cut.\"",
+          "lu_payday#paid > \"Worth it.\"",
+          "lu_payday#paid > \"We were never even.\""
+        ],
+        "readBy": [
+          "mission payday objective settle"
+        ],
+        "doc": ""
+      },
+      "squeezed_lu": {
+        "setBy": [
+          "ruiz_drop#choose > \"Free? Tell Lu it costs two grand.\""
+        ],
+        "readBy": [
+          "lu_payday#start"
+        ],
+        "doc": "Dez made Lu pay for the coupe"
+      }
+    }
+  },
+  "checks": [
+    {
+      "name": "story compiles (schema + references)",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "no undefined jump targets",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "every dialogue node reachable",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "no dead ends (each node has -> end, a next or choices)",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "no dialogue traps (end reachable from every node)",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "choice nodes always offer an option (not all conditional)",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "flags read are set somewhere (no dead conditions)",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "flags set are read somewhere (consequences tracked)",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "declared mission flags are set",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "conditions and actions reference existing missions, characters, nodes and items",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "every mission can start (start action, next or start: auto)",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "every objective can complete",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "custom objectives need game code (report(\"custom\", target))",
+      "pass": false,
+      "detail": "borrowed_shine.steal; borrowed_shine.heat",
+      "level": "warn"
+    },
+    {
+      "name": "no mission dependency cycles",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "every mission belongs to an act",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "branches covered (a reachable choice sets each branch flag)",
+      "pass": true,
+      "detail": "2/2",
+      "level": "error"
+    },
+    {
+      "name": "branches have consequences (flag read later)",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "branches fold back (foldback mission follows the branch)",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "every speaker is a defined character",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "main characters have want / need / flaw / arc",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "a protagonist is defined",
+      "pass": true,
+      "detail": "dez",
+      "level": "warn"
+    },
+    {
+      "name": "speaking characters have a voice note",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "every defined character appears",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "lines ≤ 30 words, choices ≤ 12 words (brevity)",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "every mission offers a player choice",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "mission dialogue ≤ 60 lines (keep players playing)",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "every mission has a beat sheet",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "premise, themes and world facts stated",
+      "pass": true,
+      "detail": "ok",
+      "level": "warn"
+    },
+    {
+      "name": "original IP (no known franchise names)",
+      "pass": true,
+      "detail": "ok",
+      "level": "error"
+    },
+    {
+      "name": "simulated playthroughs reach the ending (first, last, every branch)",
+      "pass": true,
+      "detail": "4/4 runs end",
+      "level": "error"
+    },
+    {
+      "name": "every branch is playable to the ending",
+      "pass": true,
+      "detail": "2/2",
+      "level": "error"
+    }
+  ],
+  "playthroughs": [
+    {
+      "ended": true,
+      "rounds": 5,
+      "strategy": "first",
+      "completed": [
+        "borrowed_shine",
+        "payday"
+      ],
+      "stuck": [],
+      "notStarted": [],
+      "flags": {
+        "talked:lu": true,
+        "seen:lu:lu_offer__start": true,
+        "seen:lu_offer": true,
+        "seen:lu:lu_offer__reply": true,
+        "seen:lu:lu_offer__pitch": true,
+        "quest:borrowed_shine": "complete",
+        "seen:lu:lu_offer__accept": true,
+        "talked:ruiz": true,
+        "seen:ruiz:ruiz_early__start": true,
+        "seen:ruiz_early": true,
+        "quest:borrowed_shine:steal": true,
+        "seen:lu:lu_wait__start": true,
+        "seen:lu_wait": true,
+        "quest:borrowed_shine:heat": true,
+        "quest:borrowed_shine:drop": true,
+        "seen:ruiz:ruiz_drop__start": true,
+        "seen:ruiz_drop": true,
+        "seen:ruiz:ruiz_drop__choose": true,
+        "kept_word": true,
+        "coupe_handed": true,
+        "quest:borrowed_shine:complete": true,
+        "quest:borrowed_shine:call": true,
+        "seen:ruiz:ruiz_drop__word": true,
+        "quest:payday": "complete",
+        "seen:lu:lu_payday__partner": true,
+        "settled": true,
+        "quest:payday:complete": true,
+        "quest:payday:settle": true,
+        "seen:lu:lu_payday__out": true
+      },
+      "choices": [
+        {
+          "node": "lu_offer__pitch",
+          "text": "Even means even."
+        },
+        {
+          "node": "ruiz_drop__choose",
+          "text": "Keys. We're even now."
+        },
+        {
+          "node": "lu_payday__partner",
+          "text": "No more work, Lu."
+        }
+      ],
+      "lines": 15,
+      "problems": []
+    },
+    {
+      "ended": true,
+      "rounds": 5,
+      "strategy": "last",
+      "completed": [
+        "borrowed_shine",
+        "payday"
+      ],
+      "stuck": [],
+      "notStarted": [],
+      "flags": {
+        "talked:lu": true,
+        "seen:lu:lu_offer__start": true,
+        "seen:lu_offer": true,
+        "seen:lu:lu_offer__reply": true,
+        "seen:lu:lu_offer__pitch": true,
+        "seen:lu:lu_offer__daylight": true,
+        "quest:borrowed_shine": "complete",
+        "seen:lu:lu_offer__accept": true,
+        "talked:ruiz": true,
+        "seen:ruiz:ruiz_early__start": true,
+        "seen:ruiz_early": true,
+        "quest:borrowed_shine:steal": true,
+        "seen:lu:lu_wait__start": true,
+        "seen:lu_wait": true,
+        "quest:borrowed_shine:heat": true,
+        "quest:borrowed_shine:drop": true,
+        "seen:ruiz:ruiz_drop__start": true,
+        "seen:ruiz_drop": true,
+        "seen:ruiz:ruiz_drop__choose": true,
+        "squeezed_lu": true,
+        "coupe_handed": true,
+        "quest:borrowed_shine:complete": true,
+        "quest:borrowed_shine:call": true,
+        "seen:ruiz:ruiz_drop__squeeze": true,
+        "quest:payday": "complete",
+        "seen:lu_payday": true,
+        "seen:lu:lu_payday__paid": true,
+        "settled": true,
+        "quest:payday:complete": true,
+        "quest:payday:settle": true,
+        "seen:lu:lu_payday__out": true
+      },
+      "choices": [
+        {
+          "node": "lu_offer__pitch",
+          "text": "In daylight? Seriously?"
+        },
+        {
+          "node": "lu_offer__daylight",
+          "text": "Fine. Last favour."
+        },
+        {
+          "node": "ruiz_drop__choose",
+          "text": "Free? Tell Lu it costs two grand."
+        },
+        {
+          "node": "lu_payday__paid",
+          "text": "We were never even."
+        }
+      ],
+      "lines": 16,
+      "problems": []
+    },
+    {
+      "ended": true,
+      "rounds": 5,
+      "strategy": "prefer:kept_word",
+      "completed": [
+        "borrowed_shine",
+        "payday"
+      ],
+      "stuck": [],
+      "notStarted": [],
+      "flags": {
+        "talked:lu": true,
+        "seen:lu:lu_offer__start": true,
+        "seen:lu_offer": true,
+        "seen:lu:lu_offer__reply": true,
+        "seen:lu:lu_offer__pitch": true,
+        "quest:borrowed_shine": "complete",
+        "seen:lu:lu_offer__accept": true,
+        "talked:ruiz": true,
+        "seen:ruiz:ruiz_early__start": true,
+        "seen:ruiz_early": true,
+        "quest:borrowed_shine:steal": true,
+        "seen:lu:lu_wait__start": true,
+        "seen:lu_wait": true,
+        "quest:borrowed_shine:heat": true,
+        "quest:borrowed_shine:drop": true,
+        "seen:ruiz:ruiz_drop__start": true,
+        "seen:ruiz_drop": true,
+        "seen:ruiz:ruiz_drop__choose": true,
+        "kept_word": true,
+        "coupe_handed": true,
+        "quest:borrowed_shine:complete": true,
+        "quest:borrowed_shine:call": true,
+        "seen:ruiz:ruiz_drop__word": true,
+        "quest:payday": "complete",
+        "seen:lu:lu_payday__partner": true,
+        "settled": true,
+        "quest:payday:complete": true,
+        "quest:payday:settle": true,
+        "seen:lu:lu_payday__out": true
+      },
+      "choices": [
+        {
+          "node": "lu_offer__pitch",
+          "text": "Even means even."
+        },
+        {
+          "node": "ruiz_drop__choose",
+          "text": "Keys. We're even now."
+        },
+        {
+          "node": "lu_payday__partner",
+          "text": "No more work, Lu."
+        }
+      ],
+      "lines": 15,
+      "problems": []
+    },
+    {
+      "ended": true,
+      "rounds": 5,
+      "strategy": "prefer:squeezed_lu",
+      "completed": [
+        "borrowed_shine",
+        "payday"
+      ],
+      "stuck": [],
+      "notStarted": [],
+      "flags": {
+        "talked:lu": true,
+        "seen:lu:lu_offer__start": true,
+        "seen:lu_offer": true,
+        "seen:lu:lu_offer__reply": true,
+        "seen:lu:lu_offer__pitch": true,
+        "quest:borrowed_shine": "complete",
+        "seen:lu:lu_offer__accept": true,
+        "talked:ruiz": true,
+        "seen:ruiz:ruiz_early__start": true,
+        "seen:ruiz_early": true,
+        "quest:borrowed_shine:steal": true,
+        "seen:lu:lu_wait__start": true,
+        "seen:lu_wait": true,
+        "quest:borrowed_shine:heat": true,
+        "quest:borrowed_shine:drop": true,
+        "seen:ruiz:ruiz_drop__start": true,
+        "seen:ruiz_drop": true,
+        "seen:ruiz:ruiz_drop__choose": true,
+        "squeezed_lu": true,
+        "coupe_handed": true,
+        "quest:borrowed_shine:complete": true,
+        "quest:borrowed_shine:call": true,
+        "seen:ruiz:ruiz_drop__squeeze": true,
+        "quest:payday": "complete",
+        "seen:lu_payday": true,
+        "seen:lu:lu_payday__paid": true,
+        "settled": true,
+        "quest:payday:complete": true,
+        "quest:payday:settle": true,
+        "seen:lu:lu_payday__out": true
+      },
+      "choices": [
+        {
+          "node": "lu_offer__pitch",
+          "text": "Even means even."
+        },
+        {
+          "node": "ruiz_drop__choose",
+          "text": "Free? Tell Lu it costs two grand."
+        },
+        {
+          "node": "lu_payday__paid",
+          "text": "Worth it."
+        }
+      ],
+      "lines": 15,
+      "problems": []
+    }
+  ],
+  "graphSvg": "/home/user/-/.claude/worktrees/agent-a938b98f8f26d8be9/tests/blind/gta-slice/story/review/borrowed-shine.graph.svg",
+  "graph": "/home/user/-/.claude/worktrees/agent-a938b98f8f26d8be9/tests/blind/gta-slice/story/review/borrowed-shine.graph.png",
+  "compiled": "/home/user/-/.claude/worktrees/agent-a938b98f8f26d8be9/tests/blind/gta-slice/story/review/borrowed-shine.compiled.json",
+  "bible": "/home/user/-/.claude/worktrees/agent-a938b98f8f26d8be9/tests/blind/gta-slice/story/review/borrowed-shine.bible.md"
+}

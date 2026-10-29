@@ -1,0 +1,277 @@
+{
+  "game": "Borrowed Shine (GTA-like blind-test slice)",
+  "quality": "medium",
+  "startedAt": "2026-10-29T11:16:55.547Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "31386 ms"
+    },
+    {
+      "label": "title menu on boot",
+      "ok": true,
+      "detail": "menu"
+    },
+    {
+      "label": "game starts",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "player grounded on the sidewalk at spawn",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "traffic cars drive the streets",
+      "ok": true,
+      "detail": 6
+    },
+    {
+      "label": "30+ pedestrians with daily schedules",
+      "ok": true,
+      "detail": 80
+    },
+    {
+      "label": "realistic pedestrian templates built",
+      "ok": true,
+      "detail": 4
+    },
+    {
+      "label": "street frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 85.2,
+        "std": 59.3,
+        "colors": 132
+      }
+    },
+    {
+      "label": "W walks the player (third-person on foot)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "pedestrians walk between schedule places",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "E talks to Lu (dialogue opens)",
+      "ok": true,
+      "detail": "dialogue"
+    },
+    {
+      "label": "dialogue advances to the job pitch (choices)",
+      "ok": true,
+      "detail": "lu_offer__pitch"
+    },
+    {
+      "label": "mission 'Borrowed Shine' starts from the story dialogue",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "label": "dialogue closes",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "no wanted level before a crime",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "F enters (steals) the parked gold coupe",
+      "ok": true,
+      "detail": "gold coupe"
+    },
+    {
+      "label": "objective 'Steal the gold coupe' reported",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "car theft raises the wanted level",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "the stolen car accelerates (W/throttle)",
+      "ok": true,
+      "detail": 122.4
+    },
+    {
+      "label": "the car drives down the street",
+      "ok": true,
+      "detail": 50.4
+    },
+    {
+      "label": "brake slows the car to a crawl (< 15 km/h)",
+      "ok": true,
+      "detail": 11.4
+    },
+    {
+      "label": "F exits the car on foot",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "label": "switch to the rifle",
+      "ok": true,
+      "detail": "rifle"
+    },
+    {
+      "label": "right mouse aims over the shoulder",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "rifle fires",
+      "ok": true,
+      "detail": 6
+    },
+    {
+      "label": "ammo decreases",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "gunfire raises the wanted level further",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "label": "shooting registered as a crime",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "police officers spawn and pursue",
+      "ok": true,
+      "detail": 3
+    },
+    {
+      "label": "officers have pursuit goals",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "a police cruiser joins at level 2",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "nearby pedestrians react to the crime",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "the cruiser drives toward the player",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "back in the coupe",
+      "ok": true,
+      "detail": "gold coupe"
+    },
+    {
+      "label": "out of sight: police switch to search",
+      "ok": true,
+      "detail": "search"
+    },
+    {
+      "label": "wanted level decays to zero after hiding",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "pursuers despawn when clear",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "objective 'Lose the police' reported",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "driving the coupe to Halfmoon completes the reach objective",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "Ruiz offers the branch choice",
+      "ok": true,
+      "detail": "ruiz_drop__choose"
+    },
+    {
+      "label": "branch chosen (squeeze Lu): mission 1 complete",
+      "ok": true,
+      "detail": "complete"
+    },
+    {
+      "label": "foldback mission 'Payday' starts automatically",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "label": "Lu remembers the branch (squeezed_lu variant)",
+      "ok": true,
+      "detail": "lu_payday__paid"
+    },
+    {
+      "label": "mission 'Payday' completes",
+      "ok": true,
+      "detail": "complete"
+    },
+    {
+      "label": "story ending reached (goal done)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "frame within open-world budget (< 900 draw calls, < 2.5 M triangles)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-title.png",
+    "screenshots/02-street.png",
+    "screenshots/03-dialogue.png",
+    "screenshots/04-coupe.png",
+    "screenshots/05-driving.png",
+    "screenshots/06-aim-rifle.png",
+    "screenshots/07-pursuit.png",
+    "screenshots/08-halfmoon.png",
+    "screenshots/09-branch.png",
+    "screenshots/10-ending.png"
+  ],
+  "metrics": {
+    "fps": 44,
+    "frameMs": 66.30000000004657,
+    "calls": 1,
+    "triangles": 1,
+    "geometries": 659,
+    "textures": 319,
+    "tier": "medium",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 30,
+    "particles": 72
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 31386,
+  "durationMs": 461941,
+  "summary": "47/47 checks passed"
+}
