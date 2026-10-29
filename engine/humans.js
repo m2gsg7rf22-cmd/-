@@ -37,7 +37,7 @@ export function assembleHuman(data, spec = {}) {
     if (crowd && items.some((it) => ['jeans', 'pants', 'shorts'].includes(it.type))) items = items.filter((it) => it.type !== 'underwear');
     dress(h, items);
   }
-  if (spec.hair !== null) addHair(h, typeof spec.hair === 'string' ? { style: spec.hair, color: spec.hairColor } : { color: spec.hairColor, ...(spec.hair || {}) });
+  if (spec.hair !== null) addHair(h, { soft: !crowd, ...(typeof spec.hair === 'string' ? { style: spec.hair, color: spec.hairColor } : { color: spec.hairColor, ...(spec.hair || {}) }) });
   if (spec.beard) addBeard(h, typeof spec.beard === 'string' ? { style: spec.beard, color: spec.hairColor } : spec.beard);
   if (spec.mergeGarments ?? crowd) mergeGarments(h);
   if (crowd && !spec.keepFace) {
