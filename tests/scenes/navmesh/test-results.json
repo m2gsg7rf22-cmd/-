@@ -1,0 +1,177 @@
+{
+  "game": "Navmesh scene",
+  "quality": "medium",
+  "startedAt": "2026-10-29T11:07:52.896Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "5470 ms"
+    },
+    {
+      "label": "scene boots into play",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "navmesh built (convex polygons)",
+      "ok": true,
+      "detail": 186
+    },
+    {
+      "label": "seeds keep one connected region (roofs pruned)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "path climbs the stairs onto the bridge deck (y = 3)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "ground path passes under the bridge (stays on the ground level)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "ramp leads onto the 1.5 m platform",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "scene renders",
+      "ok": true,
+      "detail": {
+        "mean": 162.1,
+        "std": 38.2,
+        "colors": 240
+      }
+    },
+    {
+      "label": "agents reach their destinations (20+ arrivals in 45 s)",
+      "ok": true,
+      "detail": 28
+    },
+    {
+      "label": "agents never leave the walkable mesh",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "agents never clip walls, pillars, crates or railings",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "local avoidance keeps agents apart (radius 0.35 each)",
+      "ok": true,
+      "detail": 0.779
+    },
+    {
+      "label": "agents walk over the bridge",
+      "ok": true,
+      "detail": 4
+    },
+    {
+      "label": "agents walk under the bridge",
+      "ok": true,
+      "detail": 2842
+    },
+    {
+      "label": "agents walk up the ramp to the platform",
+      "ok": true,
+      "detail": 4
+    },
+    {
+      "label": "agents enter the courtyard through the doorway",
+      "ok": true,
+      "detail": 5
+    },
+    {
+      "label": "car parked under the bridge (dynamic obstacle)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "path reroutes around the parked car",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "rerouted path is longer than the free one",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "agents re-plan and never walk through the car",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "still no agent off the mesh",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "still no wall clipping",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "closed door makes the courtyard unreachable (null path)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "opening the door restores the path",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "no wall clipping over the whole run",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "scene renders without the overlay",
+      "ok": true,
+      "detail": {
+        "mean": 156.7,
+        "std": 41.8,
+        "colors": 116
+      }
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-overview.png",
+    "screenshots/02-bridge.png",
+    "screenshots/03-car-obstacle.png",
+    "screenshots/04-door-closed.png",
+    "screenshots/05-ramp.png",
+    "screenshots/06-no-overlay.png"
+  ],
+  "metrics": {
+    "fps": 9.089256498818422,
+    "frameMs": 7.199999999953434,
+    "calls": 1,
+    "triangles": 1,
+    "geometries": 108,
+    "textures": 60,
+    "tier": "medium",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 0,
+    "particles": 0
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 5470,
+  "durationMs": 77132,
+  "summary": "27/27 checks passed"
+}

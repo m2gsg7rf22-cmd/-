@@ -72,3 +72,6 @@ export { decimate, decimateObject } from './geometry/decimate.js';
 export { building, streetBlock, FACADE_STYLES, GROUND_TYPES } from './world/facade.js';
 export { Cloth } from './physics/cloth.js';
 export { StealthSystem, lightProbe, GUARD_STATES, defaultMoveTo } from './gameplay/stealth.js';
+// ---- Navigation: navmesh (voxelized walkable surfaces, multi-level, dynamic obstacles), A* + funnel,
+// NavAgent/NavCrowd steering with reciprocal avoidance, ScheduleAgent planner. See references/navigation.md.
+export { buildNavMesh, NavMesh, NavAgent, NavCrowd, navMeshPlanner, NAVMESH_DEFAULTS } from './ai/navmesh.js';

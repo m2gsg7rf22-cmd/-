@@ -66,6 +66,16 @@ three.js r180. Everything is procedural and runs without network or build step.
 | `new GF.WantedSystem({ spawn, despawn, canSee: GF.lineOfSight(app.physics) })` `.commit(crime, { position, witnessed })` `.update(dt, player)`; `GF.wantedHUD(app.ui, w)`; `app.ui.stars(id, { max })` | heat 0-5, pursuers, cooldown |
 | `new GF.Crowd(app, city, { count, maxNear })`, `await crowd.prepare()`, `crowd.update(dt, camPos)`; `H.assembleHuman(data, { lod: 'crowd' })`, `H.cloneHuman(t)`, `H.mergeGarments(h)` | pedestrians: realistic near / mannequin mid / hidden far |
 
+## Navigation (see `navigation.md`)
+| API | Notes |
+|---|---|
+| `app.buildNavMesh({ bounds, seeds, cellSize, agentRadius, agentHeight, maxClimb, maxSlope, colliders })` = `GF.buildNavMesh({ physics: app.physics, ... })` | voxelized walkable surfaces (terrain + collider tops, multi-level, ramps), erosion, regions, convex polygons + portals; opt-in |
+| `nav.findPath(a, b)` → `[Vector3]` \| null, `.closestPoint(p)`, `.raycast(a, b)`, `.moveAlongSurface(a, b)`, `.randomPoint(rng)`, `.isWalkable(p)`, `.heightAt(x, z, nearY)` | A* + funnel; null when unreachable |
+| `nav.addObstacle(Box3 \| {x,z,hx,hz,yaw,y,hy})` → id, `.removeObstacle(id)`, `.updateObstacle(id, s)` | tile re-polygonization; agents re-plan on `nav.version` |
+| `nav.toJSON()`, `GF.NavMesh.fromJSON(j)`, `nav.debugMesh()`, `nav.info()` | serialization, overlay, stats |
+| `new GF.NavCrowd(nav)`, `crowd.add(new GF.NavAgent(nav, { position, maxSpeed, integrate }))`, `agent.setDestination(p)`, `crowd.update(dt)` | path following + arrival + reciprocal velocity-obstacle avoidance, constrained to the mesh |
+| `GF.navMeshPlanner(nav)`; `new GF.Crowd(app, city, { navmesh: nav })` | ScheduleAgent planner; crowd routing over the navmesh |
+
 ## Physics
 | API | Notes |
 |---|---|
