@@ -24,6 +24,13 @@ export class Player extends Actor {
     this.focus = null;
     this.targets = () => [];
     this.currentAttack = null;
+    // Hooks for add-on controllers (shooter kit, cover, vehicles…): all optional / neutral by default.
+    this.aimFacing = null;   // yaw to face (strafe) instead of facing the movement direction
+    this.speedScale = 1;     // movement speed multiplier (aim-down-sights, heavy weapons)
+    this.lookScale = 1;      // camera look sensitivity multiplier (ADS)
+    this.upperPose = null;   // looping upper-body clip when not blocking (e.g. 'aimRifle')
+    this.moveFilter = null;  // (dir, speed, dt) => { dir, speed } (cover sliding, rails)
+    this.crouching = false;
     this.stats = { kills: 0, damageDealt: 0, damageTaken: 0, dodges: 0, parries: 0 };
     this.anim.on('hit', (clip) => this._onStrike(clip));
     this.on('damage', ({ amount }) => { this.stats.damageTaken += amount; app.ui.flash(Math.min(1, amount / 40)); app.shake(0.35); app.audio.play('hurt', { pos: this.position }); });
@@ -61,14 +68,14 @@ export class Player extends Actor {
   control(dt) {
     const app = this.app, input = app.input;
     if (!this.alive) { this.update(dt); this.cam.update(dt, this.position); return; }
-    const look = input.look(); this.cam.look(look.x, look.y);
+    const look = input.look(); this.cam.look(look.x * this.lookScale, look.y * this.lookScale);
     this.stamina.update(dt); this.abilityCooldown = Math.max(0, this.abilityCooldown - dt);
     this.combo.update(dt); this.parryWindow = Math.max(0, this.parryWindow - dt);
     const mv = input.moveVector();
     let dir = this.cam.moveDir(mv.x, mv.y);
     const moving = dir.lengthSq() > 0.01;
     if (moving) dir.normalize();
-    const wantSprint = input.held('sprint') && moving && !this.blocking;
+    const wantSprint = input.held('sprint') && moving && !this.blocking && this.aimFacing == null && !this.crouching;
     const sprinting = wantSprint && this.stamina.drain(18, dt);
     let speed = moving ? (sprinting ? this.ctrl.sprintSpeed : this.ctrl.runSpeed * Math.min(1, Math.hypot(mv.x, mv.y) * 1.2)) : 0;
     const busy = this.anim.isPlaying() && this.anim.current.name !== 'hit';
@@ -93,7 +100,7 @@ export class Player extends Actor {
     const wantBlock = this.combat && input.held('block') && this.dodging <= 0 && this.stamina.value > 5;
     if (wantBlock && !this.blocking) this.parryWindow = 0.18;
     this.blocking = wantBlock;
-    this.anim.setUpperOverride(this.blocking ? 'block' : null);
+    this.anim.setUpperOverride(this.blocking ? 'block' : this.upperPose);
     if (this.blocking) speed = Math.min(speed, 2);
     // attacks
     if (this.combat && this.dodging <= 0 && !this.blocking) {
@@ -119,12 +126,15 @@ export class Player extends Actor {
     const attacking = this.anim.isPlaying() && ['attack1', 'attack2', 'attack3', 'heavy', 'cast'].includes(this.anim.current?.name);
     if (attacking) speed = Math.min(speed, 0.6);
     // lock-on strafing: face target
-    const face = !(this.lockTarget && !sprinting && this.dodging <= 0);
+    let face = !(this.lockTarget && !sprinting && this.dodging <= 0);
     if (!face) this.faceTowards(this.lockTarget.position, dt, 12);
-    const jump = input.pressed('jump') && !attacking && this.dodging <= 0 && !this.blocking;
+    else if (this.aimFacing != null && this.dodging <= 0) { face = false; let d = this.aimFacing - this.ctrl.facing; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; this.ctrl.facing += d * (1 - Math.exp(-22 * dt)); }
+    if (this.speedScale !== 1 && this.dodging <= 0) speed *= this.speedScale;
+    if (this.moveFilter) { const f = this.moveFilter(moving || this.dodging > 0 ? dir : new THREE.Vector3(), speed, dt); dir = f.dir; speed = f.speed; }
+    const jump = input.pressed('jump') && !attacking && this.dodging <= 0 && !this.blocking && !this.moveFilter;
     if (jump && this.ctrl.grounded) app.audio.play('jump', { volume: 0.6 });
     const wasAir = !this.ctrl.grounded;
-    this.update(dt, moving || this.dodging > 0 ? dir : new THREE.Vector3(), speed, { jump, faceMovement: face && !attacking });
+    this.update(dt, moving || this.dodging > 0 || this.moveFilter ? dir : new THREE.Vector3(), speed, { jump, faceMovement: face && !attacking });
     if (wasAir && this.ctrl.grounded && (this.ctrl.landSpeed || 0) > 6) { app.audio.play('land'); app.vfx.emit('dust', this.position.clone()); if (this.ctrl.landSpeed > 12) this.anim.play('land'); }
     // interaction
     this.focus = null; let best = 99;

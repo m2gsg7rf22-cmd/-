@@ -28,7 +28,7 @@ export { generateCity, TrafficSystem } from './world/city.js';
 export { PhysicsWorld, raySphere } from './physics/world.js';
 export { CharacterController, syncVisual } from './physics/character.js';
 export { Vehicle } from './physics/vehicle.js';
-export { ThirdPersonCamera, ChaseCamera, CinematicCamera, CameraShake } from './camera/cameras.js';
+export { ThirdPersonCamera, FirstPersonCamera, ChaseCamera, CinematicCamera, CameraShake } from './camera/cameras.js';
 export { BehaviorTree, bt, Sequence, Selector, Parallel, Condition, Action, Wait, Cooldown, StateMachine, Steering, NavGrid, Perception, SUCCESS, FAILURE, RUNNING } from './ai/behavior.js';
 export { Health, Stamina, meleeSweep, ComboSystem, ProjectileSystem, Inventory, Progression, Entities } from './gameplay/systems.js';
 export { Flags, QuestSystem, DialogueSystem, parseDialogue, Mission } from './gameplay/narrative.js';
@@ -39,3 +39,12 @@ export { Player } from './gameplay/player.js';
 export { composeGame, normalizeSpec, BIOMES } from './compose/composer.js';
 export { Traversal } from './gameplay/traversal.js';
 export { LightPool } from './render/lightpool.js';
+
+// ---------------------------------------------------------------------------------------------
+// Shooter kit (ranged combat, third- and first-person): weapons, hitscan/projectiles, cover,
+// ranged AI, firearm meshes. See skills/gameforge/references/shooter.md.
+export { WEAPONS, WEAPON_DEFAULTS, defineWeapon, weaponDef, damageAtDistance, zoneMultiplier, spreadAngle, coneDirection, timeToKill,
+  WeaponState, WeaponSystem, actorHitboxes, rayHitbox, hitscan, applyDamage, attachFirearm, ShootingTarget, ShooterController } from './gameplay/shooter.js';
+export { CoverSystem } from './gameplay/cover.js';
+export { RangedEnemy, RANGED_TYPES, aiAimError } from './gameplay/shooter-ai.js';
+export { weaponModel, weaponSocketWorld, WEAPON_MODEL_KINDS } from './gameplay/weapon-models.js';

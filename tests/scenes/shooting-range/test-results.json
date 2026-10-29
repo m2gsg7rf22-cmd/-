@@ -1,0 +1,249 @@
+{
+  "game": "Shooting Range (shooter kit)",
+  "quality": "low",
+  "startedAt": "2026-10-28T23:32:14.777Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "4208 ms"
+    },
+    {
+      "label": "scene boots into play",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "rifle equipped",
+      "ok": true,
+      "detail": "rifle"
+    },
+    {
+      "label": "ammo HUD shows a full magazine",
+      "ok": true,
+      "detail": 30
+    },
+    {
+      "label": "Mouse2 (aim) enters aim mode",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "aim mode zooms the camera (FOV)",
+      "ok": true,
+      "detail": 42.3
+    },
+    {
+      "label": "hitting the target damages it",
+      "ok": true,
+      "detail": 28
+    },
+    {
+      "label": "firing reduces ammo",
+      "ok": true,
+      "detail": 23
+    },
+    {
+      "label": "automatic fire keeps firing while held",
+      "ok": true,
+      "detail": 7
+    },
+    {
+      "label": "hitscan hits the target",
+      "ok": true,
+      "detail": 5
+    },
+    {
+      "label": "controlled bursts drop the target (kill event)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "crosshair shows hit markers",
+      "ok": true,
+      "detail": 5
+    },
+    {
+      "label": "ammo HUD tracks the magazine",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "reload key starts a reload",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "reload restores the magazine",
+      "ok": true,
+      "detail": 30
+    },
+    {
+      "label": "reload consumes reserve ammo",
+      "ok": true,
+      "detail": 113
+    },
+    {
+      "label": "head hitbox registers headshots",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "number keys switch weapons",
+      "ok": true,
+      "detail": "pistol"
+    },
+    {
+      "label": "semi-auto fires one round per press",
+      "ok": true,
+      "detail": 11
+    },
+    {
+      "label": "shotgun equipped",
+      "ok": true,
+      "detail": "shotgun"
+    },
+    {
+      "label": "shotgun fires a pellet shell",
+      "ok": true,
+      "detail": 5
+    },
+    {
+      "label": "camera key switches to first-person",
+      "ok": true,
+      "detail": "first"
+    },
+    {
+      "label": "first-person frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 151.8,
+        "std": 78,
+        "colors": 57
+      }
+    },
+    {
+      "label": "and back to third-person",
+      "ok": true,
+      "detail": "third"
+    },
+    {
+      "label": "cover key snaps to nearby cover",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "low wall detected as low cover",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "player slides onto the wall",
+      "ok": true,
+      "detail": 2.35
+    },
+    {
+      "label": "player crouches behind low cover",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "moving sideways slides along cover",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "cover movement stops at the edge",
+      "ok": true,
+      "detail": -7.43
+    },
+    {
+      "label": "aiming from low cover stands up to shoot over it",
+      "ok": true,
+      "detail": false
+    },
+    {
+      "label": "cover key leaves cover",
+      "ok": true,
+      "detail": false
+    },
+    {
+      "label": "pillar detected as high cover",
+      "ok": true,
+      "detail": false
+    },
+    {
+      "label": "aiming at a high-cover edge peeks out",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "AI shoots back",
+      "ok": true,
+      "detail": 30
+    },
+    {
+      "label": "AI bullets hit the player",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "label": "player takes damage from AI",
+      "ok": true,
+      "detail": 8
+    },
+    {
+      "label": "AI takes cover and peek-shoots",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "AI is using cover",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "AI stops when killed",
+      "ok": true,
+      "detail": "dead"
+    },
+    {
+      "label": "player alive",
+      "ok": true,
+      "detail": 1992
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-range.png",
+    "screenshots/02-aim-fire.png",
+    "screenshots/03-first-person.png",
+    "screenshots/03b-first-person-ads.png",
+    "screenshots/04-low-cover.png",
+    "screenshots/05-high-cover-peek.png",
+    "screenshots/06-ai-firefight.png"
+  ],
+  "metrics": {
+    "fps": 27.570548167369513,
+    "frameMs": 8.79999999993015,
+    "calls": 39,
+    "triangles": 22842,
+    "geometries": 59,
+    "textures": 8,
+    "tier": "low",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 81,
+    "particles": 566
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 4208,
+  "durationMs": 57510,
+  "summary": "42/42 checks passed"
+}
