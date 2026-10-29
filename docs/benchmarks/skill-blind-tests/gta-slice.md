@@ -245,3 +245,7 @@
 | 15 | metrics ב־medium = calls:1 | ✔ תוקן: הספירה מצטברת על כל המעברים בפריים |
 | 16 | חומר בגד | ✔ תועד (רשימת חומרים והבדלים) |
 | 17 | שוטרים יורים/מעצר | ✔ מומש: `policeForce` (מעצר ברמה 1, שוטרים חמושים מרמה 2), סצנת `tests/scenes/police` ‏11/11 |
+
+## בנייה לקובץ יחיד (בדיקה נוספת אחרי המבחן)
+`node tools/gameforge.mjs build tests/blind/gta-slice` → `dist/gta-slice.html` (106 מודולים, 9.97MB, עובד מ־file://).
+`node tools/playtest.mjs tests/blind/gta-slice --file dist/gta-slice.html` → **47/47** (178 שניות, SwiftShader). קובץ ה־dist לא נשמר במאגר בגלל גודלו.
