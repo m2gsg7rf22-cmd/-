@@ -1,0 +1,129 @@
+{
+  "game": "Race track kit scene",
+  "quality": "low",
+  "startedAt": "2026-10-29T04:31:16.079Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "4423 ms"
+    },
+    {
+      "label": "race opens with a countdown on the start grid",
+      "ok": true,
+      "detail": "countdown"
+    },
+    {
+      "label": "racing line is inside the track limits",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "track renders",
+      "ok": true,
+      "detail": {
+        "mean": 138.6,
+        "std": 83.7,
+        "colors": 219
+      }
+    },
+    {
+      "label": "cars are held during the countdown",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "label": "GO after the countdown",
+      "ok": true,
+      "detail": "racing"
+    },
+    {
+      "label": "player car (throttle held, steering inputs) drives across the line and through checkpoint 1",
+      "ok": true,
+      "detail": 2
+    },
+    {
+      "label": "player car stays on its wheels on the banked track",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "race positions update live",
+      "ok": true,
+      "detail": 18
+    },
+    {
+      "label": "positions are a consistent ranking",
+      "ok": true,
+      "detail": "[1,2,3,4,5,6]"
+    },
+    {
+      "label": "driving against the track direction is flagged wrong way",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "respawn puts the car back on track facing the right way",
+      "ok": true,
+      "detail": false
+    },
+    {
+      "label": "respawn is on the road",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "all five AI cars complete a timed lap",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "player completes a lap (pilot through the Input system)",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "AI lap times are plausible",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "racing frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 153.7,
+        "std": 78,
+        "colors": 167
+      }
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-grid.png",
+    "screenshots/02-racing.png",
+    "screenshots/03-lap.png"
+  ],
+  "metrics": {
+    "fps": 25.910268648574316,
+    "frameMs": 6.199999999953434,
+    "calls": 232,
+    "triangles": 131390,
+    "geometries": 246,
+    "textures": 24,
+    "tier": "low",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 13,
+    "particles": 0
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 4423,
+  "durationMs": 185078,
+  "summary": "18/18 checks passed"
+}

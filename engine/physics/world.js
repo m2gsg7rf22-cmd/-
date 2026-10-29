@@ -18,6 +18,7 @@ export class PhysicsWorld {
     this.triggers = [];
     this.waterLevel = heightfield ? heightfield.waterLevel : -Infinity;
     this.events = null; // optional EventBus
+    this.groundFn = null; // optional (x, z) => height ground provider when there is no heightfield (e.g. a race track surface)
   }
   _key(i, j) { return i * 73856093 ^ j * 19349663; }
   _cells(minX, minZ, maxX, maxZ, fn) {
@@ -38,6 +39,14 @@ export class PhysicsWorld {
     this.statics.delete(s.id);
     this._cells(s.x - s.br, s.z - s.br, s.x + s.br, s.z + s.br, (k) => { const a = this.grid.get(k); if (a) this.grid.set(k, a.filter((o) => o !== s)); });
   }
+  // Move a static collider (kinematic platform, door…) and re-hash it in the grid.
+  moveStatic(s, x, y, z, yaw) {
+    this._cells(s.x - s.br, s.z - s.br, s.x + s.br, s.z + s.br, (k) => { const a = this.grid.get(k); if (a) { const i = a.indexOf(s); if (i >= 0) a.splice(i, 1); } });
+    const dy = y - s.y; s.x = x; s.y = y; s.z = z; s.minY += dy; s.maxY += dy;
+    if (yaw !== undefined && s.type === 'box') { s.yaw = yaw; s.cos = Math.cos(yaw); s.sin = Math.sin(yaw); }
+    if (this.statics.has(s.id)) this._cells(s.x - s.br, s.z - s.br, s.x + s.br, s.z + s.br, (k) => { if (!this.grid.has(k)) this.grid.set(k, []); this.grid.get(k).push(s); });
+    return s;
+  }
   // Add collider from an object's userData.collider at its transform.
   addFromObject(obj, extra = {}) {
     const c = obj.userData.collider; if (!c) return null;
@@ -57,7 +66,7 @@ export class PhysicsWorld {
     this._cells(x - r, z - r, x + r, z + r, (k) => { for (const s of this.grid.get(k) || []) if (!seen.has(s.id)) { seen.add(s.id); out.push(s); } });
     return out;
   }
-  terrainHeight(x, z) { return this.hf ? this.hf.heightAt(x, z) : 0; }
+  terrainHeight(x, z) { return this.hf ? this.hf.heightAt(x, z) : this.groundFn ? this.groundFn(x, z) : 0; }
   // Highest walkable surface under (x,z) at or below fromY + step.
   groundHeight(x, z, fromY = Infinity, step = 0.45, radius = 0) {
     let g = this.terrainHeight(x, z), surface = null;

@@ -145,6 +145,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 - `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/shooter.md` — **ranged combat / shooters (third- and first-person)**: weapons, hitscan + projectiles, cover, ranged AI, aim camera, HUD; weapon-feel tuning, TTK math, encounter design, aim assist and accessibility
+- `references/genres.md` — **genre kits**: platformer (controller feel profile, moving/crumbling platforms, springs, hazards, checkpoints, reachability-checked level generator, bot) and racing (seeded tracks, racing line, AI racers, laps/positions); game-feel numbers, level rhythm and track design method
 - `references/recipes.md` — code recipes: new enemy, boss, vehicle, cutscene, quest, minigame, traversal
 - `references/testing.md` — playtest scenario format and coverage checklist
 - `references/quality-gates.md` — visual, gameplay, performance and honesty gates

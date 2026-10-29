@@ -71,6 +71,14 @@ three.js r180. Everything is procedural and runs without network or build step.
 | `new GF.Vehicle(world, carRig, tuning)` `.drive(input)` `.update(dt)` | raycast vehicle; `.kmh .drifting .boostFuel .damage` |
 | `new GF.Traversal(player, opts)` | swing / glide / double jump / air dash (see recipes) |
 
+## Genre kits (full API + design method: `genres.md`)
+| API | Notes |
+|---|---|
+| `GF.platformerProfile(o)` → `new GF.CharacterController(world, { profile })` | coyote, buffer, variable jump, wall slide/jump, ledge grab, dash; `move(dt, dir, 0, { jump, jumpHeld, dash })` |
+| `GF.PlatformerLevel`, `GF.generatePlatformerLevel`, `GF.canReach`/`maxGap`/`validateLevel`, `GF.PlatformerBot` | moving/crumbling platforms, springs, hazards, checkpoints, collectibles; reachability-checked generator |
+| `GF.generateTrack`, `GF.trackMesh`, `GF.addTrackPhysics`, `GF.computeRacingLine`, `GF.RaceAI`, `GF.RaceManager`, `GF.formatTime` | seeded circuits, racing line, AI racers, laps/splits/positions/wrong way/respawn |
+| `world.moveStatic(shape, x, y, z)`, `world.groundFn` | kinematic colliders; ground provider without a heightfield |
+
 ## Gameplay & AI
 | API | Notes |
 |---|---|

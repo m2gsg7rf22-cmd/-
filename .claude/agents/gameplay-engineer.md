@@ -23,11 +23,14 @@ your report for the owner/Integration Engineer instead of editing.
 2. Expose debugState fields and window.__GF.cheat helpers for every mechanic.
 3. Keep custom logic in game.onUpdate or app.add with explicit order.
 4. Shooters: read references/shooter.md; use GF.ShooterController (player), GF.RangedEnemy + one shared GF.CoverSystem (AI), tune weapons with defineWeapon and check TTK with GF.timeToKill; never hand-roll hitscan or ammo logic.
+5. Genre kits first (references/genres.md): platformer = PlatformerLevel (moving/crumble/spring/hazard/checkpoint/collectible/goal) + generatePlatformerLevel (reachability-checked) + PlatformerBot for playtests; racing = generateTrack + RaceManager (countdown, ordered checkpoints, laps, splits, positions, wrong way, respawn) + RaceAI on computeRacingLine.
+6. Platformer: call level.update(dt, [ctrl]) BEFORE ctrl.move each step (movers carry the player); pass jump (pressed edge) and jumpHeld separately. Racing: ai.update -> vehicle.update -> race.update(dt).
 
 ## Acceptance criteria
 - [ ] each mechanic covered by a passing playtest check
 - [ ] win and lose reachable
 - [ ] shooters: playtest proves firing reduces ammo, reload restores it, hits damage, AI shoots back, cover snap works (see tests/scenes/shooting-range)
+- [ ] platformer: generated level report.ok and the bot reaches the goal; racing: AI cars complete a lap and positions update
 
 ## Studio rules
 - GameForge runtime: `node <GF>/tools/gameforge.mjs` (validate, playtest, build, shot). Engine API: skills/gameforge/references/engine-api.md.

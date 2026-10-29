@@ -59,3 +59,9 @@ export { WEAPONS, WEAPON_DEFAULTS, defineWeapon, weaponDef, damageAtDistance, zo
 export { CoverSystem } from './gameplay/cover.js';
 export { RangedEnemy, RANGED_TYPES, aiAimError } from './gameplay/shooter-ai.js';
 export { weaponModel, weaponSocketWorld, WEAPON_MODEL_KINDS } from './gameplay/weapon-models.js';
+// ---- Genre kit: platformer (controller profile, level runtime, reachability, generator, bot)
+export { PLATFORMER_DEFAULTS, PIECES as PLATFORMER_PIECES, platformerParams, platformerProfile, jumpArc, airTime, jumpReach, canReach, maxGap, validateLevel, motionPose, PlatformerLevel, generatePlatformerLevel, PlatformerBot } from './gameplay/platformer.js';
+
+// ---- Genre kit: racing (track generator + mesh + physics, racing line, AI racers, race manager)
+export { Track, generateTrack, trackMesh, addTrackPhysics } from './world/track.js';
+export { computeRacingLine, RaceAI, RaceManager, formatTime } from './gameplay/racing.js';
