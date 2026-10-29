@@ -214,3 +214,9 @@ Limits: fingers keep the socket's fist pose (no per-finger wrap); no weapon–bo
 (everything except `pistol` / `oneHanded` defs) are shouldered — low ready when idle, `aim` while aiming,
 firing or within 0.8 s of a shot, barrel on the aim point. Opt out with `{ shouldered: false }`.
 Regression: `node tools/playtest.mjs tests/scenes/shooting-range --query humans=1` (realistic humans).
+
+## With `composeGame`
+Set `spec.player.weapons: ['pistol', 'rifle']` (and optional `spec.player.shooter` options): the composer creates
+`game.shooter` (a ShooterController) and routes on-foot control through it. To supply your own on-foot controller from a
+module, replace `game.controlOnFoot = (dt) => myShooter.control(dt)` — never call `player.control(dt)` in addition:
+ShooterController already calls it (calling both moves the player twice per frame).

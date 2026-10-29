@@ -17,7 +17,8 @@ your report for the owner/Integration Engineer instead of editing.
 2. Populate distance bands (near props, mid vegetation, far landmarks).
 3. Open worlds: follow references/open-world.md — set density per district, stream content with ChunkManager/streamObjects (loadRadius < fog, unloadRadius = load + half a cell, 1-2 loads per frame), LODGroup/impostors for far objects, and a Crowd on the sidewalks; verify with chunk + metrics playtest checks.
 4. Ensure every objective is reachable (no blocked roads, no water gaps without swimming).
-5. Add colliders for every solid object.
+5. Survival worlds: place harvestable ResourceNodes with nodes.scatter(hf, type, rules) (starter nodes near spawn, density rings outward) and keep a flat build site near spawn (flatten) for BuildPlacement — see references/survival.md.
+6. Add colliders for every solid object.
 
 ## Acceptance criteria
 - [ ] player spawns grounded

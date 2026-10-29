@@ -1,12 +1,12 @@
 {
   "game": "Open World Systems (integration scene)",
   "quality": "low",
-  "startedAt": "2026-10-29T04:45:47.926Z",
+  "startedAt": "2026-10-29T11:38:24.639Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "9432 ms"
+      "detail": "5497 ms"
     },
     {
       "label": "scene boots into play",
@@ -174,8 +174,8 @@
     "screenshots/03-calm.png"
   ],
   "metrics": {
-    "fps": 4,
-    "frameMs": 11.300000000046566,
+    "fps": 51.999999999999986,
+    "frameMs": 10.699999999720603,
     "calls": 188,
     "triangles": 125680,
     "geometries": 1055,
@@ -189,7 +189,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 9432,
-  "durationMs": 65473,
+  "loadMs": 5497,
+  "durationMs": 72715,
   "summary": "32/32 checks passed"
 }

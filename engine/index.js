@@ -77,3 +77,8 @@ export { StealthSystem, lightProbe, GUARD_STATES, defaultMoveTo } from './gamepl
 export { buildNavMesh, NavMesh, NavAgent, NavCrowd, navMeshPlanner, NAVMESH_DEFAULTS } from './ai/navmesh.js';
 export { navMover } from './gameplay/stealth.js';
 export { BossController } from './gameplay/boss.js';
+// ---- Survival / crafting kit + weather (see skills/gameforge/references/survival.md, weather.md)
+// The slot inventory is exported as SlotInventory (GF.Inventory stays the simple count inventory from systems.js).
+export { ItemRegistry, DEFAULT_ITEMS, Inventory as SlotInventory, applyEffect, Equipment, CraftingSystem, DEFAULT_RECIPES, Needs, NEEDS_DEFAULTS, ACTIVITY, needsHUD, inventoryHUD,
+  ResourceNodes, RESOURCE_TYPES, BuildPlacement, BUILD_PIECES, attachSurvivalSave } from './gameplay/survival.js';
+export { Weather, WEATHER_STATES, WEATHER_TRANSITIONS, Precipitation, attachWeather } from './render/weather.js';

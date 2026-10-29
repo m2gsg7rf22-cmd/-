@@ -41,6 +41,8 @@ export const SPEC = {
     look: { outfit: 'armor', armor: true, cape: true, top: 0x2e3440, accent: 0xc9a227, hairStyle: 'short' },
     vehicle: { type: 'sports', color: 0x16c8ff, tuning: { enginePower: 26, maxSpeed: 62 } },
     spawn: [0, 20],               // optional x,z
+    weapons: ['pistol', 'rifle'], // optional: wires ShooterController (game.shooter); long guns are shouldered on realistic humans
+    shooter: { view: 'third', aimAssist: { strength: 0.5 } }, // optional ShooterController options
   },
   enemies: [                      // archetypes: grunt | brute | duelist | thug (see ENEMY_TYPES)
     { type: 'grunt', count: 4, at: 'camp', spread: 12 },

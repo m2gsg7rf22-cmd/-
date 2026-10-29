@@ -1,0 +1,242 @@
+{
+  "game": "Survival + Weather Systems (integration scene)",
+  "quality": "medium",
+  "startedAt": "2026-10-29T11:35:55.561Z",
+  "checks": [
+    {
+      "label": "game boots and exposes window.__GF",
+      "ok": true,
+      "detail": "3574 ms"
+    },
+    {
+      "label": "scene boots into play",
+      "ok": true,
+      "detail": "playing"
+    },
+    {
+      "label": "resource nodes scattered on the heightfield (trees, rocks, bushes)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "weather starts clear",
+      "ok": true,
+      "detail": "clear"
+    },
+    {
+      "label": "clear-day frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 100.5,
+        "std": 44.2,
+        "colors": 120
+      }
+    },
+    {
+      "label": "bare-hand harvest fells a tree and yields wood",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "harvesting a rock yields stone",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "bushes yield fiber and berries",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "felled tree is removed (stump left)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "canCraft explains the axe is missing rope",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "rope crafted after its craft time",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "axe is still in the crafting queue mid-way",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "stone axe crafted",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "axe equipped",
+      "ok": true,
+      "detail": "axe"
+    },
+    {
+      "label": "the axe fells trees in fewer hits than bare hands",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "raycast from the eye hits and harvests a tree trunk",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "campfire kit crafted",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "label": "foundation ghost preview is visible and valid on flat ground",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "ghost preview frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 98.4,
+        "std": 32.6,
+        "colors": 118
+      }
+    },
+    {
+      "label": "placement over a tree is invalid (red ghost, reason given)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "roof without walls is rejected (structural rule)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "shelter built: foundation, walls, doorway, roof and campfire",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "placing the campfire used the crafted kit",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "needs tick over time (hunger, thirst, fatigue)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "lit campfire acts as a crafting station nearby",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "clear -> rain transitions smoothly (mid-blend)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "rain: GPU drops visible, fog thickens, surfaces get wet",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "player outside in the rain gets wet",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "rain frame renders",
+      "ok": true,
+      "detail": {
+        "mean": 58.8,
+        "std": 41.2,
+        "colors": 160
+      }
+    },
+    {
+      "label": "rain -> storm: wind rises, heavy rain",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "storm produces lightning strikes (seeded)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "thunder follows the flash (distance delay)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "inside the built shelter counts as sheltered",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "state scrambled before loading",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "save/load round trip restores inventory, buildings, weather and equipment",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "all 7 survival/weather systems registered with the save system",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "frame within budget (< 700 draw calls, < 3 M triangles)",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "storm -> snow: flakes replace rain, snow cover builds below freezing",
+      "ok": true,
+      "detail": true
+    },
+    {
+      "label": "no runtime errors",
+      "ok": true,
+      "detail": "none"
+    }
+  ],
+  "screenshots": [
+    "screenshots/01-clear.png",
+    "screenshots/02-ghost.png",
+    "screenshots/03-shelter.png",
+    "screenshots/04-rain.png",
+    "screenshots/05-storm-lightning.png",
+    "screenshots/06-storm.png",
+    "screenshots/07-snow.png"
+  ],
+  "metrics": {
+    "fps": 16.10070257611248,
+    "frameMs": 6.900000000372529,
+    "calls": 1,
+    "triangles": 1,
+    "geometries": 169,
+    "textures": 43,
+    "tier": "medium",
+    "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "errors": 0,
+    "audioEvents": 128,
+    "particles": 7739
+  },
+  "errors": [],
+  "passed": true,
+  "url": "index.html",
+  "loadMs": 3574,
+  "durationMs": 140200,
+  "summary": "39/39 checks passed"
+}

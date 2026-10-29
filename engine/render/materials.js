@@ -6,7 +6,8 @@ import { generateTexture } from './textures.js';
 
 const texCache = new Map();
 const matCache = new Map();
-export const SHARED_UNIFORMS = { uTime: { value: 0 }, uWind: { value: new THREE.Vector2(0.6, 0.3) } };
+// uWet / uSnowCover (0..1) are driven by render/weather.js; terrain reads them (wet darkening + sheen, snow cover).
+export const SHARED_UNIFORMS = { uTime: { value: 0 }, uWind: { value: new THREE.Vector2(0.6, 0.3) }, uWet: { value: 0 }, uSnowCover: { value: 0 } };
 
 export function setTextureSize(size) { MaterialLibrary.textureSize = size; }
 

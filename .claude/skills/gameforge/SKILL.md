@@ -143,6 +143,8 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 - `references/narrative.md` — **writing story, cast, missions and branching dialogue yourself**: story scripts, `gameforge story` (graph + bible + playthrough simulation + checks), premise→theme→characters→structure→beats→branching→dialogue→quests method, checklist
 - `references/open-world.md` — **open worlds (GTA-style cities, open fantasy regions)**: chunk streaming + LOD budgets, NPC daily schedules, wanted/heat with pursuers, sidewalk crowds with a realistic→mannequin LOD ladder, measured crowd budgets
 - `references/navigation.md` — **navmesh pathfinding**: build from physics/terrain (multi-level, stairs, ramps), findPath/raycast/closestPoint, dynamic obstacles (parked cars, doors), NavAgent/NavCrowd avoidance, planners for schedules/crowds, measured costs and limits
+- `references/survival.md` — **survival / crafting**: item registry, slot inventory + equipment, recipe crafting with "why not" diagnostics, needs (hunger, thirst, body temperature, fatigue), harvestable resource nodes, grid/snap building with ghost preview, save integration; economy + needs tuning numbers
+- `references/weather.md` — **weather**: clear/cloudy/rain/storm/snow/fog with smooth transitions, cloud dome, fog/exposure, wind for foliage + cloth, GPU rain/snow, lightning + thunder, wet/snow surfaces, seeded forecast, gameplay events
 - `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/stealth.md` — **stealth kit**: light-aware vision, suspicion states, noise, patrols, hiding spots, takedowns, body discovery, radio alarm

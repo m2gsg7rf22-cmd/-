@@ -100,11 +100,11 @@ export function terrainMaterial({ waterLevel = 0, snowLine = 60, sandBand = 2.5,
   const m = new THREE.MeshStandardMaterial({ roughness: 0.95, metalness: 0 });
   m.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, { tGrass: { value: g.map }, tRock: { value: r.map }, tDirt: { value: d.map }, tSand: { value: s.map },
-      nGrass: { value: g.normalMap }, nRock: { value: r.normalMap }, uWater: { value: waterLevel }, uSnow: { value: snowLine }, uSand: { value: sandBand }, uScale: { value: scale }, uTime: SHARED_UNIFORMS.uTime });
+      nGrass: { value: g.normalMap }, nRock: { value: r.normalMap }, uWater: { value: waterLevel }, uSnow: { value: snowLine }, uSand: { value: sandBand }, uScale: { value: scale }, uTime: SHARED_UNIFORMS.uTime, uWet: SHARED_UNIFORMS.uWet, uSnowCover: SHARED_UNIFORMS.uSnowCover });
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWPos; varying vec3 vWNormal;')
       .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz; vWNormal = normalize(mat3(modelMatrix) * objectNormal);');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
-      uniform sampler2D tGrass, tRock, tDirt, tSand, nGrass, nRock; uniform float uWater, uSnow, uSand, uScale, uTime;
+      uniform sampler2D tGrass, tRock, tDirt, tSand, nGrass, nRock; uniform float uWater, uSnow, uSand, uScale, uTime, uWet, uSnowCover;
       varying vec3 vWPos; varying vec3 vWNormal;
       vec3 triRock(vec3 p, vec3 n){ vec3 w = pow(abs(n), vec3(4.0)); w /= (w.x+w.y+w.z);
         return texture2D(tRock, p.zy*uScale*0.6).rgb*w.x + texture2D(tRock, p.xz*uScale*0.6).rgb*w.y + texture2D(tRock, p.xy*uScale*0.6).rgb*w.z; }
@@ -124,8 +124,11 @@ export function terrainMaterial({ waterLevel = 0, snowLine = 60, sandBand = 2.5,
         col = mix(col, rock, smoothstep(0.28, 0.45, slope + (macro - 0.5) * 0.1));
         col = mix(col, sand, 1.0 - smoothstep(uWater + uSand * 0.4, uWater + uSand, vWPos.y + (macro - 0.5) * 1.5));
         col = mix(col, vec3(0.93, 0.95, 1.0), smoothstep(uSnow, uSnow + 8.0, vWPos.y + macro * 6.0) * (1.0 - smoothstep(0.35, 0.6, slope)));
+        float flatK = 1.0 - smoothstep(0.22, 0.5, slope);
+        col = mix(col, vec3(0.9, 0.92, 0.96), uSnowCover * flatK * smoothstep(0.15, 0.55, macro * 0.6 + uSnowCover * 0.7));
+        col *= 1.0 - uWet * (0.38 - 0.18 * uSnowCover);
         diffuseColor.rgb *= col;`)
-      .replace('#include <roughnessmap_fragment>', `float roughnessFactor = mix(0.95, 0.75, smoothstep(0.28, 0.45, slope));`);
+      .replace('#include <roughnessmap_fragment>', `float roughnessFactor = mix(0.95, 0.75, smoothstep(0.28, 0.45, slope)) * (roughness / 0.95) * mix(1.0, 0.45, uWet * flatK * (1.0 - uSnowCover));`);
   };
   m.customProgramCacheKey = () => 'gf-terrain';
   return m;

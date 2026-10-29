@@ -114,6 +114,17 @@ three.js r180. Everything is procedural and runs without network or build step.
 | `new GF.RangedEnemy(app, { type: rifleman|gunner|marksman|shotgunner, cover, targets })` `.think(dt, target)` `.update(dt)` | cover → peek-shoot → flank → reload AI |
 | `GF.weaponModel(kind)` + `GF.attachFirearm(actor, model)`; `GF.FirstPersonCamera` | Modeling-Kit firearms, grip at origin / muzzle +Z |
 
+## Survival kit + weather (see survival.md, weather.md)
+| API | Notes |
+|---|---|
+| `new GF.ItemRegistry(defs)`, `new GF.SlotInventory(reg, { slots, maxWeight })`, `new GF.Equipment(inv)` | stacking, weight, split/merge, durability, use effects, tools/clothing |
+| `new GF.CraftingSystem(inv, { recipes, equipment, stations })` `.canCraft(id)` `.craft(id)` `.update(dt)` | inputs/tools/station/time/outputs; queue; missing-input reasons |
+| `new GF.Needs({ health, stamina, hoursPerSecond })` `.update(dt, { activity, ambient, wind, rain, shelter, heat, insulation })`; `GF.needsHUD`, `GF.inventoryHUD` | hunger, thirst, body temperature, fatigue, wetness |
+| `new GF.ResourceNodes({ scene, physics })` `.scatter(hf, 'tree', rules)` `.harvest(node, { inventory, equipment })` `.raycast` `.inFront` | trees/rocks/bushes/ore: hp, yields, tool tiers, respawn |
+| `new GF.BuildPlacement({ scene, physics, ground: hf, blockers })` `.preview` `.place` `.remove` `.shelterAt` `.heatAt` `.stationsNear` | grid/edge/top snap, ghost, slope/overlap rules, campfire fuel |
+| `GF.attachWeather(app, { seed, ground })` `.set(state, { transition })` `.forecast(n)` `.strike()` `.registerWet(mat)` `.bindCloth(c)`; `.temperature .wind .rainIntensity .shouldShelter` | clear cloudy rain storm snow fog; events `weather:change/lightning/thunder/shelter` |
+| `GF.attachSurvivalSave(app.save, { inventory, equipment, crafting, needs, nodes, building, weather })` | save/load for everything |
+
 ## Audio & UI
 | API | Notes |
 |---|---|
