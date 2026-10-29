@@ -149,7 +149,7 @@ Writes and runs automated playtests (playtest.json), canvas/screenshot checks an
 - **Inputs:** GDD mechanics, debugState/cheat hooks.
 - **Outputs:** playtest.json, test-results.json, bug list in tasks.json.
 - **Owns:** playtest.json
-- **Accept:** coverage checklist complete; results committed with timestamps
+- **Accept:** coverage checklist complete; results committed with timestamps; visual-diff passes or every changed shot is explained
 
 ## Performance Engineer (`performance-engineer`)
 Profiles draw calls, triangles, textures and frame time; merges/instances geometry, tunes quality tiers and LOD.

@@ -27,7 +27,7 @@
 | 7 | Narrative & Quest | `engine/gameplay/narrative.js`, `tools/lib/design.mjs` | unit + playtests | ממומש (פורמט דיאלוג/משימות). פער: מחולל עלילה מתוך spec |
 | 8 | NPC Intelligence | `engine/ai/behavior.js`, `engine/ai/schedules.js` | unit + open-world scene | ממומש (כולל לוחות זמנים יומיים). פער: navmesh |
 | 9 | Audio Generation | `engine/audio/audio.js` (+FM, pluck, defineSfx, רינדור offline), **`gameforge sound`** (WAV + ספקטרוגרמה + בדיקות), `references/audio.md`, דוגמאות ב־`skills/gameforge/sounds/` | review checks | **Claude מעצב צלילים בעצמו** (שיפוט לפי ניתוח, לא שמיעה) |
-| 10 | QA & Visual Evaluation | `tools/playtest.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | — | ממומש. פער: השוואת פיקסלים מול baseline |
+| 10 | QA & Visual Evaluation | `tools/playtest.mjs` (`--query`), `tools/visual-diff.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | `visual-diff.test.mjs` | ממומש, כולל רגרסיה ויזואלית מול baseline |
 
 ## יומן (חדש למעלה)
 - **v0.4.1**: מוזגו IK + ragdoll ופלטפורמר + מרוצים. ריסים מרונדרים. `ShoulderedWeapon` לנשק ארוך על דמויות. בדיקות: unit 88/88, platformer 19/19, race-track 18/18, shooting-range 42/42, open-world 32/32, ashen-vale 22/22.
@@ -51,4 +51,4 @@ unit 33/33 · כל ה־playtests ב־examples עברו (source + dist) · bench-
 3. World: כלי ביקורת לסצנה שלמה (`gameforge scene`) + שיטת עבודה לבניית עולם, חזיתות מבנים, טקסטורת פרטים לשטח.
 4. Narrative generator: מחולל עלילה, דמויות ומשימות מתוך spec, כמודול כללי עם בדיקות.
 5. LOD לבני אדם: נתיב crowd מומש. הפער שנותר הוא decimation של הגוף (35k משולשים).
-6. QA: השוואת פיקסלים מול baseline.
+6. ✔ QA: `gameforge visual-diff` (השוואת פיקסלים מול baseline, מפת הבדלים, `--update`).

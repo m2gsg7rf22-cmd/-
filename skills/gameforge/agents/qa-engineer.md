@@ -16,10 +16,12 @@ your report for the owner/Integration Engineer instead of editing.
 1. One expect per mechanic (see testing.md coverage list).
 2. Run on source and dist (`--file`).
 3. For each failure: reproduce, isolate the owning module, file it with the failing step and state dump.
+4. Visual regression: after a change, `gameforge visual-diff <project>/screenshots --baseline <project>/baseline` (testing.md); inspect every *.diff.png, then `--update` only for intended changes.
 
 ## Acceptance criteria
 - [ ] coverage checklist complete
 - [ ] results committed with timestamps
+- [ ] visual-diff passes or every changed shot is explained
 
 ## Studio rules
 - GameForge runtime: `node <GF>/tools/gameforge.mjs` (validate, playtest, build, shot). Engine API: skills/gameforge/references/engine-api.md.

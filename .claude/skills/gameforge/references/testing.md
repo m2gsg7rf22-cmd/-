@@ -45,3 +45,17 @@ games inside this repository that import `../../engine`). Results: `test-results
 - save → change state → load restores it
 - canvas non-blank check + at least one screenshot per major scene
 - the dist build passes the same scenario via `--file`
+
+## Visual regression (pixel diff against a baseline)
+Playtests prove behaviour; `visual-diff` proves the image did not change by accident (lighting, materials, LOD, a
+missing mesh). Playtest screenshots are deterministic for a fixed seed, quality tier and machine.
+```
+node tools/playtest.mjs <project>                                   # writes <project>/screenshots/*.png
+node tools/gameforge.mjs visual-diff <project>/screenshots --baseline <project>/baseline   # first run: stores the baseline
+# … change code, re-run the playtest, then:
+node tools/gameforge.mjs visual-diff <project>/screenshots --baseline <project>/baseline
+```
+Each PNG is box-blurred 3×3; a pixel is "changed" when its largest channel delta exceeds `--tolerance` (0.06), and a shot
+FAILS when more than `--threshold` (2 %) of its pixels changed. Open `screenshots/diff/<name>.diff.png` (changed pixels red over a
+dimmed frame) and decide: regression → fix; intended → `--update` to accept the new baseline. Report: `diff/visual-diff.json`.
+Compare only shots taken on the same machine/GPU path (SwiftShader vs a real GPU differ everywhere).
