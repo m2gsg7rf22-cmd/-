@@ -1,0 +1,861 @@
+{
+  "format": "gameforge.story/1",
+  "id": "borrowed-shine",
+  "title": "Borrowed Shine",
+  "premise": "A broke courier who swore off crime must steal a councilman's gold coupe for the fixer who saved his life, and decide whether a favour repaid is worth more than a fair price.",
+  "logline": "One car, one favour, one city that never forgets who drove it.",
+  "themes": [
+    "Is a debt of gratitude ever paid in full?",
+    "Who owns a favour once it is cashed?"
+  ],
+  "tone": "Sun-bleached street crime; quick humour; consequences that land in daylight.",
+  "characters": [
+    {
+      "id": "dez",
+      "name": "Dez Varga",
+      "role": "protagonist",
+      "main": true,
+      "want": "Pay back Lu and walk away clean.",
+      "need": "Accept that he chooses who he owes.",
+      "flaw": "Says yes to anyone who was kind to him once.",
+      "arc": "From a courier who cannot refuse Lu to a man who names his own price, or keeps his word on purpose.",
+      "voice": "Short sentences, delivery-route slang, jokes when nervous."
+    },
+    {
+      "id": "lu",
+      "name": "Lu Anwen",
+      "role": "fixer",
+      "main": true,
+      "want": "Embarrass Councilman Pryce before the election.",
+      "need": "See that her favours make people small.",
+      "flaw": "Treats kindness as an investment.",
+      "arc": "From a patron who collects people to someone who either earns Dez's loyalty or loses it.",
+      "voice": "Warm, amused, food metaphors, never says thank you."
+    },
+    {
+      "id": "ruiz",
+      "name": "Tomas Ruiz",
+      "role": "mechanic",
+      "main": false,
+      "want": "Retire to his brother's farm with clean hands.",
+      "need": "",
+      "flaw": "",
+      "arc": "",
+      "voice": "Grumbling, slow, talks to cars like old dogs."
+    }
+  ],
+  "npcs": [
+    {
+      "id": "lu",
+      "name": "Lu Anwen",
+      "role": "fixer",
+      "at": "taqueria",
+      "look": {
+        "archetype": "civilian",
+        "seed": 12,
+        "sex": 0,
+        "age": 52,
+        "heightCm": 164,
+        "hair": "bun",
+        "hairColor": 2827554,
+        "skin": "olive",
+        "outfit": [
+          {
+            "type": "shirt",
+            "color": 3108707
+          },
+          {
+            "type": "pants",
+            "color": 2763306
+          },
+          {
+            "type": "shoes",
+            "color": 3811872
+          }
+        ]
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:payday==active"
+            ],
+            "node": "lu_payday__start"
+          },
+          {
+            "if": [
+              "quest:borrowed_shine==active"
+            ],
+            "node": "lu_wait__start"
+          },
+          {
+            "if": [
+              "!quest:borrowed_shine"
+            ],
+            "node": "lu_offer__start"
+          },
+          {
+            "node": "lu__idle"
+          }
+        ],
+        "nodes": {
+          "lu_payday__start": {
+            "if": "squeezed_lu",
+            "else": "lu_payday__partner",
+            "next": "lu_payday__paid",
+            "do": [
+              "set seen:lu_payday"
+            ]
+          },
+          "lu_payday__partner": {
+            "choices": [
+              {
+                "text": "No more work, Lu.",
+                "next": "lu_payday__out",
+                "do": [
+                  "set settled"
+                ]
+              },
+              {
+                "text": "Partner gets a cut.",
+                "next": "lu_payday__in",
+                "if": "kept_word",
+                "do": [
+                  "set settled"
+                ]
+              }
+            ],
+            "speaker": "Lu",
+            "text": "Ruiz says you gave it away. Stupid. Loyal. Sit down, partner, there is more work."
+          },
+          "lu_payday__paid": {
+            "choices": [
+              {
+                "text": "Worth it.",
+                "next": "lu_payday__out",
+                "do": [
+                  "set settled"
+                ]
+              },
+              {
+                "text": "We were never even.",
+                "next": "lu_payday__out",
+                "do": [
+                  "set settled"
+                ]
+              }
+            ],
+            "speaker": "Lu",
+            "text": "Two grand, Dez. You learned to count. Take it, and find another street."
+          },
+          "lu_payday__in": {
+            "speaker": "Lu",
+            "text": "Half a cut. Eat something first.",
+            "next": "end"
+          },
+          "lu_payday__out": {
+            "speaker": "Lu",
+            "text": "The street remembers. So do I.",
+            "next": "end"
+          },
+          "lu_wait__start": {
+            "speaker": "Lu",
+            "text": "The coupe will not drive itself to Ruiz. Go.",
+            "next": "end",
+            "do": [
+              "set seen:lu_wait"
+            ]
+          },
+          "lu_offer__start": {
+            "speaker": "Lu",
+            "text": "Dez. Sit. You look like a man who skipped breakfast and his conscience.",
+            "next": "lu_offer__reply",
+            "do": [
+              "set seen:lu_offer"
+            ]
+          },
+          "lu_offer__reply": {
+            "speaker": "Dez",
+            "text": "I deliver tacos now, Lu. Legal tacos.",
+            "next": "lu_offer__pitch"
+          },
+          "lu_offer__pitch": {
+            "choices": [
+              {
+                "text": "Even means even.",
+                "next": "lu_offer__accept",
+                "do": [
+                  "start borrowed_shine"
+                ]
+              },
+              {
+                "text": "In daylight? Seriously?",
+                "next": "lu_offer__daylight"
+              }
+            ],
+            "speaker": "Lu",
+            "text": "Pryce parks his gold coupe on my street. Bring it to Ruiz at Halfmoon. Then we are even."
+          },
+          "lu_offer__daylight": {
+            "choices": [
+              {
+                "text": "Fine. Last favour.",
+                "next": "lu_offer__accept",
+                "do": [
+                  "start borrowed_shine"
+                ]
+              }
+            ],
+            "speaker": "Lu",
+            "text": "Daylight is when people stare. Let them. Pryce needs the embarrassment."
+          },
+          "lu_offer__accept": {
+            "speaker": "Lu",
+            "text": "Good boy. The coupe is two blocks over. Mind the police, they love that car.",
+            "next": "end"
+          },
+          "lu__idle": {
+            "speaker": "Lu Anwen",
+            "text": "Eat first, sin after.",
+            "next": "end"
+          }
+        }
+      }
+    },
+    {
+      "id": "ruiz",
+      "name": "Tomas Ruiz",
+      "role": "mechanic",
+      "at": "halfmoon",
+      "look": {
+        "archetype": "civilian",
+        "seed": 31,
+        "sex": 1,
+        "age": 58,
+        "heightCm": 172,
+        "hair": "short",
+        "hairColor": 9078144,
+        "beard": "stubble",
+        "skin": "brown",
+        "outfit": [
+          {
+            "type": "tshirt",
+            "color": 9079418
+          },
+          {
+            "type": "jeans",
+            "color": 3159100
+          },
+          {
+            "type": "boots",
+            "color": 2762016
+          }
+        ]
+      },
+      "dialogue": {
+        "start": [
+          {
+            "if": [
+              "quest:borrowed_shine==active",
+              "quest:borrowed_shine:drop"
+            ],
+            "node": "ruiz_drop__start"
+          },
+          {
+            "if": [
+              "quest:borrowed_shine==active",
+              "!quest:borrowed_shine:drop"
+            ],
+            "node": "ruiz_early__start"
+          },
+          {
+            "node": "ruiz__idle"
+          }
+        ],
+        "nodes": {
+          "ruiz_drop__start": {
+            "speaker": "Ruiz",
+            "text": "Gold. Of course it is gold. Lu said you would bring it for free.",
+            "next": "ruiz_drop__choose",
+            "do": [
+              "set seen:ruiz_drop"
+            ]
+          },
+          "ruiz_drop__choose": {
+            "choices": [
+              {
+                "text": "Keys. We're even now.",
+                "next": "ruiz_drop__word",
+                "do": [
+                  "set kept_word",
+                  "set coupe_handed"
+                ]
+              },
+              {
+                "text": "Free? Tell Lu it costs two grand.",
+                "next": "ruiz_drop__squeeze",
+                "do": [
+                  "set squeezed_lu",
+                  "set coupe_handed"
+                ]
+              }
+            ],
+            "speaker": "Dez",
+            "text": "Did she."
+          },
+          "ruiz_drop__word": {
+            "speaker": "Ruiz",
+            "text": "A man of his word. Rare on this street. Go tell her.",
+            "next": "end"
+          },
+          "ruiz_drop__squeeze": {
+            "speaker": "Ruiz",
+            "text": "She will pay. She will also remember. Go tell her.",
+            "next": "end"
+          },
+          "ruiz_early__start": {
+            "speaker": "Ruiz",
+            "text": "No car, no conversation. Forty minutes starts when you park.",
+            "next": "end",
+            "do": [
+              "set seen:ruiz_early"
+            ]
+          },
+          "ruiz__idle": {
+            "speaker": "Tomas Ruiz",
+            "text": "Forty minutes. Fifty if you talk.",
+            "next": "end"
+          }
+        }
+      }
+    }
+  ],
+  "quests": [
+    {
+      "id": "borrowed_shine",
+      "title": "Borrowed Shine",
+      "description": "Lu asks Dez to steal Councilman Pryce's gold coupe, shake the police and bring it to the Halfmoon body shop.",
+      "giver": "lu",
+      "act": "act1",
+      "objectives": [
+        {
+          "id": "steal",
+          "type": "custom",
+          "target": "steal_car",
+          "text": "Steal the gold coupe"
+        },
+        {
+          "id": "heat",
+          "type": "custom",
+          "target": "lose_heat",
+          "text": "Lose the police",
+          "after": [
+            "steal"
+          ]
+        },
+        {
+          "id": "drop",
+          "type": "reach",
+          "target": "halfmoon",
+          "text": "Bring the coupe to Halfmoon",
+          "after": [
+            "heat"
+          ]
+        },
+        {
+          "id": "call",
+          "type": "flag",
+          "target": "coupe_handed",
+          "text": "Hand the coupe to Ruiz",
+          "after": [
+            "drop"
+          ]
+        }
+      ],
+      "requires": [],
+      "rewards": {
+        "xp": 150
+      }
+    },
+    {
+      "id": "payday",
+      "title": "Payday",
+      "description": "Dez returns to Lu; how she settles depends on whether he kept his word.",
+      "giver": "lu",
+      "act": "act1",
+      "objectives": [
+        {
+          "id": "settle",
+          "type": "flag",
+          "target": "settled",
+          "text": "Settle up with Lu"
+        }
+      ],
+      "requires": [
+        "quest:borrowed_shine:complete"
+      ],
+      "rewards": {
+        "xp": 100
+      }
+    }
+  ],
+  "dialogues": {
+    "lu": {
+      "start": [
+        {
+          "if": [
+            "quest:payday==active"
+          ],
+          "node": "lu_payday__start"
+        },
+        {
+          "if": [
+            "quest:borrowed_shine==active"
+          ],
+          "node": "lu_wait__start"
+        },
+        {
+          "if": [
+            "!quest:borrowed_shine"
+          ],
+          "node": "lu_offer__start"
+        },
+        {
+          "node": "lu__idle"
+        }
+      ],
+      "nodes": {
+        "lu_payday__start": {
+          "if": "squeezed_lu",
+          "else": "lu_payday__partner",
+          "next": "lu_payday__paid",
+          "do": [
+            "set seen:lu_payday"
+          ]
+        },
+        "lu_payday__partner": {
+          "choices": [
+            {
+              "text": "No more work, Lu.",
+              "next": "lu_payday__out",
+              "do": [
+                "set settled"
+              ]
+            },
+            {
+              "text": "Partner gets a cut.",
+              "next": "lu_payday__in",
+              "if": "kept_word",
+              "do": [
+                "set settled"
+              ]
+            }
+          ],
+          "speaker": "Lu",
+          "text": "Ruiz says you gave it away. Stupid. Loyal. Sit down, partner, there is more work."
+        },
+        "lu_payday__paid": {
+          "choices": [
+            {
+              "text": "Worth it.",
+              "next": "lu_payday__out",
+              "do": [
+                "set settled"
+              ]
+            },
+            {
+              "text": "We were never even.",
+              "next": "lu_payday__out",
+              "do": [
+                "set settled"
+              ]
+            }
+          ],
+          "speaker": "Lu",
+          "text": "Two grand, Dez. You learned to count. Take it, and find another street."
+        },
+        "lu_payday__in": {
+          "speaker": "Lu",
+          "text": "Half a cut. Eat something first.",
+          "next": "end"
+        },
+        "lu_payday__out": {
+          "speaker": "Lu",
+          "text": "The street remembers. So do I.",
+          "next": "end"
+        },
+        "lu_wait__start": {
+          "speaker": "Lu",
+          "text": "The coupe will not drive itself to Ruiz. Go.",
+          "next": "end",
+          "do": [
+            "set seen:lu_wait"
+          ]
+        },
+        "lu_offer__start": {
+          "speaker": "Lu",
+          "text": "Dez. Sit. You look like a man who skipped breakfast and his conscience.",
+          "next": "lu_offer__reply",
+          "do": [
+            "set seen:lu_offer"
+          ]
+        },
+        "lu_offer__reply": {
+          "speaker": "Dez",
+          "text": "I deliver tacos now, Lu. Legal tacos.",
+          "next": "lu_offer__pitch"
+        },
+        "lu_offer__pitch": {
+          "choices": [
+            {
+              "text": "Even means even.",
+              "next": "lu_offer__accept",
+              "do": [
+                "start borrowed_shine"
+              ]
+            },
+            {
+              "text": "In daylight? Seriously?",
+              "next": "lu_offer__daylight"
+            }
+          ],
+          "speaker": "Lu",
+          "text": "Pryce parks his gold coupe on my street. Bring it to Ruiz at Halfmoon. Then we are even."
+        },
+        "lu_offer__daylight": {
+          "choices": [
+            {
+              "text": "Fine. Last favour.",
+              "next": "lu_offer__accept",
+              "do": [
+                "start borrowed_shine"
+              ]
+            }
+          ],
+          "speaker": "Lu",
+          "text": "Daylight is when people stare. Let them. Pryce needs the embarrassment."
+        },
+        "lu_offer__accept": {
+          "speaker": "Lu",
+          "text": "Good boy. The coupe is two blocks over. Mind the police, they love that car.",
+          "next": "end"
+        },
+        "lu__idle": {
+          "speaker": "Lu Anwen",
+          "text": "Eat first, sin after.",
+          "next": "end"
+        }
+      }
+    },
+    "ruiz": {
+      "start": [
+        {
+          "if": [
+            "quest:borrowed_shine==active",
+            "quest:borrowed_shine:drop"
+          ],
+          "node": "ruiz_drop__start"
+        },
+        {
+          "if": [
+            "quest:borrowed_shine==active",
+            "!quest:borrowed_shine:drop"
+          ],
+          "node": "ruiz_early__start"
+        },
+        {
+          "node": "ruiz__idle"
+        }
+      ],
+      "nodes": {
+        "ruiz_drop__start": {
+          "speaker": "Ruiz",
+          "text": "Gold. Of course it is gold. Lu said you would bring it for free.",
+          "next": "ruiz_drop__choose",
+          "do": [
+            "set seen:ruiz_drop"
+          ]
+        },
+        "ruiz_drop__choose": {
+          "choices": [
+            {
+              "text": "Keys. We're even now.",
+              "next": "ruiz_drop__word",
+              "do": [
+                "set kept_word",
+                "set coupe_handed"
+              ]
+            },
+            {
+              "text": "Free? Tell Lu it costs two grand.",
+              "next": "ruiz_drop__squeeze",
+              "do": [
+                "set squeezed_lu",
+                "set coupe_handed"
+              ]
+            }
+          ],
+          "speaker": "Dez",
+          "text": "Did she."
+        },
+        "ruiz_drop__word": {
+          "speaker": "Ruiz",
+          "text": "A man of his word. Rare on this street. Go tell her.",
+          "next": "end"
+        },
+        "ruiz_drop__squeeze": {
+          "speaker": "Ruiz",
+          "text": "She will pay. She will also remember. Go tell her.",
+          "next": "end"
+        },
+        "ruiz_early__start": {
+          "speaker": "Ruiz",
+          "text": "No car, no conversation. Forty minutes starts when you park.",
+          "next": "end",
+          "do": [
+            "set seen:ruiz_early"
+          ]
+        },
+        "ruiz__idle": {
+          "speaker": "Tomas Ruiz",
+          "text": "Forty minutes. Fifty if you talk.",
+          "next": "end"
+        }
+      }
+    }
+  },
+  "startQuests": [],
+  "autoStart": [
+    "payday"
+  ],
+  "items": {},
+  "landmarks": [],
+  "initialFlags": {},
+  "externalFlags": [],
+  "barks": {
+    "lu": [
+      "Eat first, sin after.",
+      "Everybody on this street owes me lunch.",
+      "Keep your engine warm, Dez."
+    ],
+    "ruiz": [
+      "Forty minutes. Fifty if you talk.",
+      "Gold is a terrible colour for a getaway."
+    ]
+  },
+  "ending": {
+    "quests": [
+      "payday"
+    ],
+    "title": "Even",
+    "text": "The coupe is primer grey by sunset. Cobalt Row has a new story about Dez Varga."
+  },
+  "acts": [
+    {
+      "id": "act1",
+      "title": "Act I: The Favour",
+      "purpose": "Setup and payoff in one district: the job, the theft, the heat, the choice.",
+      "missions": [
+        "borrowed_shine",
+        "payday"
+      ]
+    }
+  ],
+  "meta": {
+    "conversations": {
+      "lu_offer": {
+        "npc": "lu",
+        "mission": "borrowed_shine",
+        "when": "offer",
+        "once": false,
+        "priority": 11,
+        "entry": "lu_offer__start",
+        "nodes": [
+          "lu_offer__start",
+          "lu_offer__reply",
+          "lu_offer__pitch",
+          "lu_offer__daylight",
+          "lu_offer__accept"
+        ],
+        "local": [
+          "start",
+          "reply",
+          "pitch",
+          "daylight",
+          "accept"
+        ]
+      },
+      "lu_wait": {
+        "npc": "lu",
+        "mission": "borrowed_shine",
+        "when": "active",
+        "once": false,
+        "priority": 12,
+        "entry": "lu_wait__start",
+        "nodes": [
+          "lu_wait__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "ruiz_drop": {
+        "npc": "ruiz",
+        "mission": "borrowed_shine",
+        "when": "active",
+        "once": false,
+        "priority": 12,
+        "entry": "ruiz_drop__start",
+        "nodes": [
+          "ruiz_drop__start",
+          "ruiz_drop__choose",
+          "ruiz_drop__word",
+          "ruiz_drop__squeeze"
+        ],
+        "local": [
+          "start",
+          "choose",
+          "word",
+          "squeeze"
+        ]
+      },
+      "ruiz_early": {
+        "npc": "ruiz",
+        "mission": "borrowed_shine",
+        "when": "active",
+        "once": false,
+        "priority": -1,
+        "entry": "ruiz_early__start",
+        "nodes": [
+          "ruiz_early__start"
+        ],
+        "local": [
+          "start"
+        ]
+      },
+      "lu_payday": {
+        "npc": "lu",
+        "mission": "payday",
+        "when": "active",
+        "once": false,
+        "priority": 22,
+        "entry": "lu_payday__start",
+        "nodes": [
+          "lu_payday__start",
+          "lu_payday__partner",
+          "lu_payday__paid",
+          "lu_payday__in",
+          "lu_payday__out"
+        ],
+        "local": [
+          "start",
+          "partner",
+          "paid",
+          "in",
+          "out"
+        ]
+      }
+    },
+    "undefinedTargets": [],
+    "missionOrder": [
+      "borrowed_shine",
+      "payday"
+    ],
+    "flagDocs": {
+      "kept_word": {
+        "id": "kept_word",
+        "desc": "Dez handed the coupe over as a favour",
+        "mission": "borrowed_shine"
+      },
+      "squeezed_lu": {
+        "id": "squeezed_lu",
+        "desc": "Dez made Lu pay for the coupe",
+        "mission": "borrowed_shine"
+      }
+    },
+    "convByMission": {
+      "borrowed_shine": [
+        "lu_offer",
+        "lu_wait",
+        "ruiz_drop",
+        "ruiz_early"
+      ],
+      "payday": [
+        "lu_payday"
+      ]
+    },
+    "convs": [
+      {
+        "id": "lu_offer",
+        "npc": "lu",
+        "mission": "borrowed_shine",
+        "entry": "lu_offer__start"
+      },
+      {
+        "id": "lu_wait",
+        "npc": "lu",
+        "mission": "borrowed_shine",
+        "entry": "lu_wait__start"
+      },
+      {
+        "id": "ruiz_drop",
+        "npc": "ruiz",
+        "mission": "borrowed_shine",
+        "entry": "ruiz_drop__start"
+      },
+      {
+        "id": "ruiz_early",
+        "npc": "ruiz",
+        "mission": "borrowed_shine",
+        "entry": "ruiz_early__start"
+      },
+      {
+        "id": "lu_payday",
+        "npc": "lu",
+        "mission": "payday",
+        "entry": "lu_payday__start"
+      }
+    ]
+  },
+  "world": {
+    "setting": "Port Solana, a hot harbour city of palm-lined avenues; this slice is Cobalt Row, a dense mixed district of shops and towers.",
+    "facts": [
+      "Cobalt Row runs on cash, scooters and favours owed to Lu Anwen.",
+      "Councilman Pryce parks his gold coupe on the street because nobody would dare touch it.",
+      "The Halfmoon body shop repaints anything in forty minutes, no questions.",
+      "Port Solana police answer gunfire fast and car theft faster on Cobalt Row."
+    ],
+    "locations": [
+      {
+        "id": "taqueria",
+        "name": "Lu's Corner Taqueria",
+        "desc": "A street-corner counter where Lu holds court.",
+        "hooks": [
+          "A jar of IOU slips by the register",
+          "Two plastic chairs, one always kept for Lu",
+          "Scooter keys hanging on nails behind the counter"
+        ]
+      },
+      {
+        "id": "coupe_spot",
+        "name": "Pryce's Curb",
+        "desc": "A no-parking curb where the gold coupe sits untouched.",
+        "hooks": [
+          "A gold coupe parked across two spaces",
+          "Unpaid parking tickets tucked under the wiper",
+          "Pedestrians giving the car a wide berth"
+        ]
+      },
+      {
+        "id": "halfmoon",
+        "name": "Halfmoon Body Shop",
+        "desc": "A paint shop at the edge of the district.",
+        "hooks": [
+          "Fresh primer drips on the kerb",
+          "A licence-plate stack sorted by colour",
+          "Ruiz's radio playing old ballads"
+        ]
+      }
+    ]
+  }
+}
