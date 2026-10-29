@@ -41,3 +41,18 @@ test('lightProbe: point light brightens nearby points, walls shadow them', () =>
   assert.ok(near > far + 0.2, `near ${near} far ${far}`);
   assert.ok(shadowed(new THREE.Vector3(3, 1, 0)) < open(new THREE.Vector3(3, 1, 0)), 'occluded');
 });
+
+test('stealth + navmesh: an investigating guard routes around a wall instead of walking into it', async () => {
+  const { PhysicsWorld } = await import('../../engine/physics/world.js');
+  const { buildNavMesh } = await import('../../engine/ai/navmesh.js');
+  const w = new PhysicsWorld(); w.addStatic({ type: 'box', x: 0, y: 1.5, z: -1, hx: 0.15, hy: 1.5, hz: 7 });
+  const nm = buildNavMesh({ physics: w, bounds: { minX: -10, minZ: -10, maxX: 10, maxZ: 10 } });
+  const s = new StealthSystem({ lightLevel: () => 0.05, physics: w });
+  const g = s.addGuard(actor(-5, 0, Math.PI / 2), { route: [[-5, 0, 0]], navmesh: nm });
+  s.setPlayer(actor(9, 9), () => ({ crouched: true }));
+  s.noise(new THREE.Vector3(5, 0, 0), 30, 'bottle');
+  let minAbsX = Infinity, reached = false;
+  for (let i = 0; i < 60 * 30 && !reached; i++) { s.update(1 / 60); if (Math.abs(g.actor.position.z) < 6) minAbsX = Math.min(minAbsX, Math.abs(g.actor.position.x)); reached = g.state === 'search'; }
+  assert.ok(reached, 'guard arrived at the noise and started searching');
+  assert.ok(minAbsX > 0.3, `never crossed the wall (closest |x| beside it ${minAbsX.toFixed(2)})`);
+});

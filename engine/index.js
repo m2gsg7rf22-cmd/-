@@ -75,3 +75,4 @@ export { StealthSystem, lightProbe, GUARD_STATES, defaultMoveTo } from './gamepl
 // ---- Navigation: navmesh (voxelized walkable surfaces, multi-level, dynamic obstacles), A* + funnel,
 // NavAgent/NavCrowd steering with reciprocal avoidance, ScheduleAgent planner. See references/navigation.md.
 export { buildNavMesh, NavMesh, NavAgent, NavCrowd, navMeshPlanner, NAVMESH_DEFAULTS } from './ai/navmesh.js';
+export { navMover } from './gameplay/stealth.js';

@@ -64,18 +64,19 @@ export class StealthSystem {
   addHidingSpot(spot) { this.hiding.push({ factor: 0.15, ...spot }); return this; }
   /**
    * Register a guard. opts: route [[x,y,z] | {pos, wait, look}], moveTo(guard, point, speed, dt) → arrived?,
-   * sight 18 m, fov 110° (+ peripheral 160° at half rate), hearing 1, walk 1.4, run 3.6, suspicionRate 1.
+   * navmesh (routes around walls via navMover), sight 18 m, fov 110° (+ peripheral 160° at 35 %), hearing 1, walk 1.4, run 3.6, suspicionRate 1.
    */
   addGuard(actor, opts = {}) {
     const g = {
       actor, state: 'patrol', suspicion: 0, route: (opts.route || [actor.position.toArray()]).map((r) => (Array.isArray(r) ? { pos: V(...r), wait: 1.5 } : { wait: 1.5, ...r, pos: V(...(r.pos.toArray ? r.pos.toArray() : r.pos)) })),
       wp: 0, wait: 0, target: null, searchPts: [], stateT: 0, lastKnown: null, seesPlayer: false,
-      opts: { sight: 18, fov: 110 * Math.PI / 180, peripheral: 160 * Math.PI / 180, hearing: 1, walk: 1.4, run: 3.6, suspicionRate: 1, moveTo: defaultMoveTo, ...opts },
+      opts: { sight: 18, fov: 110 * Math.PI / 180, peripheral: 160 * Math.PI / 180, hearing: 1, walk: 1.4, run: 3.6, suspicionRate: 1, ...opts, moveTo: opts.moveTo || (opts.navmesh ? navMover(opts.navmesh) : defaultMoveTo) },
     };
     if (actor.ctrl && actor instanceof Actor) { // game Actor/NPC/Enemy: drive it through its controller + animation
       const a = actor; g.body = a; g._move = null;
       g.actor = { get position() { return a.position; }, get facing() { return a.ctrl.facing; }, set facing(v) { a.ctrl.facing = v; }, userData: a.model.userData };
-      if (!opts.moveTo) g.opts.moveTo = (A, point, speed) => { const d = point.clone().sub(a.position).setY(0); if (d.length() < 0.4) { g._move = null; return true; } g._move = { dir: d.normalize(), speed }; return false; };
+      const steer = (A, point, speed) => { const d = point.clone().sub(a.position).setY(0); if (d.length() < 0.4) { g._move = null; return true; } g._move = { dir: d.normalize(), speed }; return false; };
+      g.opts.moveTo = opts.navmesh ? navMover(opts.navmesh, { inner: steer }) : opts.moveTo || steer;
     }
     this.guards.push(g); return g;
   }
@@ -201,4 +202,25 @@ export function defaultMoveTo(actor, point, speed, dt) {
   if (len < 0.25) return true;
   actor.facing = Math.atan2(d.x, d.z); actor.position.addScaledVector(d.normalize(), Math.min(len, speed * dt));
   return false;
+}
+
+/**
+ * navMover(navmesh) → moveTo adapter for addGuard: guards follow navmesh paths (A* + funnel) instead of
+ * straight lines, re-planning when the goal moves > 1 m or the navmesh changes (doors, parked cars).
+ * Works with plain objects and game Actors (pass it as `moveTo`; Actors still move through their controller).
+ */
+export function navMover(navmesh, { inner = defaultMoveTo } = {}) {
+  const plans = new WeakMap();
+  return (actor, point, speed, dt) => {
+    let p = plans.get(actor);
+    if (!p || p.goal.distanceTo(point) > 1 || p.version !== navmesh.version) {
+      const path = navmesh.findPath(actor.position, point);
+      p = { goal: point.clone(), version: navmesh.version, path: path ? path.slice(1) : [point.clone()] }; plans.set(actor, p);
+    }
+    while (p.path.length > 1 && actor.position.distanceTo(p.path[0]) < 0.35) p.path.shift();
+    const next = p.path[0] || point, arrived = inner(actor, next, speed, dt);
+    if (arrived && p.path.length <= 1) { plans.delete(actor); return true; }
+    if (arrived) p.path.shift();
+    return false;
+  };
 }

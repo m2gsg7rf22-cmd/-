@@ -27,7 +27,7 @@ Takedown: player within 1.4 m behind the guard (≥ 110° off its facing) or gua
 (death clip / ragdoll) and leaves a body that other guards can discover in their light-weighted view.
 
 **Movement.** Default mover walks straight lines; in real levels pass `moveTo(guard, point, speed, dt) → arrived`
-backed by the navmesh (references/navigation.md) so guards route around walls.
+backed by the navmesh — simply `addGuard(npc, { route, navmesh })` (uses `navMover(navmesh)`, re-plans when doors/obstacles change the mesh; references/navigation.md).
 
 **Level design numbers.** Lit pools 6–10 m apart, dark gaps ≥ 4 m; patrol loops 20–40 s with 2–4 s look-waits;
 every lit choke point needs an alternative (shadow route, distraction, vent); one hiding spot per 15 m of route.
