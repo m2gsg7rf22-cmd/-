@@ -7,7 +7,9 @@ import { applySkin, computeSkinMasks } from './character/skin.js';
 import { addHair, addBeard, HAIR_STYLES } from './character/hair.js';
 import { dress, OUTFITS, GARMENTS } from './character/clothing.js';
 import { clone as cloneSkinned } from './vendor/three/addons/utils/SkeletonUtils.js';
+import { decimate } from './geometry/decimate.js';
 import { Retargeter, clipFromBVH, clipFromBVHCanonical, parseBVH, fingerCurl, BVH_NAME_MAPS } from './animation/retarget.js';
+export { decimate } from './geometry/decimate.js';
 export { loadHumanData, buildHuman, defaultHumanParams, EXPRESSIONS, VISEMES, listModifiers, SKIN_TONES, applySkin, addHair, addBeard, HAIR_STYLES, dress, OUTFITS, GARMENTS, Retargeter, clipFromBVH, clipFromBVHCanonical, parseBVH, fingerCurl, BVH_NAME_MAPS };
 export { ARCHETYPES, createCharacter, characterFromSpec, lookToHumanSpec } from './character/archetypes.js';
 
@@ -44,8 +46,37 @@ export function assembleHuman(data, spec = {}) {
     g.morphAttributes = {}; api.mesh.morphTargetInfluences = undefined; api.mesh.morphTargetDictionary = undefined; api.mesh.updateMorphTargets?.();
     api.face = null;
   }
+  if (spec.decimate) decimateHuman(h, spec.decimate);
   api.retargeter = new Retargeter(api.bones);
   return h;
+}
+
+/**
+ * LOD: simplify the body and garment meshes of a human to `ratio` of their triangles (quadric
+ * half-edge collapse: UV seams, borders, skin weights and face morphs stay intact). Hair cards and
+ * eyes are left alone. Typical: 0.5 at 15–30 m, 0.25 beyond 30 m (pair with lod:'crowd').
+ * Returns { from, to } triangle counts.
+ */
+export function decimateHuman(human, ratio = 0.4) {
+  const api = human.userData; let from = 0, to = 0;
+  let garments = [...(api.garments || []).filter((m) => m.parent === human), ...human.children.filter((c) => c.isSkinnedMesh && c.name === 'garments:merged')];
+  // underwear is fully covered once there are trousers: drop it instead of fighting poke-through
+  if (garments.some((g) => /garment:(jeans|pants|shorts|dress|robe)/.test(g.name))) for (const g of garments.filter((g) => g.name === 'garment:underwear')) { human.remove(g); g.geometry.dispose(); }
+  garments = garments.filter((g) => g.parent === human);
+  // decimated surfaces sink by roughly the chord sagitta; push each layer out a little more than the one below
+  const inflate = Math.min(0.006, 0.0015 * (1 / Math.max(0.05, ratio) - 1));
+  for (const m of new Set([api.mesh, ...garments])) {
+    if (!m?.isMesh || !m.geometry.index) continue;
+    const g = decimate(m.geometry, { ratio }); from += g.userData.decimate.from; to += g.userData.decimate.to;
+    if (m !== api.mesh && inflate > 0) {
+      const P = g.attributes.position, N = g.attributes.normal, d = inflate * (1 + (m.userData.layer ?? 1) * 0.5);
+      const arr = P.array.slice(); for (let i = 0; i < P.count; i++) { arr[i * 3] += N.getX(i) * d; arr[i * 3 + 1] += N.getY(i) * d; arr[i * 3 + 2] += N.getZ(i) * d; }
+      g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+    }
+    m.geometry.dispose(); m.geometry = g;
+  }
+  api.decimated = { ratio, from, to };
+  return api.decimated;
 }
 
 /** Merge every garment SkinnedMesh of a human into one vertex-coloured mesh (1 draw call). */

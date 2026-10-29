@@ -24,6 +24,7 @@ list.forEach((w, i) => {
   const spec = H.characterFromSpec(arch, +seed);
   if (q.has('hair')) spec.hair = q.get('hair') === 'none' ? null : q.get('hair');
   if (q.has('outfit')) spec.outfit = q.get('outfit');
+  if (q.has('decimate')) spec.decimate = +q.get('decimate');
   if (q.has('sex')) spec.sex = +q.get('sex');
   const h = H.assembleHuman(data, spec);
   h.position.x = (i - (list.length - 1) / 2) * (+(q.get('gap') || 0.85));

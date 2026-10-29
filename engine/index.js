@@ -68,3 +68,4 @@ export { PLATFORMER_DEFAULTS, PIECES as PLATFORMER_PIECES, platformerParams, pla
 export { Track, generateTrack, trackMesh, addTrackPhysics } from './world/track.js';
 export { computeRacingLine, RaceAI, RaceManager, formatTime } from './gameplay/racing.js';
 export { ShoulderedWeapon } from './gameplay/weapon-pose.js';
+export { decimate, decimateObject } from './geometry/decimate.js';

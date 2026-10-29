@@ -339,3 +339,9 @@ quality, but:
 - card foliage is not volumetric.
 
 Do not call an asset photorealistic. Show the review sheet as evidence.
+
+## Triangle budgets and LODs: `K.decimate`
+`K.decimate(geometry, { ratio: 0.3 })` (or `{ targetTris }`) returns a simplified copy; `K.decimateObject(root, { ratio })` replaces
+every mesh in a hierarchy. Vertices are never moved (half-edge collapse), so uv/normal/color/skin attributes stay valid; UV seams
+and open borders are locked. Use it to meet a budget after sculpting (SDF meshes are dense) and to build LOD levels for
+`LODGroup` (references/open-world.md). Check the result in `gameforge model` at the distance the LOD is used.

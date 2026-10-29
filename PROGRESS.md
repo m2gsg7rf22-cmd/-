@@ -50,5 +50,5 @@ unit 33/33 · כל ה־playtests ב־examples עברו (source + dist) · bench-
 2. אותו עיקרון ("יכולת, לא תוצרים") לשאר התחומים: סביבה/עולם, אנימציה (כתיבת clips + גיליון ביקורת), חומרים/שיידרים, סאונד.
 3. World: כלי ביקורת לסצנה שלמה (`gameforge scene`) + שיטת עבודה לבניית עולם, חזיתות מבנים, טקסטורת פרטים לשטח.
 4. Narrative generator: מחולל עלילה, דמויות ומשימות מתוך spec, כמודול כללי עם בדיקות.
-5. LOD לבני אדם: נתיב crowd מומש. הפער שנותר הוא decimation של הגוף (35k משולשים).
+5. ✔ LOD לבני אדם: `decimate` (QEM half-edge, שומר UV/skin/morphs) + `decimateHuman`, ‏28k→7k משולשים ב־0.25 בלי חדירת שכבות. זמין גם כ־`K.decimate` למודלים.
 6. ✔ QA: `gameforge visual-diff` (השוואת פיקסלים מול baseline, מפת הבדלים, `--update`).

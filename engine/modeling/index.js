@@ -10,6 +10,7 @@ import * as cardsMod from './cards.js';
 import { pbr, solid, emissive, glass, carPaint, textureSet, applyWind, MaterialLibrary } from '../render/materials.js';
 import { generateTexture, TEXTURE_KINDS } from '../render/textures.js';
 import { RNG, Noise } from '../core/rng.js';
+import { decimate, decimateObject } from '../geometry/decimate.js';
 import { Heightfield, terrainMesh, terrainMaterial } from '../world/terrain.js';
 import { populate, instanceProp, scatterPoints, grassField } from '../world/vegetation.js';
 import { createWater } from '../world/water.js';
@@ -69,6 +70,7 @@ export const K = {
   // MeshBuilder, mat4, ellipseRing, superRing, profileRing, mergeByMaterial, validateGeometry, validateObject
   ...builders,
   sdf, branching, ...sdf, ...branching,
+  decimate, decimateObject, // LODs / budgets: decimate(geo, { ratio }) keeps uv/normal/skin attributes (references/modeling.md)
   paint: cardsMod.paint, cardTexture: cardsMod.cardTexture, cards: cardsMod.cards, cardStrip: cardsMod.cardStrip, cardMaterial: cardsMod.cardMaterial,
   // materials: pbr(kind, {color, repeat, normalScale, roughness}) with TEXTURE_KINDS, solid, emissive, glass, carPaint
   pbr, solid, emissive, glass, carPaint, textureSet, applyWind, MaterialLibrary, generateTexture, TEXTURE_KINDS,

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-29T04:34:37.600Z",
+  "generated": "2026-10-29T04:59:20.938Z",
   "node": "v22.22.0",
   "norms": {
     "shoulderHeight": [
@@ -44,8 +44,8 @@
       "label": "civilian:1",
       "heightM": 1.545,
       "targetCm": 154.52500641012455,
-      "geomMs": 248,
-      "fullMs": 1849,
+      "geomMs": 276,
+      "fullMs": 1611,
       "fullTris": 43402,
       "ratios": {
         "shoulderHeight": 0.785,
@@ -84,8 +84,8 @@
       "label": "civilian:2",
       "heightM": 1.748,
       "targetCm": 174.84851907616817,
-      "geomMs": 143,
-      "fullMs": 1169,
+      "geomMs": 127,
+      "fullMs": 1048,
       "fullTris": 45239,
       "ratios": {
         "shoulderHeight": 0.797,
@@ -124,8 +124,8 @@
       "label": "civilian:3",
       "heightM": 1.818,
       "targetCm": 181.81481395617234,
-      "geomMs": 76,
-      "fullMs": 1476,
+      "geomMs": 208,
+      "fullMs": 1184,
       "fullTris": 42551,
       "ratios": {
         "shoulderHeight": 0.803,
@@ -164,8 +164,8 @@
       "label": "businessperson:1",
       "heightM": 1.899,
       "targetCm": 189.9323829053692,
-      "geomMs": 114,
-      "fullMs": 1367,
+      "geomMs": 59,
+      "fullMs": 1186,
       "fullTris": 48056,
       "ratios": {
         "shoulderHeight": 0.803,
@@ -204,8 +204,8 @@
       "label": "businessperson:2",
       "heightM": 1.625,
       "targetCm": 162.45069913600085,
-      "geomMs": 56,
-      "fullMs": 1265,
+      "geomMs": 90,
+      "fullMs": 971,
       "fullTris": 48786,
       "ratios": {
         "shoulderHeight": 0.794,
@@ -244,8 +244,8 @@
       "label": "businessperson:3",
       "heightM": 1.611,
       "targetCm": 161.12166758646194,
-      "geomMs": 163,
-      "fullMs": 938,
+      "geomMs": 53,
+      "fullMs": 867,
       "fullTris": 45710,
       "ratios": {
         "shoulderHeight": 0.792,
@@ -284,8 +284,8 @@
       "label": "soldier:1",
       "heightM": 1.639,
       "targetCm": 163.8766108206876,
-      "geomMs": 56,
-      "fullMs": 1424,
+      "geomMs": 58,
+      "fullMs": 1304,
       "fullTris": 48393,
       "ratios": {
         "shoulderHeight": 0.793,
@@ -324,8 +324,8 @@
       "label": "soldier:2",
       "heightM": 1.582,
       "targetCm": 158.16070340162736,
-      "geomMs": 56,
-      "fullMs": 1161,
+      "geomMs": 55,
+      "fullMs": 905,
       "fullTris": 42408,
       "ratios": {
         "shoulderHeight": 0.791,
@@ -364,8 +364,8 @@
       "label": "soldier:3",
       "heightM": 1.784,
       "targetCm": 178.440734334636,
-      "geomMs": 94,
-      "fullMs": 1126,
+      "geomMs": 53,
+      "fullMs": 936,
       "fullTris": 48380,
       "ratios": {
         "shoulderHeight": 0.8,
@@ -404,8 +404,8 @@
       "label": "knight:1",
       "heightM": 1.697,
       "targetCm": 169.73809260724255,
-      "geomMs": 61,
-      "fullMs": 1213,
+      "geomMs": 59,
+      "fullMs": 1263,
       "fullTris": 53775,
       "ratios": {
         "shoulderHeight": 0.797,
@@ -444,8 +444,8 @@
       "label": "knight:2",
       "heightM": 1.691,
       "targetCm": 169.10700585469908,
-      "geomMs": 57,
-      "fullMs": 891,
+      "geomMs": 45,
+      "fullMs": 932,
       "fullTris": 53820,
       "ratios": {
         "shoulderHeight": 0.795,
@@ -484,8 +484,8 @@
       "label": "knight:3",
       "heightM": 1.803,
       "targetCm": 180.33939383808453,
-      "geomMs": 61,
-      "fullMs": 1060,
+      "geomMs": 55,
+      "fullMs": 928,
       "fullTris": 51635,
       "ratios": {
         "shoulderHeight": 0.802,
@@ -524,8 +524,8 @@
       "label": "superhero:1",
       "heightM": 1.759,
       "targetCm": 175.88704496196007,
-      "geomMs": 57,
-      "fullMs": 1081,
+      "geomMs": 53,
+      "fullMs": 962,
       "fullTris": 44031,
       "ratios": {
         "shoulderHeight": 0.799,
@@ -564,8 +564,8 @@
       "label": "superhero:2",
       "heightM": 1.67,
       "targetCm": 167.03814230239706,
-      "geomMs": 65,
-      "fullMs": 1016,
+      "geomMs": 53,
+      "fullMs": 1024,
       "fullTris": 44706,
       "ratios": {
         "shoulderHeight": 0.796,
@@ -604,8 +604,8 @@
       "label": "superhero:3",
       "heightM": 1.8,
       "targetCm": 180.0449214025598,
-      "geomMs": 55,
-      "fullMs": 1145,
+      "geomMs": 54,
+      "fullMs": 1081,
       "fullTris": 44021,
       "ratios": {
         "shoulderHeight": 0.801,
@@ -644,8 +644,8 @@
       "label": "villager:1",
       "heightM": 1.595,
       "targetCm": 159.48801786458517,
-      "geomMs": 66,
-      "fullMs": 1248,
+      "geomMs": 56,
+      "fullMs": 1162,
       "fullTris": 47994,
       "ratios": {
         "shoulderHeight": 0.792,
@@ -684,8 +684,8 @@
       "label": "villager:2",
       "heightM": 1.596,
       "targetCm": 159.6383807486511,
-      "geomMs": 55,
-      "fullMs": 947,
+      "geomMs": 83,
+      "fullMs": 1152,
       "fullTris": 46682,
       "ratios": {
         "shoulderHeight": 0.789,
@@ -724,8 +724,8 @@
       "label": "villager:3",
       "heightM": 1.818,
       "targetCm": 181.81481395617234,
-      "geomMs": 60,
-      "fullMs": 1063,
+      "geomMs": 52,
+      "fullMs": 909,
       "fullTris": 46520,
       "ratios": {
         "shoulderHeight": 0.803,
@@ -764,8 +764,8 @@
       "label": "wizard:1",
       "heightM": 1.714,
       "targetCm": 171.37396255070755,
-      "geomMs": 50,
-      "fullMs": 562,
+      "geomMs": 52,
+      "fullMs": 624,
       "fullTris": 33714,
       "ratios": {
         "shoulderHeight": 0.801,
@@ -804,8 +804,8 @@
       "label": "wizard:2",
       "heightM": 1.691,
       "targetCm": 169.10700585469908,
-      "geomMs": 54,
-      "fullMs": 730,
+      "geomMs": 53,
+      "fullMs": 705,
       "fullTris": 46702,
       "ratios": {
         "shoulderHeight": 0.797,
@@ -844,8 +844,8 @@
       "label": "wizard:3",
       "heightM": 1.755,
       "targetCm": 175.4733393251905,
-      "geomMs": 53,
-      "fullMs": 1004,
+      "geomMs": 52,
+      "fullMs": 881,
       "fullTris": 44618,
       "ratios": {
         "shoulderHeight": 0.801,
@@ -884,8 +884,8 @@
       "label": "athlete:1",
       "heightM": 1.639,
       "targetCm": 163.8766108206876,
-      "geomMs": 56,
-      "fullMs": 911,
+      "geomMs": 50,
+      "fullMs": 805,
       "fullTris": 42505,
       "ratios": {
         "shoulderHeight": 0.793,
@@ -925,7 +925,7 @@
       "heightM": 1.582,
       "targetCm": 158.16070340162736,
       "geomMs": 43,
-      "fullMs": 819,
+      "fullMs": 769,
       "fullTris": 43203,
       "ratios": {
         "shoulderHeight": 0.79,
@@ -964,8 +964,8 @@
       "label": "athlete:3",
       "heightM": 1.654,
       "targetCm": 165.440734334636,
-      "geomMs": 45,
-      "fullMs": 893,
+      "geomMs": 47,
+      "fullMs": 901,
       "fullTris": 42521,
       "ratios": {
         "shoulderHeight": 0.796,
@@ -1004,8 +1004,8 @@
       "label": "biker:1",
       "heightM": 1.627,
       "targetCm": 162.74470416869937,
-      "geomMs": 52,
-      "fullMs": 1061,
+      "geomMs": 55,
+      "fullMs": 1055,
       "fullTris": 48753,
       "ratios": {
         "shoulderHeight": 0.791,
@@ -1044,8 +1044,8 @@
       "label": "biker:2",
       "heightM": 1.673,
       "targetCm": 167.28768866596056,
-      "geomMs": 55,
-      "fullMs": 1040,
+      "geomMs": 56,
+      "fullMs": 982,
       "fullTris": 48743,
       "ratios": {
         "shoulderHeight": 0.798,
@@ -1084,8 +1084,8 @@
       "label": "biker:3",
       "heightM": 1.651,
       "targetCm": 165.09409076248463,
-      "geomMs": 53,
-      "fullMs": 1622,
+      "geomMs": 51,
+      "fullMs": 1572,
       "fullTris": 43000,
       "ratios": {
         "shoulderHeight": 0.79,
@@ -1124,8 +1124,8 @@
       "label": "extreme sex=0 m=0 w=0",
       "heightM": 1.448,
       "targetCm": null,
-      "geomMs": 138,
-      "fullMs": 1104,
+      "geomMs": 147,
+      "fullMs": 1058,
       "fullTris": 42570,
       "ratios": {
         "shoulderHeight": 0.781,
@@ -1164,8 +1164,8 @@
       "label": "extreme sex=0 m=1 w=1",
       "heightM": 1.446,
       "targetCm": null,
-      "geomMs": 74,
-      "fullMs": 1207,
+      "geomMs": 36,
+      "fullMs": 1189,
       "fullTris": 42578,
       "ratios": {
         "shoulderHeight": 0.781,
@@ -1204,8 +1204,8 @@
       "label": "extreme sex=0 m=0 w=1",
       "heightM": 1.446,
       "targetCm": null,
-      "geomMs": 143,
-      "fullMs": 959,
+      "geomMs": 117,
+      "fullMs": 1006,
       "fullTris": 42652,
       "ratios": {
         "shoulderHeight": 0.781,
@@ -1244,8 +1244,8 @@
       "label": "extreme sex=0 m=1 w=0",
       "heightM": 1.446,
       "targetCm": null,
-      "geomMs": 47,
-      "fullMs": 1072,
+      "geomMs": 35,
+      "fullMs": 985,
       "fullTris": 42560,
       "ratios": {
         "shoulderHeight": 0.781,
@@ -1284,8 +1284,8 @@
       "label": "extreme sex=1 m=0 w=0",
       "heightM": 1.576,
       "targetCm": null,
-      "geomMs": 40,
-      "fullMs": 931,
+      "geomMs": 56,
+      "fullMs": 962,
       "fullTris": 42507,
       "ratios": {
         "shoulderHeight": 0.79,
@@ -1324,8 +1324,8 @@
       "label": "extreme sex=1 m=1 w=1",
       "heightM": 1.576,
       "targetCm": null,
-      "geomMs": 37,
-      "fullMs": 1007,
+      "geomMs": 39,
+      "fullMs": 868,
       "fullTris": 42645,
       "ratios": {
         "shoulderHeight": 0.79,
@@ -1364,8 +1364,8 @@
       "label": "extreme sex=1 m=0 w=1",
       "heightM": 1.576,
       "targetCm": null,
-      "geomMs": 36,
-      "fullMs": 833,
+      "geomMs": 32,
+      "fullMs": 863,
       "fullTris": 42688,
       "ratios": {
         "shoulderHeight": 0.79,
@@ -1404,8 +1404,8 @@
       "label": "extreme sex=1 m=1 w=0",
       "heightM": 1.576,
       "targetCm": null,
-      "geomMs": 33,
-      "fullMs": 923,
+      "geomMs": 35,
+      "fullMs": 1034,
       "fullTris": 42604,
       "ratios": {
         "shoulderHeight": 0.79,
@@ -1444,8 +1444,8 @@
       "label": "height 150cm",
       "heightM": 1.5,
       "targetCm": 150,
-      "geomMs": 188,
-      "fullMs": 1061,
+      "geomMs": 170,
+      "fullMs": 1002,
       "fullTris": 42542,
       "ratios": {
         "shoulderHeight": 0.784,
@@ -1484,8 +1484,8 @@
       "label": "height 200cm",
       "heightM": 2,
       "targetCm": 200,
-      "geomMs": 47,
-      "fullMs": 1045,
+      "geomMs": 42,
+      "fullMs": 925,
       "fullTris": 42601,
       "ratios": {
         "shoulderHeight": 0.808,
@@ -1524,8 +1524,8 @@
       "label": "age 0.5",
       "heightM": 1.582,
       "targetCm": null,
-      "geomMs": 44,
-      "fullMs": 996,
+      "geomMs": 78,
+      "fullMs": 1066,
       "fullTris": 42557,
       "ratios": {
         "shoulderHeight": 0.789,
@@ -1564,8 +1564,8 @@
       "label": "age 0.875",
       "heightM": 1.582,
       "targetCm": null,
-      "geomMs": 33,
-      "fullMs": 828,
+      "geomMs": 48,
+      "fullMs": 866,
       "fullTris": 42557,
       "ratios": {
         "shoulderHeight": 0.789,
@@ -1604,8 +1604,8 @@
       "label": "age 1",
       "heightM": 1.582,
       "targetCm": null,
-      "geomMs": 32,
-      "fullMs": 850,
+      "geomMs": 31,
+      "fullMs": 806,
       "fullTris": 42557,
       "ratios": {
         "shoulderHeight": 0.789,
@@ -1690,7 +1690,7 @@
     {
       "name": "full character assembly < 2 s (median)",
       "pass": true,
-      "detail": "1060 ms, 43402 tris"
+      "detail": "982 ms, 43402 tris"
     },
     {
       "name": "inspection sheets render without page errors",
@@ -1699,8 +1699,8 @@
     }
   ],
   "perf": {
-    "geomMsMedian": 56,
-    "fullMsMedian": 1060,
+    "geomMsMedian": 53,
+    "fullMsMedian": 982,
     "fullTrisMedian": 43402,
     "note": "Node.js CPU timings (geometry + 512px skin bake + clothing + hair); browser timings are similar."
   },
@@ -1709,49 +1709,49 @@
       "name": "lineup",
       "file": "lineup.jpg",
       "caption": "Archetype lineup (9 archetypes, seeded)",
-      "ms": 49385,
+      "ms": 53438,
       "errors": []
     },
     {
       "name": "diversity",
       "file": "diversity.jpg",
       "caption": "Same archetype, 8 seeds",
-      "ms": 48556,
+      "ms": 37903,
       "errors": []
     },
     {
       "name": "portraits",
       "file": "portraits.jpg",
       "caption": "Head/shoulder portraits",
-      "ms": 40263,
+      "ms": 31573,
       "errors": []
     },
     {
       "name": "expressions",
       "file": "expressions.jpg",
       "caption": "Expressions: neutral, smile, angry, sad, surprised",
-      "ms": 80258,
+      "ms": 49726,
       "errors": []
     },
     {
       "name": "walk-cycle",
       "file": "walk-cycle.jpg",
       "caption": "Retargeted procedural walk, 6 phases (side view)",
-      "ms": 41928,
+      "ms": 35179,
       "errors": []
     },
     {
       "name": "run-cycle",
       "file": "run-cycle.jpg",
       "caption": "Retargeted procedural run, 6 phases",
-      "ms": 46995,
+      "ms": 28327,
       "errors": []
     },
     {
       "name": "bvh-walk",
       "file": "bvh-walk.jpg",
       "caption": "CC0 BVH mocap (MakeHuman walk) retargeted, 5 phases",
-      "ms": 26657,
+      "ms": 28977,
       "errors": []
     }
   ]

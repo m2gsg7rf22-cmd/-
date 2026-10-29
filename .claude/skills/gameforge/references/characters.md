@@ -125,3 +125,11 @@ are listed in the file.
   - Skin is a baked albedo with a wrap-lighting SSS approximation.
 - **Rigid shoes.** Shoes do not bend at the toes.
 - **Children are not supported.** The bundled targets are adult only.
+
+## LOD for realistic humans (triangle reduction)
+`assembleHuman(data, { ...spec, decimate: 0.3 })` or `H.decimateHuman(human, 0.3)` simplifies the body and every garment with
+quadric half-edge collapse (engine/geometry/decimate.js): UVs, seams, borders, skin weights and face morphs survive; underwear
+under trousers/dresses is dropped and outer layers are pushed out a few mm so nothing pokes through. Measured on civilian:5:
+27.8k body tris → 13.9k (0.5) / 6.9k (0.25), ~1–2 s per template — decimate the crowd *template* once and `cloneHuman()` it.
+Suggested ladder: full < 15 m · 0.5 at 15–30 m · 0.25 + `lod:'crowd'` beyond 30 m · impostor/hidden beyond 80 m.
+Preview: `sandbox/humans.html?who=civilian:5&decimate=0.25`.
