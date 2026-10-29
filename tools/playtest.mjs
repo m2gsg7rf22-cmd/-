@@ -2,7 +2,7 @@
 // GameForge automated playtester. Drives a game through window.__GF hooks with a JSON
 // scenario (<project>/playtest.json), asserts on game state, checks for runtime errors,
 // verifies the canvas is not blank, measures performance and captures screenshots.
-// Usage: node tools/playtest.mjs <game-dir> [--quality low|medium|high] [--shots dir] [--headed]
+// Usage: node tools/playtest.mjs <game-dir> [--quality low|medium|high] [--shots dir] [--query 'a=1&b=2'] [--headed]
 import fs from 'node:fs';
 import path from 'node:path';
 import { launchBrowser } from './lib/playwright.mjs';
@@ -11,7 +11,7 @@ import { serve } from './serve.mjs';
 function get(obj, p) { return p.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj); }
 const OPS = { '<': (a, b) => a < b, '<=': (a, b) => a <= b, '>': (a, b) => a > b, '>=': (a, b) => a >= b, '==': (a, b) => a === b, '!=': (a, b) => a !== b, 'truthy': (a) => !!a, 'falsy': (a) => !a, 'includes': (a, b) => Array.isArray(a) ? a.includes(b) : String(a).includes(b) };
 
-export async function playtest(gameDir, { quality, shotsDir, serveRoot, file = null, resultsName = 'test-results.json', log = console.log } = {}) {
+export async function playtest(gameDir, { quality, shotsDir, serveRoot, file = null, resultsName = 'test-results.json', log = console.log, query = '' } = {}) {
   gameDir = path.resolve(gameDir);
   const scenario = JSON.parse(fs.readFileSync(path.join(gameDir, 'playtest.json'), 'utf8'));
   const root = path.resolve(serveRoot || scenario.serveRoot ? path.resolve(gameDir, scenario.serveRoot || '.') : gameDir);
@@ -29,7 +29,7 @@ export async function playtest(gameDir, { quality, shotsDir, serveRoot, file = n
   const check = (label, ok, detail) => { results.checks.push({ label, ok: !!ok, detail }); log(`  ${ok ? 'PASS' : 'FAIL'}  ${label}${detail !== undefined ? '  (' + (typeof detail === 'string' ? detail : JSON.stringify(detail)) + ')' : ''}`); };
   const t0 = Date.now();
   try {
-    const url = file ? `file://${path.resolve(file)}?quality=${q}&test=1` : `http://127.0.0.1:${server.address().port}/${rel ? rel + '/' : ''}${scenario.url || 'index.html'}?quality=${q}&test=1`;
+    const url = file ? `file://${path.resolve(file)}?quality=${q}&test=1${query ? '&' + query : ''}` : `http://127.0.0.1:${server.address().port}/${rel ? rel + '/' : ''}${scenario.url || 'index.html'}?quality=${q}&test=1${query ? '&' + query : ''}`;
     results.url = file ? 'file://' + path.basename(file) : (scenario.url || 'index.html');
     await page.goto(url);
     await page.waitForFunction(() => window.__GF && window.__GF.ready, null, { timeout: scenario.loadTimeout || 120000 });
@@ -103,7 +103,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   let failed = 0;
   for (const d of dirs) {
     console.log(`\n▶ Playtest ${d}`);
-    const r = await playtest(d, { quality: opt('quality'), shotsDir: opt('shots'), serveRoot: opt('root'), file: opt('file'), resultsName: opt('file') ? 'test-results.dist.json' : 'test-results.json' });
+    const r = await playtest(d, { quality: opt('quality'), shotsDir: opt('shots'), serveRoot: opt('root'), file: opt('file'), query: opt('query'), resultsName: opt('file') ? 'test-results.dist.json' : 'test-results.json' });
     console.log(`  ${r.passed ? '✔' : '✘'} ${r.summary} in ${(r.durationMs / 1000).toFixed(1)}s  metrics=${JSON.stringify(r.metrics)}`);
     if (!r.passed) failed++;
   }

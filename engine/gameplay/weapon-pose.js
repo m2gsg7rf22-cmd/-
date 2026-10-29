@@ -58,11 +58,11 @@ export class ShoulderedWeapon {
     this.debug = { supportSlide: 0, reach: {} };
     ik.setHandTarget(this.side, this._t[this.side], { rotation: this._q[this.side] });
     ik.setHandTarget(this.other, this._t[this.other], { rotation: this._q[this.other] });
-    const prev = ik.onBeforeHands; ik.onBeforeHands = (dt) => { prev?.(dt); this._pose(dt); };
+    const prev = this._prevHook = ik.onBeforeHands; ik.onBeforeHands = this._hook = (dt) => { prev?.(dt); this._pose(dt); };
   }
   setAim(target) { this.aimTarget = target; return this; }
   /** Detach from the IK (hands released; weapon stays where it is). */
-  dispose() { this.ik.setHandTarget('L', null); this.ik.setHandTarget('R', null); this.ik.onBeforeHands = null; }
+  dispose() { this.ik.setHandTarget('L', null); this.ik.setHandTarget('R', null); if (this.ik.onBeforeHands === this._hook) this.ik.onBeforeHands = this._prevHook || null; }
 
   // The support hand grips a forward handle with the thumb up like the trigger hand, but its socket
   // frame is mirrored; pick the orientation whose wrist ends up closer to the support shoulder.

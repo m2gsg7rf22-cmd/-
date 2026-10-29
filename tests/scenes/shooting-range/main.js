@@ -3,9 +3,13 @@
 // ShooterController (third/first-person cameras, crosshair + ammo HUD, snap-to-cover),
 // CoverSystem and two RangedEnemy AIs using cover / peek-shoot. Driven by playtest.json.
 import * as GF from '../../../engine/index.js';
+import * as Humans from '../../../engine/humans.js';
 const { THREE } = GF;
 
 const app = new GF.GameApp({ id: 'shooting-range', title: 'Shooting Range', container: document.getElementById('game'), timeOfDay: 14, theme: { accent: '#ffb347' } });
+
+// ?humans=1: realistic humans (exercises ShoulderedWeapon + two-hand IK); default stays stylized for speed
+if (new URLSearchParams(location.search).has('humans')) app.useHumans(Humans, await Humans.loadHumanData());
 
 // ---------- range geometry (static colliders double as cover)
 const concrete = GF.solid(0x8a8780, { roughness: 0.9 }), dark = GF.solid(0x4a4e55, { roughness: 0.8 }), lane = GF.solid(0x5d6b4a, { roughness: 1 });

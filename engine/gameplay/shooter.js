@@ -21,6 +21,7 @@ import { attach } from '../character/humanoid.js';
 import { FirstPersonCamera } from '../camera/cameras.js';
 import { CoverSystem } from './cover.js';
 import { weaponModel, weaponSocketWorld } from './weapon-models.js';
+import { ShoulderedWeapon } from './weapon-pose.js';
 import { UI } from '../ui/ui.js';
 
 const DEG = Math.PI / 180;
@@ -304,6 +305,7 @@ class TracerPool {
 
 // Attach a firearm model to an actor's right hand. Realistic humans use the weapon convention
 // directly (grip origin, +Z muzzle); the stylized mannequin socket is sword-oriented, so wrap.
+const shoulderable = (def) => def.model && def.model !== 'pistol' && !def.oneHanded;
 export function attachFirearm(actor, model) {
   const ch = actor.model || actor;
   if (ch.userData.kind === 'human') { ch.userData.sockets.hand_R.add(model); ch.userData.retargeter?.setHands?.(0.35, 1.1); return model; }
@@ -313,14 +315,16 @@ export function attachFirearm(actor, model) {
 
 // ---------------------------------------------------------------- 4. WeaponSystem
 export class WeaponSystem {
-  constructor(app, owner, { weapons = ['rifle'], ammo = {}, targets = () => [], seed = 1234, visual = true, damageMult = 1, projectiles = null, colors = {} } = {}) {
+  constructor(app, owner, { weapons = ['rifle'], ammo = {}, targets = () => [], seed = 1234, visual = true, damageMult = 1, projectiles = null, colors = {}, shouldered: shoulderedOpt } = {}) {
     this.app = app; this.owner = owner; this.targets = targets; this.damageMult = damageMult; this.visual = visual;
     this.rng = new RNG(seed);
     this.slots = weapons.map((w, i) => {
       const def = weaponDef(w), a = ammo[def.id] || {};
       const st = new WeaponState(def, { mag: a.mag, reserve: ammo.infinite ? Infinity : a.reserve, seed: seed + i * 31 });
       st.model = visual && def.model ? weaponModel(def.model, colors) : null;
-      if (st.model) { st.model.visible = false; attachFirearm(owner, st.model); }
+      // realistic humans carry long guns shouldered (butt in the shoulder, both hands by IK); pistols stay in the hand socket
+      st.shoulder = !!(st.model && owner.realistic && owner.ik && shoulderable(def) && shoulderedOpt !== false);
+      if (st.model) { st.model.visible = false; if (!st.shoulder) attachFirearm(owner, st.model); }
       for (const e of ['reloadStart', 'reload', 'empty', 'reloadShell']) st.on(e, () => this._emitState(e, st));
       return st;
     });
@@ -355,8 +359,10 @@ export class WeaponSystem {
     if (typeof i === 'string') i = this.slots.findIndex((s) => s.def.id === i);
     if (i < 0 || i >= this.slots.length || i === this.index) return false;
     const prev = this.current; if (prev) { prev.setTrigger(false); prev.cancelReload(); if (prev.model) prev.model.visible = false; }
+    this.shouldered?.dispose(); this.shouldered = null;
     this.index = i; const cur = this.current; cur.equip(); if (instant) cur.equipT = 0;
     if (cur.model) cur.model.visible = true;
+    if (cur.shoulder) this.shouldered = new ShoulderedWeapon(this.owner.model, cur.model, this.owner.ik, { mode: 'ready' });
     if (!instant) this.app.audio?.play('weaponSwap', { pos: this.owner.position });
     this.emit('equip', { weapon: cur.def.id, index: i });
     return true;
@@ -377,6 +383,7 @@ export class WeaponSystem {
   update(dt) {
     const st = this.current, def = st.def;
     this.aimBlend = damp(this.aimBlend, this.aiming ? 1 : 0, 3 / Math.max(0.05, def.adsTime), dt);
+    if (this.shouldered) { const hot = this.aiming || this.trigger || st.sinceShot < 0.8; this.shouldered.mode = hot ? 'aim' : 'ready'; this.shouldered.setAim(hot ? this.aimPoint : null); }
     this.recoil.yaw = 0; this.recoil.pitch = 0;
     const targets = this._targets();
     this.aimHit = hitscan(this.app.physics, this.aim.origin, this.aim.dir, def.range, targets, { ignore: this.owner });

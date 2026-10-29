@@ -210,3 +210,7 @@ drops the head onto the stock (cheek weld), and solves both hands with two-bone 
 Switch `sw.mode` for low ready while moving and `aim` when the aim button is held. `sw.dispose()` releases the hands.
 Preview: `sandbox/armed.html?mode=aim&weapon=rifle&az=0&cx=2.4&cy=1.5&cz=0.6`. Unit test: `tests/unit/ik.test.mjs`.
 Limits: fingers keep the socket's fist pose (no per-finger wrap); no weapon–body collision.
+`WeaponSystem` does this automatically when the owner is a realistic human with IK (`Actor.ik`): long guns
+(everything except `pistol` / `oneHanded` defs) are shouldered — low ready when idle, `aim` while aiming,
+firing or within 0.8 s of a shot, barrel on the aim point. Opt out with `{ shouldered: false }`.
+Regression: `node tools/playtest.mjs tests/scenes/shooting-range --query humans=1` (realistic humans).
