@@ -1,12 +1,12 @@
 {
   "game": "Shooting Range (shooter kit)",
   "quality": "low",
-  "startedAt": "2026-10-28T23:32:14.777Z",
+  "startedAt": "2026-10-29T04:45:13.556Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "4208 ms"
+      "detail": "3428 ms"
     },
     {
       "label": "scene boots into play",
@@ -119,7 +119,7 @@
       "detail": {
         "mean": 151.8,
         "std": 78,
-        "colors": 57
+        "colors": 56
       }
     },
     {
@@ -180,12 +180,12 @@
     {
       "label": "AI shoots back",
       "ok": true,
-      "detail": 30
+      "detail": 31
     },
     {
       "label": "AI bullets hit the player",
       "ok": true,
-      "detail": 2
+      "detail": 3
     },
     {
       "label": "player takes damage from AI",
@@ -228,8 +228,8 @@
     "screenshots/06-ai-firefight.png"
   ],
   "metrics": {
-    "fps": 27.570548167369513,
-    "frameMs": 8.79999999993015,
+    "fps": 5.625351584474038,
+    "frameMs": 12.800000000046566,
     "calls": 39,
     "triangles": 22842,
     "geometries": 59,
@@ -237,13 +237,13 @@
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
-    "audioEvents": 81,
-    "particles": 566
+    "audioEvents": 84,
+    "particles": 596
   },
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 4208,
-  "durationMs": 57510,
+  "loadMs": 3428,
+  "durationMs": 33295,
   "summary": "42/42 checks passed"
 }

@@ -30,6 +30,7 @@
 | 10 | QA & Visual Evaluation | `tools/playtest.mjs`, `tools/report.mjs`, `tools/bench-*.mjs` | — | ממומש. פער: השוואת פיקסלים מול baseline |
 
 ## יומן (חדש למעלה)
+- **v0.4.1**: מוזגו IK + ragdoll ופלטפורמר + מרוצים. ריסים מרונדרים. `ShoulderedWeapon` לנשק ארוך על דמויות. בדיקות: unit 88/88, platformer 19/19, race-track 18/18, shooting-range 42/42, open-world 32/32, ashen-vale 22/22.
 - **v0.3.4**: יכולת נרטיב: פורמט `*.story.js`, מהדר ל־quests + dialogue, `gameforge story` (בדיקות גרף/דגלים/משימות/ענפים/דמויות/קצב/מקוריות + סימולציה), מסמך שיטה ודוגמת שוד מקורית (3 מערכות, 9 משימות, 3 סופים).
 - **v0.4 (open world)**: מערכות עולם פתוח כמודולים כלליים: `world/streaming.js` (ChunkManager, LODGroup, impostor), `ai/schedules.js` (לוחות זמנים יומיים, בריחה וחזרה, קפיצות זמן), `gameplay/wanted.js` (heat 0–5, רודפים, קו ראייה, cooldown, כוכבים ב־HUD דרך `ui.stars`), `world/crowd.js` (הולכי רגל על מדרכות עם LOD: אדם ריאליסטי ← בובה ← מוסתר). נוסף ל־humans.js נתיב `lod:'crowd'`, וגם `cloneHuman` ו־`mergeGarments`. בדיקות: `openworld.test.mjs` (7), סצנה `tests/scenes/open-world` (32/32), `tools/bench-crowd.mjs`. תיעוד: `references/open-world.md`.
 - **v0.3.4**: שכבה פרוצדורלית אחרי ה־mixer לשני ה־rigs: two-bone IK אנליטי עם pole ו־CCD, foot IK על שטח לא אחיד (ברירת מחדל לבני אדם ריאליסטיים על heightfield), look-at עם מגבלות והחלקה (NPC מסתכלים על השחקן), hand IK ואחיזה בשתי ידיים, ragdoll מסוג Verlet (`ragdollOnDeath`). בדיקות: `tests/unit/ik.test.mjs`, ויזואלי: `sandbox/ik.html` ו־`tools/bench-ik.mjs` (`docs/benchmarks/ik/`).
@@ -44,7 +45,7 @@
 unit 33/33 · כל ה־playtests ב־examples עברו (source + dist) · bench-characters 11/11 · bench-vehicles 7/7.
 
 ## הצעד הבא
-0. **פתוח (נבדק חזותית ב־sandbox/armed.html):** רובה על אדם ריאליסטי לא מוצמד לכתף: הידיים מושטות קדימה מדי ויד שמאל לא על ה־foregrip. הפתרון: מצב shouldered weapon (נשק מעוגן לכתף ולכיוון הכינון) + hand IK לשתי הידיים, אחרי מיזוג ה־IK.
+0. ✔ נפתר: `ShoulderedWeapon` (קת בכתף, סיבוב גו, cheek weld, IK לשתי הידיים; מצבי aim/ready/hip). נשאר: חיבור אוטומטי ל־ShooterController עבור בני אדם ריאליסטיים.
 1. בדיקות עיוורות לסאונד ולסצנה. לתקן כל פער שיימצא.
 2. אותו עיקרון ("יכולת, לא תוצרים") לשאר התחומים: סביבה/עולם, אנימציה (כתיבת clips + גיליון ביקורת), חומרים/שיידרים, סאונד.
 3. World: כלי ביקורת לסצנה שלמה (`gameforge scene`) + שיטת עבודה לבניית עולם, חזיתות מבנים, טקסטורת פרטים לשטח.

@@ -239,6 +239,7 @@ export class CharacterIK {
     this.model.updateMatrixWorld(true);
     if (this.opts.footIK) this._feet(ddt);
     if (this.opts.lookAt && this._lookFwd) this._lookAt(ddt);
+    this.onBeforeHands?.(ddt); // e.g. ShoulderedWeapon poses the gun from the (now final) torso
     if (this.opts.handIK) for (const s of ['L', 'R']) this._hand(s, ddt);
     this._commit();
   }

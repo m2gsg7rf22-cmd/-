@@ -194,3 +194,19 @@ the result as `st.model`, or extend `weapon-models.js`.
 - AI movement steers in a straight line to cover spots, with no NavGrid path. On complex maps,
   feed `GF.NavGrid` paths into `RangedEnemy` (override `_findSpot` / the move logic).
 - The first-person viewmodel can clip into walls. There is no separate viewmodel render pass.
+
+## Shouldered long guns on characters (realistic humans and stylized rigs)
+A rifle parented to `hand_R` looks wrong on a realistic body (arms stretched, support hand floating).
+For third-person characters holding long guns use `ShoulderedWeapon` (engine/gameplay/weapon-pose.js):
+```js
+const ik = new GF.CharacterIK(model, { ground: GF.groundFromPhysics(app.physics) });
+const sw = new GF.ShoulderedWeapon(model, GF.weaponModel('rifle'), ik, { mode: 'aim' }); // 'aim' | 'ready' | 'hip'
+sw.setAim(targetPoint);       // optional: barrel points at it (else straight ahead)
+// each frame: mixer.update(dt); ik.update(dt);  — the weapon is posed inside the IK pass
+```
+It places the butt in the shoulder pocket, blades the torso (support shoulder forward), leans the spine,
+drops the head onto the stock (cheek weld), and solves both hands with two-bone IK onto the weapon's
+`grip` / `offHand` sockets; the support hand slides back along the barrel when the arm cannot reach.
+Switch `sw.mode` for low ready while moving and `aim` when the aim button is held. `sw.dispose()` releases the hands.
+Preview: `sandbox/armed.html?mode=aim&weapon=rifle&az=0&cx=2.4&cy=1.5&cz=0.6`. Unit test: `tests/unit/ik.test.mjs`.
+Limits: fingers keep the socket's fist pose (no per-finger wrap); no weapon–body collision.

@@ -67,3 +67,4 @@ export { PLATFORMER_DEFAULTS, PIECES as PLATFORMER_PIECES, platformerParams, pla
 // ---- Genre kit: racing (track generator + mesh + physics, racing line, AI racers, race manager)
 export { Track, generateTrack, trackMesh, addTrackPhysics } from './world/track.js';
 export { computeRacingLine, RaceAI, RaceManager, formatTime } from './gameplay/racing.js';
+export { ShoulderedWeapon } from './gameplay/weapon-pose.js';

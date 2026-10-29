@@ -1,12 +1,12 @@
 {
   "game": "Platformer kit scene",
   "quality": "low",
-  "startedAt": "2026-10-29T04:24:29.920Z",
+  "startedAt": "2026-10-29T04:42:06.181Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "3844 ms"
+      "detail": "3685 ms"
     },
     {
       "label": "scene boots into play",
@@ -29,7 +29,7 @@
       "detail": {
         "mean": 147.6,
         "std": 73.7,
-        "colors": 142
+        "colors": 145
       }
     },
     {
@@ -98,7 +98,7 @@
       "detail": {
         "mean": 151.7,
         "std": 74.3,
-        "colors": 140
+        "colors": 142
       }
     },
     {
@@ -114,7 +114,7 @@
   ],
   "metrics": {
     "fps": 4,
-    "frameMs": 1.400000000023283,
+    "frameMs": 1.9000000001396984,
     "calls": 18,
     "triangles": 75618,
     "geometries": 88,
@@ -128,7 +128,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 3844,
-  "durationMs": 181359,
+  "loadMs": 3685,
+  "durationMs": 82672,
   "summary": "19/19 checks passed"
 }

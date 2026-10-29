@@ -1,12 +1,12 @@
 {
   "game": "Race track kit scene",
   "quality": "low",
-  "startedAt": "2026-10-29T04:31:16.079Z",
+  "startedAt": "2026-10-29T04:43:29.558Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "4423 ms"
+      "detail": "5445 ms"
     },
     {
       "label": "race opens with a countdown on the start grid",
@@ -108,10 +108,10 @@
     "screenshots/03-lap.png"
   ],
   "metrics": {
-    "fps": 25.910268648574316,
-    "frameMs": 6.199999999953434,
-    "calls": 232,
-    "triangles": 131390,
+    "fps": 4,
+    "frameMs": 7.399999999906868,
+    "calls": 230,
+    "triangles": 130726,
     "geometries": 246,
     "textures": 24,
     "tier": "low",
@@ -123,7 +123,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 4423,
-  "durationMs": 185078,
+  "loadMs": 5445,
+  "durationMs": 103183,
   "summary": "18/18 checks passed"
 }

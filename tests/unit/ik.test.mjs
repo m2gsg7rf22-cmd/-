@@ -130,3 +130,20 @@ test('ragdoll keeps bone lengths within 2% over 300 steps and settles on the gro
     for (const b of Object.values(h.userData.bones)) assert.ok(b.quaternion.toArray().every(Number.isFinite));
   }
 });
+
+test('ShoulderedWeapon: butt in the shoulder pocket, both hands on the gun, all modes, any facing', async () => {
+  const { ShoulderedWeapon } = await import('../../engine/gameplay/weapon-pose.js');
+  const { weaponModel } = await import('../../engine/gameplay/weapon-models.js');
+  for (const [kind, mode, yaw] of [['rifle', 'aim', 0], ['rifle', 'ready', 1.1], ['smg', 'aim', -2.4], ['shotgun', 'hip', 0.5]]) {
+    const h = human(); h.rotation.y = yaw; const B = h.userData.bones;
+    const ik = new CharacterIK(h, { lookAt: false, footIK: false }), gun = weaponModel(kind), sw = new ShoulderedWeapon(h, gun, ik, { mode });
+    for (let i = 0; i < 40; i++) ik.update(1 / 60); // hand weights ease in
+    h.updateMatrixWorld(true);
+    const muzzle = gun.localToWorld(new THREE.Vector3(...gun.userData.sockets.muzzle)), fwd = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+    assert.ok(muzzle.clone().sub(bonePos(B['upperarm01.R'])).dot(fwd) > 0.25, `${kind}/${mode}: muzzle in front of the body`);
+    const butt = gun.localToWorld(sw.buttLocal.clone());
+    assert.ok(butt.distanceTo(bonePos(B['upperarm01.R'])) < 0.2 + (mode === 'hip' ? 0.15 : 0), `${kind}/${mode}: butt at the shoulder (${butt.distanceTo(bonePos(B['upperarm01.R'])).toFixed(3)})`);
+    for (const s of ['L', 'R']) assert.ok(bonePos(B['wrist.' + s]).distanceTo(sw._t[s]) < 0.01, `${kind}/${mode}: hand ${s} on its grip (${bonePos(B['wrist.' + s]).distanceTo(sw._t[s]).toFixed(3)} m)`);
+    sw.dispose();
+  }
+});

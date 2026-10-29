@@ -11,6 +11,8 @@ import * as H from '../engine/humans.js';
 import { CLIP_LIBRARY } from '../engine/animation/clips.js';
 import * as S from '../engine/gameplay/shooter.js';
 import { weaponModel } from '../engine/gameplay/weapon-models.js';
+import { CharacterIK } from '../engine/animation/ik.js';
+import { ShoulderedWeapon } from '../engine/gameplay/weapon-pose.js';
 const q = new URLSearchParams(location.search);
 S.registerShooterClips?.();
 const R = createRenderer({ container: document.getElementById('c') });
@@ -21,10 +23,14 @@ const data = await H.loadHumanData();
 const [arch, seed] = (q.get('who') || 'soldier:3').split(':');
 const h = H.assembleHuman(data, { ...H.characterFromSpec(arch, +seed), textureSize: 512 }); scene.add(h);
 h.rotation.y = (+(q.get('az') || 30)) * Math.PI / 180;
-const gun = weaponModel(q.get('weapon') || 'rifle'); h.userData.sockets.hand_R.add(gun); h.userData.retargeter.setHands(0.35, 1.1);
-const clipName = q.get('clip') || 'aimRifle';
+const gun = weaponModel(q.get('weapon') || 'rifle'); h.userData.retargeter.setHands(0.35, 1.1);
+const mode = q.get('mode'); // aim | ready | hip → shouldered weapon + two-hand IK; absent → weapon in the hand socket
+let ik = null, sw = null;
+if (mode) { ik = new CharacterIK(h, { lookAt: false }); sw = new ShoulderedWeapon(h, gun, ik, { mode, flipSupport: q.has('flip') ? q.get('flip') === '1' : undefined }); window.__sw = sw; }
+else h.userData.sockets.hand_R.add(gun);
+const clipName = q.get('clip') || (mode ? 'idle' : 'aimRifle');
 const mixer = new THREE.AnimationMixer(h); if (CLIP_LIBRARY[clipName]) { const a = mixer.clipAction(h.userData.retargeter.clipFromPoseFn(clipName, CLIP_LIBRARY[clipName])); a.play(); }
 scene.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 camera.position.set(+(q.get('cx') || 1.8), +(q.get('cy') || 1.5), +(q.get('cz') || 2.6)); camera.lookAt(0, 1.2, 0); atm.setFocus(new THREE.Vector3());
-let frames = 0; const clock = new THREE.Clock(); function loop() { if (window.__pause) return; mixer.update(Math.min(0.05, clock.getDelta())); R.render(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
+let frames = 0; const clock = new THREE.Clock(); function loop() { if (window.__pause) return; mixer.update(Math.min(0.05, clock.getDelta())); ik?.update(1 / 60); R.render(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
 </script></body></html>

@@ -1,12 +1,12 @@
 {
   "game": "Open World Systems (integration scene)",
   "quality": "low",
-  "startedAt": "2026-10-28T23:25:44.166Z",
+  "startedAt": "2026-10-29T04:45:47.926Z",
   "checks": [
     {
       "label": "game boots and exposes window.__GF",
       "ok": true,
-      "detail": "9148 ms"
+      "detail": "9432 ms"
     },
     {
       "label": "scene boots into play",
@@ -174,12 +174,12 @@
     "screenshots/03-calm.png"
   ],
   "metrics": {
-    "fps": 21.33617815708757,
-    "frameMs": 9.099999999976717,
-    "calls": 191,
-    "triangles": 130384,
-    "geometries": 1054,
-    "textures": 238,
+    "fps": 4,
+    "frameMs": 11.300000000046566,
+    "calls": 188,
+    "triangles": 125680,
+    "geometries": 1055,
+    "textures": 240,
     "tier": "low",
     "gpu": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "errors": 0,
@@ -189,7 +189,7 @@
   "errors": [],
   "passed": true,
   "url": "index.html",
-  "loadMs": 9148,
-  "durationMs": 69020,
+  "loadMs": 9432,
+  "durationMs": 65473,
   "summary": "32/32 checks passed"
 }
