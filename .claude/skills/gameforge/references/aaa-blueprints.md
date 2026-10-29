@@ -40,7 +40,7 @@ It cannot deliver 100 hours of content. State the slice scope in the GDD.
 | Motion (attacks, emotes, traversal, cutscenes) | anim scripts + `gameforge anim`, BVH, IK, ragdoll | animation.md |
 | Cities, terrain, foliage, water | `engine/world/*`, `gameforge scene` | modeling.md (scenes), open-world.md |
 | Streaming, crowds, schedules, police/wanted | `world/streaming.js`, `world/crowd.js`, `ai/schedules.js`, `gameplay/wanted.js` | open-world.md |
-| Melee, combos, bosses | `engine/gameplay/player.js`, `actors.js` | engine-api.md |
+| Melee, combos, bosses | `engine/gameplay/player.js`, `actors.js`, `boss.js` (phases, telegraphs, poise) | engine-api.md, genres.md |
 | Stealth (light, suspicion, noise, takedowns) | `engine/gameplay/stealth.js` | stealth.md |
 | Guns, cover, aiming, first person | `engine/gameplay/shooter.js` | shooter.md |
 | Driving and racing | `physics/vehicle.js`, `geometry/vehicles.js`, `gameplay/racing.js`, `world/track.js` | genres.md |
@@ -83,6 +83,7 @@ tests. Don't bury it inside the game. Then add it to this table.
 - **World:** a hub plus interconnected areas, shortcuts and checkpoints (bonfire-style rests,
   with original naming).
 - **Feel:** commitment in attacks (recovery frames), and hit-stop of 60–100 ms on heavy hits.
+- **Bosses:** `BossController` (genres.md): exact-shape telegraphs, phases with transitions, poise/riposte, enrage.
 
 ### Shooter (third or first person)
 - **Core loop:** aim, fire, reload, cover, flank, grenades.

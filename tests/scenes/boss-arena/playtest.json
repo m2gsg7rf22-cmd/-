@@ -1,0 +1,33 @@
+{
+  "name": "Boss Arena (boss kit)",
+  "serveRoot": "../../..",
+  "quality": "low",
+  "perfSampleMs": 1500,
+  "steps": [
+    { "do": "step", "frames": 30 },
+    { "do": "expect", "path": "state", "op": "==", "value": "playing", "label": "scene boots into play" },
+    { "do": "expect", "path": "boss.phase", "op": "==", "value": 0, "label": "boss starts in phase 1" },
+    { "do": "step", "frames": 150 },
+    { "do": "expect", "js": "Object.keys(window.__GF.state().log.attacks).length", "op": ">=", "value": 1, "label": "boss closes in and starts attacking" },
+    { "do": "screenshot", "name": "01-telegraph" },
+    { "do": "step", "frames": 300 },
+    { "do": "expect", "path": "log.hits", "op": ">=", "value": 1, "label": "standing still in telegraphs gets you hit" },
+    { "do": "eval", "js": "window.__GF.cheat.heal()" },
+    { "do": "eval", "js": "for (let i = 0; i < 40; i++) { window.__GF.press('attack'); window.__GF.step(12); }" },
+    { "do": "expect", "path": "bossHp", "op": "<", "value": 900, "label": "player melee damages the boss" },
+    { "do": "eval", "js": "window.__GF.cheat.heal(); window.__GF.cheat.hurtBoss(400)" }, { "do": "step", "frames": 10 },
+    { "do": "expect", "path": "boss.phase", "op": ">=", "value": 1, "label": "below 60 % health the boss enters phase 2" },
+    { "do": "expect", "path": "boss.state", "op": "==", "value": "transition", "label": "phase change plays an invulnerable transition" },
+    { "do": "step", "frames": 360 },
+    { "do": "eval", "js": "window.__GF.cheat.teleport(0, 12); window.__GF.cheat.bossTo(0, -2)" }, { "do": "step", "frames": 240 },
+    { "do": "expect", "js": "(window.__GF.state().log.attacks.slam || 0) + (window.__GF.state().log.attacks.lunge || 0)", "op": ">=", "value": 1, "label": "at range the boss uses gap-closers (lunge / leap slam)" },
+    { "do": "screenshot", "name": "02-phase2" },
+    { "do": "eval", "js": "window.__GF.cheat.heal(); for (let i = 0; i < 8 && window.__GF.state().boss.state !== 'staggered'; i++) window.__GF.cheat.hurtBoss(5, true, 40)" },
+    { "do": "expect", "path": "log.breaks", "op": ">=", "value": 1, "label": "heavy hits break poise (riposte window)" },
+    { "do": "eval", "js": "window.__GF.cheat.hurtBoss(150)" }, { "do": "step", "frames": 200 },
+    { "do": "expect", "path": "boss.phase", "op": "==", "value": 2, "label": "final phase below 30 %" },
+    { "do": "screenshot", "name": "03-final-phase" },
+    { "do": "eval", "js": "window.__GF.cheat.hurtBoss(5000)" }, { "do": "step", "frames": 60 },
+    { "do": "expect", "path": "log.dead", "op": "truthy", "label": "boss dies and the bar disappears" }
+  ]
+}

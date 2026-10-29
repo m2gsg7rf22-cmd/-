@@ -123,3 +123,21 @@ and −8 % when ahead (over 150 m). `skill` 0.88–1.0 spreads the field.
 - Tracks are star-shaped around the origin (no figure-eights/crossovers, no jumps or tunnels);
   the ground skirt blends heights in the infield, so very close sections can show small seams.
 - The raycast vehicle corners arcade-style, so `aLat` is a design number, not a tyre model.
+
+## Action / Souls-like: boss encounters (`engine/gameplay/boss.js`)
+`BossController` drives any Enemy with a data-driven moveset: each attack has `windup / active / recovery` seconds (the
+recovery is the punish window), an exact hit shape (`cone` radius+arc, `line` length+width, `circle`, `ring` inner+radius)
+drawn on the ground as a telegraph that fills during the windup, and optional movement (`lunge`, `leap` to the target's
+position at commit time). The boss tracks the player during the first 75 % of a windup, then commits — so a well-timed
+dodge or step out always works. Phases switch by health (`until` ratio) with an invulnerable transition (`transitionClip`,
+`onEnter`), per-phase `speed` and `combo` (chained attacks). Hits fill **poise**; breaking it staggers the boss for
+`staggerTime` (riposte window). `enrage` seconds → +25 % speed/damage.
+```js
+const boss = new GF.BossController(app, enemy, { name: 'The Warden', poise: 140, attacks: { sweep: { clip: 'heavy', windup: 0.75, active: 0.25,
+  recovery: 0.9, shape: 'cone', radius: 4.2, arc: 140, damage: 26, range: [0, 3.8] }, … }, phases: [{ until: 0.6, attacks: ['sweep', 'lunge'] }, …] });
+app.add((dt) => { boss.update(dt, player); enemy.update(dt); app.ui.boss(boss.name, enemy.health.ratio); });
+boss.on('phase' | 'attack' | 'hit' | 'poiseBreak' | 'enrage' | 'death', fn);
+```
+Feel numbers: windups 0.5–1.4 s (longer = bigger damage), recoveries 0.7–1.5 s, 2–4 attacks per phase with one gap-closer,
+phase 3 adds a combo or an area attack the player hasn't seen, telegraph radius = hit radius exactly (never lie).
+Test scene: `tests/scenes/boss-arena` (13 checks). Limits: shapes are ground-plane areas (no vertical reach), one target.

@@ -76,3 +76,4 @@ export { StealthSystem, lightProbe, GUARD_STATES, defaultMoveTo } from './gamepl
 // NavAgent/NavCrowd steering with reciprocal avoidance, ScheduleAgent planner. See references/navigation.md.
 export { buildNavMesh, NavMesh, NavAgent, NavCrowd, navMeshPlanner, NAVMESH_DEFAULTS } from './ai/navmesh.js';
 export { navMover } from './gameplay/stealth.js';
+export { BossController } from './gameplay/boss.js';
