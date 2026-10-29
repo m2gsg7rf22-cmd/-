@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><title>GameForge armed human</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#000}#c{position:fixed;inset:0}</style></head>
+<body><div id="c"></div>
+<script type="module">
+// Preview: realistic human holding a firearm (hand_R socket) in a clip. ?weapon=rifle&clip=aimRifle&who=soldier:3&az=deg
+import * as THREE from '../engine/vendor/three/three.module.js';
+import { createRenderer } from '../engine/render/renderer.js';
+import { Atmosphere } from '../engine/render/sky.js';
+import { pbr } from '../engine/render/materials.js';
+import * as H from '../engine/humans.js';
+import { CLIP_LIBRARY } from '../engine/animation/clips.js';
+import * as S from '../engine/gameplay/shooter.js';
+import { weaponModel } from '../engine/gameplay/weapon-models.js';
+const q = new URLSearchParams(location.search);
+S.registerShooterClips?.();
+const R = createRenderer({ container: document.getElementById('c') });
+const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(35, 1, 0.05, 500); R.setup(scene, camera);
+const atm = new Atmosphere(scene, R.renderer, { timeOfDay: 15, sunAzimuth: 160 });
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), pbr('concrete', { repeat: 8 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+const data = await H.loadHumanData();
+const [arch, seed] = (q.get('who') || 'soldier:3').split(':');
+const h = H.assembleHuman(data, { ...H.characterFromSpec(arch, +seed), textureSize: 512 }); scene.add(h);
+h.rotation.y = (+(q.get('az') || 30)) * Math.PI / 180;
+const gun = weaponModel(q.get('weapon') || 'rifle'); h.userData.sockets.hand_R.add(gun); h.userData.retargeter.setHands(0.35, 1.1);
+const clipName = q.get('clip') || 'aimRifle';
+const mixer = new THREE.AnimationMixer(h); if (CLIP_LIBRARY[clipName]) { const a = mixer.clipAction(h.userData.retargeter.clipFromPoseFn(clipName, CLIP_LIBRARY[clipName])); a.play(); }
+scene.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+camera.position.set(+(q.get('cx') || 1.8), +(q.get('cy') || 1.5), +(q.get('cz') || 2.6)); camera.lookAt(0, 1.2, 0); atm.setFocus(new THREE.Vector3());
+let frames = 0; const clock = new THREE.Clock(); function loop() { if (window.__pause) return; mixer.update(Math.min(0.05, clock.getDelta())); R.render(); window.__frames = ++frames; requestAnimationFrame(loop); } loop();
+</script></body></html>
