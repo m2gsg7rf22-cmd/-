@@ -77,7 +77,7 @@ Builds terrain, cities, landmarks, vegetation and level layout; owns spawn point
 - **Inputs:** World section of the spec, landmark list.
 - **Outputs:** src/world.js
 - **Owns:** src/world.js
-- **Accept:** player spawns grounded; all objectives reachable in playtest; no empty plains in screenshots
+- **Accept:** player spawns grounded; all objectives reachable in playtest; no empty plains in screenshots; open worlds: chunks load/unload as the player moves and frame metrics stay within budget
 
 ## Character Director (`character-director`)
 Designs the cast with the realistic human generator (engine/humans.js: MakeHuman CC0 body/face morphs, skin, eyes, hair, garments, archetypes) — see references/characters.md. Falls back to createHumanoid only for stylized games.
@@ -120,12 +120,12 @@ Owns colliders, character movement tuning, vehicles (raycast model), dynamic pro
 - **Accept:** no tunnelling through buildings at top speed; vehicle accelerates/steers/brakes in playtest
 
 ## AI Engineer (`ai-engineer`)
-Builds enemy and NPC behaviour: behaviour trees, perception, attack tokens, encounters, bosses, traffic and navigation.
+Builds enemy and NPC behaviour: behaviour trees, perception, attack tokens, encounters, bosses, traffic, navigation, NPC daily schedules, crowds and wanted/heat pursuit (references/open-world.md).
 
 - **Inputs:** Encounter design.
 - **Outputs:** src/ai.js
 - **Owns:** src/ai.js
-- **Accept:** enemies perceive, pursue, attack and die in playtest; no enemy stuck in geometry in screenshots
+- **Accept:** enemies perceive, pursue, attack and die in playtest; no enemy stuck in geometry in screenshots; open worlds: after a time jump NPCs are at their schedule places; wanted level rises on a crime and decays after hiding
 
 ## Audio Director (`audio-director`)
 Designs every sound the game needs as synth recipes (layered transient/body/tail with osc, noise, FM, pluck voices), verifies them with the gameforge sound review (spectrogram + checks), maps SFX to actions and music moods to game states — see references/audio.md.

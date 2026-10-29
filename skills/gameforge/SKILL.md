@@ -141,6 +141,7 @@ REQUEST → SPEC → GDD → TASK GRAPH → ASSETS/WORLD → GAMEPLAY → ANIMAT
 - `references/audio.md` — **designing any sound yourself**: synth voices, layering method, `gameforge sound` (WAV + spectrogram sheet + checks)
 - `references/cinematics.md` — **cutscenes**: shot grammar (sizes, moves, 180° rule), event timeline, character lighting, `gameforge cinematic` storyboard review, `playCinematic`
 - `references/narrative.md` — **writing story, cast, missions and branching dialogue yourself**: story scripts, `gameforge story` (graph + bible + playthrough simulation + checks), premise→theme→characters→structure→beats→branching→dialogue→quests method, checklist
+- `references/open-world.md` — **open worlds (GTA-style cities, open fantasy regions)**: chunk streaming + LOD budgets, NPC daily schedules, wanted/heat with pursuers, sidewalk crowds with a realistic→mannequin LOD ladder, measured crowd budgets
 - `references/characters.md` — realistic humans: body/face parameters, garments, hair, expressions, retargeting, mocap, benchmark
 - `references/agents.md` — 17 roles: inputs, outputs, file ownership, acceptance criteria
 - `references/recipes.md` — code recipes: new enemy, boss, vehicle, cutscene, quest, minigame, traversal

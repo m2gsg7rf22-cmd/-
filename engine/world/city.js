@@ -9,7 +9,9 @@ import { tower, shop, house } from '../geometry/buildings.js';
 import { PROPS } from '../geometry/props.js';
 import { car } from '../geometry/vehicles.js';
 
-export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth = 14, style = 'modern', parkChance = 0.12, sidewalk = 4, maxFloors = 30, props = true } = {}) {
+export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth = 14, style = 'modern', parkChance = 0.12, sidewalk = 4, maxFloors = 30, props = true, mergeBuildings = true } = {}) {
+  // mergeBuildings=false keeps buildings out of the merged static mesh (returned in `buildings`,
+  // not added to `group`) so a ChunkManager can stream them in/out; colliders stay static.
   const rng = new RNG(seed);
   const pitch = blockSize + roadWidth, half = (blocks * pitch) / 2;
   const roadCenters = []; for (let i = 0; i <= blocks; i++) roadCenters.push(-half + i * pitch);
@@ -43,7 +45,7 @@ export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth =
   roadMB.add(outer, pbr('grass', { repeat: 80 }), mat4([0, -0.02, 0]));
   group.add(roadMB.build({ name: 'roads', castShadow: false }));
 
-  const colliders = [], dynamicProps = [], buildings = [], parks = [], lampAnchors = [];
+  const colliders = [], dynamicProps = [], buildings = [], parks = [], lampAnchors = [], blockList = [];
   const deco = new THREE.Group();
   for (let bi = 0; bi < blocks; bi++) for (let bj = 0; bj < blocks; bj++) {
     const cx = (roadCenters[bi] + roadCenters[bi + 1]) / 2, cz = (roadCenters[bj] + roadCenters[bj + 1]) / 2;
@@ -55,6 +57,7 @@ export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth =
     colliders.push({ type: 'box', x: cx, y: 0.09, z: cz, hx: blockSize / 2, hy: 0.09, hz: blockSize / 2, yaw: 0, userData: { kind: 'sidewalk' } });
     const distC = Math.hypot(cx, cz) / half; // 0 centre .. ~1.4 corners
     const isPark = rng.chance(parkChance) && !(bi === Math.floor(blocks / 2) && bj === Math.floor(blocks / 2));
+    blockList.push({ bi, bj, cx, cz, park: isPark, size: blockSize, inner });
     if (isPark) {
       const lawn = new THREE.Mesh(new THREE.BoxGeometry(inner, 0.22, inner), pbr('grass', { repeat: 6 })); lawn.position.set(cx, 0.11, cz); lawn.receiveShadow = true; deco.add(lawn);
       for (let t = 0; t < 10; t++) { const tr = PROPS.tree({ seed: seed + bi * 31 + bj * 7 + t, species: rng.pick(['oak', 'oak', 'pine']) }); const px = cx + rng.range(-inner / 2 + 3, inner / 2 - 3), pz = cz + rng.range(-inner / 2 + 3, inner / 2 - 3); tr.position.set(px, 0.2, pz); tr.scale.setScalar(rng.range(0.8, 1.2)); deco.add(tr); colliders.push({ type: 'cylinder', x: px, y: 0, z: pz, r: 0.45, h: 6, userData: { kind: 'tree' } }); }
@@ -71,15 +74,18 @@ export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth =
       const depth = Math.min(lotW * rng.range(0.9, 1.3), inner / 2 - 1);
       const w = lotW - 1.2;
       const height = Math.max(2, Math.round(maxFloors * Math.pow(Math.max(0, 1 - distC * 0.8), 1.6) * rng.range(0.4, 1.1)));
-      let b;
-      if (height >= 6) b = tower({ width: w, depth, floors: height, seed: seed * 101 + bi * 13 + bj * 7 + side * 3 + l, style });
-      else if (style === 'suburb' || rng.chance(0.15)) b = house({ width: Math.min(w, 9), depth: Math.min(depth, 8), seed: seed + bi + bj * 3 + l });
+      let b, type;
+      if (height >= 6) type = 'tower'; else if (style === 'suburb' || rng.chance(0.15)) type = 'house'; else type = 'shop';
+      if (type === 'tower') b = tower({ width: w, depth, floors: height, seed: seed * 101 + bi * 13 + bj * 7 + side * 3 + l, style });
+      else if (type === 'house') b = house({ width: Math.min(w, 9), depth: Math.min(depth, 8), seed: seed + bi + bj * 3 + l });
       else b = shop({ width: w, depth, floors: Math.max(1, Math.min(3, height)), seed: seed * 7 + bi * 5 + bj + l + side });
       const off = inner / 2 - depth / 2;
       const pos = [[t, off], [off, -t], [-t, -off], [-off, t]][side];
       const yaw = [0, Math.PI / 2, Math.PI, -Math.PI / 2][side];
       b.position.set(cx + pos[0], 0.18, cz + pos[1]); b.rotation.y = yaw;
-      deco.add(b); buildings.push(b);
+      b.userData.lot = { type, block: [bi, bj], cx, cz, side, floors: height };
+      if (mergeBuildings) deco.add(b); else b.updateMatrixWorld(true);
+      buildings.push(b);
       const c = b.userData.collider;
       const hx = c.size[0] / 2, hz = c.size[2] / 2;
       colliders.push({ type: 'box', x: b.position.x, y: 0.18 + c.size[1] / 2, z: b.position.z, hx, hy: c.size[1] / 2, hz, yaw, userData: { kind: 'building' } });
@@ -115,7 +121,7 @@ export function generateCity({ seed = 1, blocks = 5, blockSize = 56, roadWidth =
     if (i < blocks) { nodes[idx(i, j)].edges.push(idx(i + 1, j)); nodes[idx(i + 1, j)].edges.push(idx(i, j)); }
     if (j < blocks) { nodes[idx(i, j)].edges.push(idx(i, j + 1)); nodes[idx(i, j + 1)].edges.push(idx(i, j)); }
   }
-  return { group, colliders, dynamicProps, buildings, parks, lampAnchors, graph: { nodes, laneOffset: roadWidth / 4 }, half, extent, roadCenters, roadWidth, blockSize, pitch,
+  return { group, colliders, dynamicProps, buildings, parks, lampAnchors, blocks: blockList, sidewalk, sidewalkY: 0.18, blockCount: blocks, graph: { nodes, laneOffset: roadWidth / 4 }, half, extent, roadCenters, roadWidth, blockSize, pitch,
     spawn: { x: roadCenters[Math.floor(blocks / 2)] + roadWidth / 4, z: roadCenters[1] - 10, yaw: 0 },
     isRoad: (x, z) => roadCenters.some((c) => Math.abs(x - c) < roadWidth / 2) || roadCenters.some((c) => Math.abs(z - c) < roadWidth / 2) };
 }

@@ -139,6 +139,23 @@ export class UI {
     const v = d.querySelector('.v'); const w = { el: d, set: (t) => { if (v.textContent !== String(t)) { v.textContent = t; d.animate?.([{ transform: 'scale(1.12)' }, { transform: 'scale(1)' }], 200); } }, show: (b) => (d.style.display = b ? '' : 'none') };
     this.widgets[id] = w; return w;
   }
+  // Rating / wanted-level stars: set(n, { flash }) fills n of max icons; hidden at 0 unless showEmpty.
+  stars(id, { max = 5, corner = 'tr', icon = '★', label = '', color = 'var(--gf-warn, #ffcf3a)', showEmpty = false } = {}) {
+    const d = document.createElement('div'); d.className = 'gf-counter gf-panel gf-stars'; d.style.display = showEmpty ? '' : 'none';
+    d.innerHTML = (label ? `<span class="l" style="color:var(--gf-dim);font-weight:400">${label}</span>` : '') + Array.from({ length: max }, () => `<span class="s" style="opacity:.22;transition:opacity .2s,color .2s">${icon}</span>`).join('');
+    this.el[corner].appendChild(d);
+    const icons = [...d.querySelectorAll('.s')]; let anim = null, last = -1, lastFlash = false;
+    const w = { el: d, value: 0, flashing: false, set: (n, { flash = false } = {}) => {
+      if (n === last && flash === lastFlash) return;
+      icons.forEach((s, i) => { s.style.opacity = i < n ? '1' : '.22'; s.style.color = i < n ? color : ''; });
+      d.style.display = n > 0 || showEmpty ? '' : 'none';
+      if (n > last && last >= 0) d.animate?.([{ transform: 'scale(1.25)' }, { transform: 'scale(1)' }], 260);
+      if (flash && !anim) anim = d.animate?.([{ opacity: 1 }, { opacity: 0.3 }], { duration: 420, iterations: Infinity, direction: 'alternate' }) || null;
+      if (!flash && anim) { anim.cancel(); anim = null; }
+      last = n; lastFlash = flash; w.value = n; w.flashing = flash;
+    }, show: (b) => (d.style.display = b ? '' : 'none') };
+    this.widgets[id] = w; return w;
+  }
   objectives(corner = 'tr') {
     const d = document.createElement('div'); d.className = 'gf-obj gf-panel'; d.style.display = 'none'; this.el[corner].appendChild(d);
     const w = { el: d, set: (title, items = [], header = 'Objective') => {
